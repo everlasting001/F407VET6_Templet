@@ -44,12 +44,23 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+    # Framework layer
+    Core/Framework/Src/system_tick.c
+    Core/Framework/Src/task_scheduler.c
+    Core/Framework/Src/state_machine.c
+
+    # Device drivers
+    Core/Drivers/Src/motor_driver.c
+
+    # Application layer
+    Core/App/Src/app_config.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    Core/Framework/Inc
+    Core/Drivers/Inc
+    Core/App/Inc
 )
 
 # Add project symbols (macros)
