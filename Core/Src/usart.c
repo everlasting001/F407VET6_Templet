@@ -21,6 +21,15 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#include <string.h>
+
+/**
+ * @brief 调试串口DMA接收缓冲区（全局数组）
+ *
+ * 必须为全局或静态变量！不能分配在栈上！
+ * DMA在后台访问此缓冲区，栈上的局部变量可能在函数返回后被回收。
+ */
+static uint8_t uart_debug_rx_buffer[UART_DEBUG_RX_BUF_SIZE];
 
 /* USER CODE END 0 */
 
@@ -158,5 +167,83 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 }
 
 /* USER CODE BEGIN 1 */
+
+/**
+ * @brief 获取DMA接收缓冲区指针
+ * @return uint8_t* 接收缓冲区首地址
+ */
+uint8_t* uart_get_rx_buffer(void)
+{
+    return uart_debug_rx_buffer;
+}
+
+/**
+ * @brief 初始化调试串口（DMA + IDLE空闲中断模式）
+ *
+ * 在 MX_USART1_UART_Init() 之后调用。
+ * 启动DMA+IDLE中断接收，之后接收到的数据会通过
+ * HAL_UARTEx_RxEventCallback 回调传递给应用层。
+ *
+ * @note RX DMA 的传输模式会在 HAL_UARTEx_ReceiveToIdle_DMA()
+ *       内部被设置为 NORMAL（非循环）模式，以确保IDLE中断
+ *       能正确触发并报告接收数据长度。
+ */
+void uart_debug_init(void)
+{
+    /* 启动DMA + IDLE空闲中断接收 */
+    /* huart1:     USART1句柄 */
+    /* uart_debug_rx_buffer: DMA接收缓冲区 */
+    /* UART_DEBUG_RX_BUF_SIZE: 缓冲区大小 */
+    if (HAL_UARTEx_ReceiveToIdle_DMA(&huart1, uart_debug_rx_buffer,
+                                     UART_DEBUG_RX_BUF_SIZE) != HAL_OK)
+    {
+        /* 初始化失败处理 */
+        Error_Handler();
+    }
+
+    /* 清除IDLE标志位，确保首次IDLE中断正确 */
+    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
+}
+
+/**
+ * @brief 通过DMA发送数据（非阻塞）
+ *
+ * 使用DMA方式发送数据。发送完成后 HAL_UART_TxCpltCallback 被调用。
+ *
+ * @note 如果前一次DMA发送尚未完成，此函数会等待最多10ms后超时返回。
+ *       实际使用中，debug输出不应过于频繁。
+ *
+ * @param data 数据缓冲区
+ * @param len  数据长度
+ */
+void uart_debug_send(uint8_t *data, uint16_t len)
+{
+    if (data == NULL || len == 0)
+    {
+        return;
+    }
+
+    if (HAL_UART_Transmit_DMA(&huart1, data, len) != HAL_OK)
+    {
+        /* 如果发送失败（可能DMA忙），尝试中断方式发送 */
+        HAL_UART_Transmit_IT(&huart1, data, len);
+    }
+}
+
+/**
+ * @brief 通过DMA发送字符串（非阻塞）
+ *
+ * 自动计算字符串长度并调用 uart_debug_send。
+ *
+ * @param str 以'\0'结尾的字符串
+ */
+void uart_debug_send_str(char *str)
+{
+    if (str == NULL)
+    {
+        return;
+    }
+    uart_debug_send((uint8_t *)str, strlen(str));
+}
 
 /* USER CODE END 1 */

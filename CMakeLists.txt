@@ -54,6 +54,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
     # Application layer
     Core/App/Src/app_config.c
+
+    # HAL callbacks (shared by all peripherals)
+    Core/Src/callback.c
+
+    # Debug utilities (printf redirect, debug output)
+    Core/Src/debug_utils.c
 )
 
 # Add include paths
@@ -61,6 +67,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Framework/Inc
     Core/Drivers/Inc
     Core/App/Inc
+    Core/Inc
 )
 
 # Add project symbols (macros)
