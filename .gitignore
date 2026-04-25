@@ -1,3 +1,9 @@
 build
 mx.scratch
 !.settings
+
+# 硬件文档库（可选，大文件可以不纳入git）
+# 取消下行注释以忽略 PDF 文件
+# .claude/docs/datasheets/*.pdf
+# .claude/docs/schematics/*.pdf
+# .claude/docs/pcb/*.pdf

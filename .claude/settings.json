@@ -1,0 +1,59 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(arm-none-eabi-gcc *)",
+      "Bash(arm-none-eabi-g++ *)",
+      "Bash(arm-none-eabi-objcopy *)",
+      "Bash(arm-none-eabi-objdump *)",
+      "Bash(arm-none-eabi-nm *)",
+      "Bash(cmake *)",
+      "Bash(cmake --preset *)",
+      "Bash(cmake --build *)",
+      "Bash(ninja *)",
+      "Bash(openocd *)",
+      "Bash(git *)",
+      "Read(Core/)",
+      "Read(Drivers/)",
+      "Read(.claude/docs/)",
+      "Read(.claude/memory/)",
+      "Edit(Core/)",
+      "Edit(Drivers/)",
+      "Bash(make *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(rm *)",
+      "Bash(sudo *)",
+      "Bash(su *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath' | { read -r f; if [[ \"$f\" =~ \\.(c|h)$ ]]; then echo '✓ 编译验证: '$f; cd \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\" && cmake --build build/Debug 2>&1 | tail -20 || echo '⚠ 编译失败，请检查'; fi; } 2>/dev/null || true",
+            "timeout": 60,
+            "statusMessage": "正在验证编译...",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔧 STM32 F407 嵌入式项目环境检查'; which arm-none-eabi-gcc > /dev/null && echo '✓ ARM 工具链已安装' || echo '⚠ ARM 工具链未找到'; which cmake > /dev/null && echo '✓ CMake 已安装' || echo '⚠ CMake 未找到'; which openocd > /dev/null && echo '✓ OpenOCD 已安装' || echo '⚠ OpenOCD 未找到'; [ -d build/Debug ] && echo '✓ 构建目录存在' || echo 'ℹ 请运行: cmake --preset Debug'",
+            "timeout": 10,
+            "statusMessage": "检查开发环境..."
+          }
+        ]
+      }
+    ]
+  }
+}
