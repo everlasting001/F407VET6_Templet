@@ -57,6 +57,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TX_DEBUG_Pin GPIO_PIN_9
+#define TX_DEBUG_GPIO_Port GPIOA
+#define RX_DEBUG_Pin GPIO_PIN_10
+#define RX_DEBUG_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
