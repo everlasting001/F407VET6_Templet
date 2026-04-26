@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCB设计基础与EDA工具教程</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .sidebar h2 {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 15px;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin: 8px 0;
+        }
+
+        .sidebar-nav a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .sidebar-nav a:hover {
+            background: rgba(255,255,255,0.2);
+            padding-left: 20px;
+        }
+
+        .sidebar-nav a.active {
+            background: rgba(255,255,255,0.3);
+            font-weight: 600;
+            border-left: 3px solid white;
+            padding-left: 9px;
+        }
+
+        .sidebar-nav .level-2 {
+            padding-left: 20px;
+            font-size: 0.9em;
+        }
+
+        /* 主内容区 */
+        .main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 40px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.05em;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #764ba2;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.4em;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #667eea;
+            font-size: 1.15em;
+            margin: 15px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+
+        .content-block {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .content-block strong {
+            color: #667eea;
+        }
+
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+            border-left: 4px solid #667eea;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+            transition: background 0.3s ease;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: #764ba2;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+        }
+
+        .expandable {
+            margin: 20px 0;
+        }
+
+        .expandable-title {
+            background: #f0f4ff;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .expandable-title:hover {
+            background: #e0e8ff;
+            transform: translateX(5px);
+        }
+
+        .expandable-content {
+            display: none;
+            padding: 20px;
+            background: #fafbff;
+            border-left: 4px solid #667eea;
+            margin-top: 5px;
+            border-radius: 4px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 1000px;
+            }
+        }
+
+        .expandable-content.active {
+            display: block;
+        }
+
+        .tip {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #0c5aa0;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+
+        ul, ol {
+            margin: 15px 0;
+            margin-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .step-counter {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: none;
+            z-index: 999;
+        }
+
+        .scroll-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 250px;
+            }
+            .main {
+                margin-left: 250px;
+                padding: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 20px;
+            }
+            .main {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .section {
+                padding: 20px;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            .scroll-top {
+                bottom: 20px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+                line-height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <h2>📚 教程导航</h2>
+            <ul class="sidebar-nav">
+                <li><a href="#section1" onclick="scrollToSection('section1')">第一部分：基础知识</a></li>
+                <li><a href="#section2" onclick="scrollToSection('section2')">第二部分：嘉立创EDA</a></li>
+                <li><a href="#section3" onclick="scrollToSection('section3')">第三部分：资源文档</a></li>
+                <li><a href="#section4" onclick="scrollToSection('section4')">第四部分：电容选择</a></li>
+            </ul>
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.3); margin: 20px 0;">
+            <p style="font-size: 0.9em; color: rgba(255,255,255,0.8);">💡 使用目录快速导航，或滚动阅读</p>
+        </aside>
+
+        <!-- 主内容 -->
+        <main class="main">
+            <header>
+                <h1>🏗️ PCB设计基础与嘉立创EDA工具教程</h1>
+                <p>从零开始学习PCB设计 - 包含基础知识、EDA工具使用、电容选型避坑指南</p>
+            </header>
+
+            <!-- 第一部分 -->
+            <section class="section" id="section1">
+                <h2>第一部分：PCB设计基础知识</h2>
+
+                <h3>什么是PCB？</h3>
+                <p>PCB（Printed Circuit Board，印刷电路板）是电子产品的"骨架"，用于：</p>
+                <ul>
+                    <li>承载各种电子元器件（IC芯片、电阻、电容、连接器等）</li>
+                    <li>通过铜箔布线连接这些元器件，形成电路</li>
+                    <li>提供机械支撑和保护</li>
+                </ul>
+
+                <h3>关键概念</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>导电层</h4>
+                        <p>铜箔层，用于信号传输和电源分配。可以有多层。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>绝缘层</h4>
+                        <p>覆铜板的介质，隔离不同层的信号，防止干扰。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>焊盘</h4>
+                        <p>焊接点，焊接元器件引脚。需要合理设计大小。</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>过孔</h4>
+                        <p>连接不同层的导孔。确保PCB的完整性和可靠性。</p>
+                    </div>
+                </div>
+
+                <h3>PCB的层构成</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>层名</th>
+                            <th>用途</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>顶层（F.Cu）</strong></td>
+                            <td>主要器件放置、顶面布线</td>
+                            <td>可见、可焊接的一面</td>
+                        </tr>
+                        <tr>
+                            <td><strong>底层（B.Cu）</strong></td>
+                            <td>底面布线、返回路径</td>
+                            <td>通常放置返回地信号</td>
+                        </tr>
+                        <tr>
+                            <td><strong>电源层</strong></td>
+                            <td>电源分配（多层板）</td>
+                            <td>铜箔连续，低阻抗</td>
+                        </tr>
+                        <tr>
+                            <td><strong>地层</strong></td>
+                            <td>地返回路径（多层板）</td>
+                            <td>最大化接地面积</td>
+                        </tr>
+                        <tr>
+                            <td><strong>阻焊层</strong></td>
+                            <td>防止焊接桥接</td>
+                            <td>保护铜箔，仅露出焊盘</td>
+                        </tr>
+                        <tr>
+                            <td><strong>丝印层</strong></td>
+                            <td>器件标号、标记</td>
+                            <td>白色字标记，方便识别</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tip">
+                    <strong>💡 本项目推荐：</strong> 电赛项目通常使用 <strong>2层PCB</strong>（顶层+底层）。成本低、易于制造、足以满足大多数需求。高频/高速项目才需要多层板。
+                </div>
+
+                <h3>电气设计的关键原则</h3>
+
+                <h4>原则1：地返回路径</h4>
+                <div class="content-block">
+                    <p><strong>核心理念：</strong> 每个电流都要有最短的GND返回路径</p>
+                    <p><strong>为什么重要：</strong></p>
+                    <ul>
+                        <li>减少环路面积 → 降低噪声</li>
+                        <li>减少阻抗 → 更稳定的电源</li>
+                        <li>减少EMI干扰 → 更可靠的系统</li>
+                    </ul>
+                </div>
+
+                <h4>原则2：去耦电容</h4>
+                <div class="content-block">
+                    <p><strong>作用：</strong> 吸收IC切换时的浪涌电流，稳定电源电压</p>
+                    <p><strong>规则：</strong></p>
+                    <ul>
+                        <li>每个IC电源引脚附近放置去耦电容</li>
+                        <li>容值：0.1µF（最常用）+ 10µF（大容值）</li>
+                        <li>距离：尽量靠近IC电源管脚（< 5mm）</li>
+                    </ul>
+                </div>
+
+                <h4>原则3：阻抗匹配</h4>
+                <div class="content-block">
+                    <p><strong>针对本项目：</strong></p>
+                    <ul>
+                        <li>I2C/SPI总线：不需要严格匹配（速率< 10 MHz）</li>
+                        <li>可使用典型阻值的上拉电阻（4.7kΩ）</li>
+                        <li>PWM/GPIO：普通信号，无需特殊处理</li>
+                    </ul>
+                </div>
+
+                <h4>原则4：干扰隔离</h4>
+                <div class="tip">
+                    <strong>关键点：</strong> 将高功率电路与模拟敏感电路分离，防止EMI耦合。不同功能块应该有独立的地返回路径。
+                </div>
+            </section>
+
+            <!-- 第二部分 -->
+            <section class="section" id="section2">
+                <h2>第二部分：嘉立创EDA工作流程</h2>
+
+                <h3>完整的PCB设计流程</h3>
+                <div class="code-block"><pre>1. 原理图设计 (Schematic)
+   └─→ 定义元器件、连接方式
+
+2. 项目管理 (Project)
+   └─→ 关联原理图文件
+
+3. 封装与库管理 (Library)
+   └─→ 关联各元器件的PCB足迹
+
+4. PCB设计 (PCB Layout)
+   ├─ 导入网表 (Netlist)
+   ├─ 放置元器件 (Placement)
+   ├─ 布线 (Routing)
+   ├─ 验证 (DFM Check, 可制造性检查)
+   └─ 输出 (Output Gerber/钻孔文件)
+
+5. 制造与装配
+   └─→ 发送到PCB厂家</pre></div>
+
+                <h3>嘉立创EDA的优势</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>✅ 优点</h4>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>免费/低成本</li>
+                            <li>云端库庞大</li>
+                            <li>集成供应链</li>
+                            <li>新手友好</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h4>❌ 局限</h4>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>功能不如Altium高端</li>
+                            <li>云端依赖</li>
+                            <li>库质量参差不齐</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>嘉立创EDA的五大工作步骤</h3>
+
+                <div class="expandable">
+                    <div class="expandable-title" onclick="toggleExpandable(this)">
+                        <span><span class="step-counter">1</span> 创建项目</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="expandable-content active">
+                        <code>文件 → 新建项目 → 输入项目名称</code>
+                        <p style="margin-top: 10px;">示例：<code>F407_MotorBoard</code></p>
+                    </div>
+                </div>
+
+                <div class="expandable">
+                    <div class="expandable-title" onclick="toggleExpandable(this)">
+                        <span><span class="step-counter">2</span> 设计原理图 (Schematic)</span>
+                        <span>▶</span>
+                    </div>
+                    <div class="expandable-content">
+                        <h4>在原理图编辑器中：</h4>
+                        <ol style="margin: 15px 0; padding-left: 20px;">
+                            <li><strong>放置器件：</strong> 右侧"库"面板 → 搜索器件 → 放置</li>
+                            <li><strong>绘制连接：</strong> 使用"导线工具"连接器件引脚</li>
+                            <li><strong>添加电源/地：</strong> 插入电源符号（+5V、GND等）</li>
+                            <li><strong>标注：</strong> 添加标号、注释，便于PCB阶段查看</li>
+                            <li><strong>生成网表：</strong> 菜单 → 输出 → 网表，供PCB使用</li>
+                        </ol>
+                        <div class="tip">
+                            <strong>黄金规则：</strong> 清晰的逻辑、完整性检查、无浮空引脚
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expandable">
+                    <div class="expandable-title" onclick="toggleExpandable(this)">
+                        <span><span class="step-counter">3</span> 创建PCB工程</span>
+                        <span>▶</span>
+                    </div>
+                    <div class="expandable-content">
+                        <code>文件 → 新建PCB → 关联原理图 → 导入网表</code>
+                        <p style="margin-top: 10px;">将原理图中的网络关系导入到PCB工程中。</p>
+                    </div>
+                </div>
+
+                <div class="expandable">
+                    <div class="expandable-title" onclick="toggleExpandable(this)">
+                        <span><span class="step-counter">4</span> 放置元器件 (Placement)</span>
+                        <span>▶</span>
+                    </div>
+                    <div class="expandable-content">
+                        <h4>关键放置规则：</h4>
+                        <ul style="margin: 15px 0; padding-left: 20px;">
+                            <li><strong>MCU 中心放置：</strong> 作为主控，其他模块围绕它</li>
+                            <li><strong>信号流向：</strong> 左→右（输入→处理→输出）</li>
+                            <li><strong>电源分组：</strong> 5V主电源一侧，3.3V稳压一侧</li>
+                            <li><strong>高频信号远离模拟信号：</strong> 避免干扰</li>
+                            <li><strong>大容值电容靠近MCU：</strong> < 10mm</li>
+                        </ul>
+                        <div class="warning">
+                            <strong>常见错误：</strong>
+                            <ul style="margin: 10px 0; padding-left: 20px;">
+                                <li>❌ 把所有元件堆在一起</li>
+                                <li>❌ 长的导线跨越整个PCB</li>
+                                <li>❌ 没有为连接器预留空间</li>
+                                <li>❌ 去耦电容放在很远的地方</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="expandable">
+                    <div class="expandable-title" onclick="toggleExpandable(this)">
+                        <span><span class="step-counter">5</span> 布线 (Routing)</span>
+                        <span>▶</span>
+                    </div>
+                    <div class="expandable-content">
+                        <h4>嘉立创EDA布线工具：</h4>
+                        <p><strong>自动布线（推荐初学者）：</strong></p>
+                        <code>工具 → 自动布线 → 配置布线参数 → 执行</code>
+
+                        <p style="margin-top: 15px;"><strong>推荐参数：</strong></p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>导线宽度：12mil（0.3mm，适合一般电流）</li>
+                            <li>最小间距：8mil（0.2mm）</li>
+                            <li>线间距离：8mil（嘉立创标准）</li>
+                        </ul>
+
+                        <p style="margin-top: 15px;"><strong>布线的黄金法则：</strong></p>
+                        <div class="success">
+                            短 > 快 > 美<br>
+                            优先级：缩短路径 > 降低阻抗 > 美观外观
+                        </div>
+                    </div>
+                </div>
+
+                <h3>电流等级与导线宽度对应表</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>电流</th>
+                            <th>导线宽度</th>
+                            <th>举例</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>< 100mA</td>
+                            <td>8-10mil (0.2-0.25mm)</td>
+                            <td>GPIO、I2C、PWM信号</td>
+                        </tr>
+                        <tr>
+                            <td>100-500mA</td>
+                            <td>12-16mil (0.3-0.4mm)</td>
+                            <td>MCU电源、驱动器输入</td>
+                        </tr>
+                        <tr>
+                            <td>0.5-1A</td>
+                            <td>20-24mil (0.5-0.6mm)</td>
+                            <td>TB6612电源、电机驱动</td>
+                        </tr>
+                        <tr>
+                            <td>> 1A</td>
+                            <td>32-40mil (0.8-1.0mm)</td>
+                            <td>电机功率、大容值电源</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>验证（DFM检查）</h3>
+                <p><strong>菜单：</strong> 工具 → 可制造性检查 (DFM Check)</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>警告</th>
+                            <th>含义</th>
+                            <th>解决方案</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>过小的焊盘间距</td>
+                            <td>焊盘靠得太近</td>
+                            <td>增加线宽或移动元件</td>
+                        </tr>
+                        <tr>
+                            <td>导线过细</td>
+                            <td>某处线路太细不能承载电流</td>
+                            <td>增加导线宽度</td>
+                        </tr>
+                        <tr>
+                            <td>空白区域过大</td>
+                            <td>PCB浪费材料</td>
+                            <td>重新调整布局或接受</td>
+                        </tr>
+                        <tr>
+                            <td>孤立焊盘</td>
+                            <td>焊盘未连接</td>
+                            <td>检查网表或手动补连</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 第三部分 -->
+            <section class="section" id="section3">
+                <h2>第三部分：文档资源汇总</h2>
+
+                <h3>官方与社区教程</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>资源</th>
+                            <th>链接</th>
+                            <th>内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>嘉立创官方教程</strong></td>
+                            <td><code>docs.jlc.com</code></td>
+                            <td>EDA软件使用手册</td>
+                        </tr>
+                        <tr>
+                            <td><strong>EasyEDA Wiki</strong></td>
+                            <td><code>wiki.easyeda.com</code></td>
+                            <td>原理图/PCB设计教程</td>
+                        </tr>
+                        <tr>
+                            <td><strong>嘉立创论坛</strong></td>
+                            <td><code>bbs.jlcpcb.com</code></td>
+                            <td>用户提问与经验分享</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PCB Design 101</strong></td>
+                            <td><code>pcbway.com</code></td>
+                            <td>PCB基础设计规则</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IPC标准（必读）</strong></td>
+                            <td><code>ipc.org</code></td>
+                            <td>PCB质量验收标准</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>针对本项目的参考文档</h3>
+                <div class="content-block">
+                    <p><strong>数据手册位置：</strong> <code>.claude/docs/datasheets/</code></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><strong>TB6612FNG Datasheet.pdf</strong> ← 电机驱动芯片（英文）</li>
+                        <li><strong>TB6612双路编码器驱动.pdf</strong> ← 电机驱动芯片（中文）</li>
+                        <li><strong>FK407M3-VET6 原理图.pdf</strong> ← STM32F407参考原理图</li>
+                        <li><strong>stm32f407参考手册-中文版.pdf</strong> ← MCU详细规格</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 第四部分 -->
+            <section class="section" id="section4">
+                <h2>第四部分：电容选择 - 如何不"炸"</h2>
+
+                <h3>为什么电容容易"炸"？</h3>
+                <div class="warning">
+                    <strong>常见错误：</strong>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>❌ 选择了"便宜"电容，质量差劣</li>
+                        <li>❌ 耐压值不足（5V电路用4V电容）</li>
+                        <li>❌ 高温环境下电容失效</li>
+                        <li>❌ 铝电解电容的极性接反</li>
+                    </ul>
+                </div>
+
+                <h3>正确的电容选择</h3>
+
+                <h4>去耦电容（供电稳压）</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>位置</th>
+                            <th>型号</th>
+                            <th>规格</th>
+                            <th>数量</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>IC电源脚附近</td>
+                            <td>C0603</td>
+                            <td>0.1µF/16V</td>
+                            <td>每个IC 2-4个</td>
+                            <td>陶瓷电容，低ESR</td>
+                        </tr>
+                        <tr>
+                            <td>主电源输入</td>
+                            <td>C1206</td>
+                            <td>10µF/16V</td>
+                            <td>1-2个</td>
+                            <td>陶瓷或铝电解</td>
+                        </tr>
+                        <tr>
+                            <td>电机驱动电源</td>
+                            <td>C1206</td>
+                            <td>100µF/25V</td>
+                            <td>2-3个</td>
+                            <td>大容值，吸收浪涌</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>选择原则</h3>
+
+                <h4>1. 耐压值 > 实际工作电压的 1.5 倍</h4>
+                <div class="success">
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li><strong>5V电路</strong> → 选 <strong>16V</strong> 及以上</li>
+                        <li><strong>12V电路</strong> → 选 <strong>25V</strong> 及以上</li>
+                    </ul>
+                </div>
+
+                <h4>2. 优先选陶瓷电容（MLCC）</h4>
+                <div class="content-block">
+                    <code>陶瓷（X7R/C0G）> 铝电解 > 钽电容</code>
+                    <p style="margin-top: 10px;"><strong>原因：</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>✅ <strong>陶瓷：</strong> 低ESR、频率特性好、寿命长</li>
+                        <li>❌ <strong>铝电解：</strong> 高温漂移大、易干涸</li>
+                        <li>❌ <strong>钽电容：</strong> 贵、容易炸（浪涌电流敏感）</li>
+                    </ul>
+                </div>
+
+                <h4>3. 封装选择</h4>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td><strong>小容值（0.1µF）</strong></td>
+                            <td>C0603（1.6×0.8mm）或 C0402</td>
+                        </tr>
+                        <tr>
+                            <td><strong>大容值（10µF+）</strong></td>
+                            <td>C1206（3.2×1.6mm）或 1210/1812</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>4. 品牌信任</h4>
+                <div class="tip">
+                    <strong>推荐品牌：</strong>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Samsung（三星）</li>
+                        <li>TDK</li>
+                        <li>Murata（村田）</li>
+                        <li>Yageo（国巨）</li>
+                    </ul>
+                    ❌ <strong>避免：</strong> 杂牌或翻新电容（容易失效）
+                </div>
+
+                <h3>电机滤波电容</h3>
+                <div class="content-block">
+                    <p><strong>作用：</strong> 吸收电机启动的大电流浪涌</p>
+                    <ul style="margin: 15px 0; padding-left: 20px;">
+                        <li><strong>规格：</strong> 100-470µF，25V及以上</li>
+                        <li><strong>位置：</strong> TB6612电源脚最近</li>
+                    </ul>
+                </div>
+            </section>
+
+            <footer style="text-align: center; padding: 30px 0; color: #999; border-top: 1px solid #ddd;">
+                <p>PCB设计教程 | STM32F407 + TB6612 电赛项目 | 2026-04-26</p>
+                <p><strong>下一章：</strong> 打开 <code>02-circuit-design.html</code> 学习你的项目的完整设计方案</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <div class="scroll-top" onclick="scrollToTop()">↑</div>
+
+    <script>
+        // 侧边栏导航
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            element.scrollIntoView({ behavior: 'smooth' });
+
+            // 更新活跃链接
+            document.querySelectorAll('.sidebar-nav a').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // 展开/折叠
+        function toggleExpandable(element) {
+            const content = element.nextElementSibling;
+            const arrow = element.querySelector('span:last-child');
+
+            content.classList.toggle('active');
+
+            if (content.classList.contains('active')) {
+                arrow.textContent = '▼';
+            } else {
+                arrow.textContent = '▶';
+            }
+        }
+
+        // 回到顶部
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 显示/隐藏回到顶部按钮
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.querySelector('.scroll-top');
+            if (window.scrollY > 300) {
+                scrollTop.style.display = 'block';
+            } else {
+                scrollTop.style.display = 'none';
+            }
+        });
+
+        // 页面加载完成
+        window.addEventListener('load', () => {
+            console.log('PCB基础教程已加载完成！');
+        });
+    </script>
+</body>
+</html>

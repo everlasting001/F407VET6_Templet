@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5分钟快速开始 - PCB设计教程</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+
+        .question {
+            text-align: center;
+            color: #764ba2;
+            font-size: 1.3em;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .paths-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .path-btn {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .path-btn .emoji {
+            font-size: 2.5em;
+        }
+
+        .path-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .path-content {
+            display: none;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .path-content.active {
+            display: block;
+        }
+
+        .back-btn {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #764ba2;
+            padding-bottom: 15px;
+        }
+
+        .time-badge {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .timeline {
+            margin: 30px 0;
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline-item {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -40px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px #f5f5f5, 0 0 0 8px #667eea;
+        }
+
+        .timeline-item h4 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .timeline-item p {
+            color: #666;
+            margin-bottom: 5px;
+            line-height: 1.6;
+        }
+
+        .timeline-item ul {
+            margin-left: 20px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .timeline-item li {
+            margin: 5px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #856404;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #155724;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .comparison-item {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .comparison-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .comparison-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .comparison-item p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 30px;
+        }
+
+        footer p {
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+
+            .paths-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 主页 -->
+        <div id="mainContent" class="card">
+            <h1>🚀 5分钟快速开始</h1>
+            <p class="subtitle">找到你的情况，选择适合的学习路线</p>
+
+            <p class="question">你是谁？</p>
+
+            <div class="paths-grid">
+                <button class="path-btn" onclick="showPath('beginner')">
+                    <span class="emoji">🟢</span>
+                    完全小白
+                </button>
+                <button class="path-btn" onclick="showPath('intermediate')">
+                    <span class="emoji">🔵</span>
+                    有一点基础
+                </button>
+                <button class="path-btn" onclick="showPath('urgent')">
+                    <span class="emoji">🟡</span>
+                    时间紧张
+                </button>
+                <button class="path-btn" onclick="showPath('expert')">
+                    <span class="emoji">🔴</span>
+                    有经验
+                </button>
+            </div>
+        </div>
+
+        <!-- 路线1：完全小白 -->
+        <div id="path-beginner" class="card path-content">
+            <button class="back-btn" onclick="goBack()">← 返回选择</button>
+
+            <h2>🟢 完全小白 - 完整学习路线</h2>
+            <span class="time-badge">⏱️ 耗时：12小时</span>
+
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <p><strong>你很可能：</strong> PCB是什么都不太懂，从来没用过嘉立创EDA</p>
+
+            <div class="highlight">
+                <strong>好消息：</strong> 12小时的投入能让你掌握完整的PCB设计，足以完成电赛项目！
+            </div>
+
+            <h3>学习计划</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>第1天：理论基础（4小时）</h4>
+                    <p>📖 打开 <strong>01-pcb-design-fundamentals.md</strong></p>
+                    <ul>
+                        <li>理解PCB基本概念（1小时）</li>
+                        <li>学习嘉立创EDA五大工作步骤（2小时）</li>
+                        <li>了解电容选择避坑指南（1小时）</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>第2天：工具学习（2小时）</h4>
+                    <p>🔧 在嘉立创EDA中实际操作</p>
+                    <ul>
+                        <li>打开嘉立创EDA，创建新项目</li>
+                        <li>跟着 01 的教程操作基本步骤</li>
+                        <li>把 README.md 打印出来贴在显示器旁</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>第3天：项目实战（6小时）</h4>
+                    <p>🎯 打开 <strong>02-circuit-design.md</strong> 设计项目</p>
+                    <ul>
+                        <li>学习电源、隔离、驱动电路设计（2小时）</li>
+                        <li>跟着教程绘制原理图（2小时）</li>
+                        <li>完成PCB布局和布线（1.5小时）</li>
+                        <li>DFM检查和文件输出（0.5小时）</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>第4步：提交工厂（30分钟）</h4>
+                    <p>✅ 上传到嘉立创</p>
+                    <ul>
+                        <li>生成Gerber文件</li>
+                        <li>上传到 www.jlcpcb.com</li>
+                        <li>7天后收到PCB</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>总耗时：</strong> 12小时设计 + 7天制造 = <strong>赛前绰绰有余！</strong>
+            </div>
+
+            <h3>预期收获</h3>
+            <div class="comparison">
+                <div class="comparison-item">
+                    <h4>✅ 知识</h4>
+                    <p>深刻理解PCB设计原理，不只是会用工具</p>
+                </div>
+                <div class="comparison-item">
+                    <h4>✅ 能力</h4>
+                    <p>独立完成从设计到制造的全过程</p>
+                </div>
+                <div class="comparison-item">
+                    <h4>✅ 自信</h4>
+                    <p>遇到问题能自己debug，而不是盲目求助</p>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="./01-pcb-design-fundamentals.md" class="btn">打开基础教程</a>
+                <a href="./INDEX.md" class="btn btn-secondary">查看完整导航</a>
+            </div>
+        </div>
+
+        <!-- 路线2：有一点基础 -->
+        <div id="path-intermediate" class="card path-content">
+            <button class="back-btn" onclick="goBack()">← 返回选择</button>
+
+            <h2>🔵 有一点基础 - 快速上手路线</h2>
+            <span class="time-badge">⏱️ 耗时：4-6小时</span>
+
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 33%"></div>
+            </div>
+
+            <p><strong>你很可能：</strong> 懂硬件设计或电子基础，但没用过嘉立创EDA或没做过PCB</p>
+
+            <div class="highlight">
+                <strong>关键：</strong> 快速掌握嘉立创的工作流，再套用项目设计方案
+            </div>
+
+            <h3>学习计划</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>今天：快速上手工具（1小时）</h4>
+                    <p>🔧 学习嘉立创基础</p>
+                    <ul>
+                        <li>快速浏览 01 的"嘉立创EDA工作流程"部分（30分钟）</li>
+                        <li>在嘉立创中实际操作一遍（30分钟）</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>今天：项目设计（3-5小时）</h4>
+                    <p>🎯 打开 <strong>02-circuit-design.md</strong></p>
+                    <ul>
+                        <li>重点读电路原理部分（1小时）</li>
+                        <li>跟着 Step by Step 完成PCB设计（2-4小时）</li>
+                        <li>遇到问题查 README.md 快速参考</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>今天：提交工厂（30分钟）</h4>
+                    <p>✅ 生成Gerber并上传</p>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>总耗时：</strong> 4-6小时设计 + 7天制造 = <strong>赛前足够时间！</strong>
+            </div>
+
+            <div class="action-buttons">
+                <a href="./02-circuit-design.md" class="btn">打开项目设计</a>
+                <a href="./README.md" class="btn btn-secondary">快速参考卡片</a>
+            </div>
+        </div>
+
+        <!-- 路线3：时间紧张 -->
+        <div id="path-urgent" class="card path-content">
+            <button class="back-btn" onclick="goBack()">← 返回选择</button>
+
+            <h2>🟡 时间紧张 - 极速完成路线</h2>
+            <span class="time-badge">⏱️ 耗时：2-4小时</span>
+
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 66%"></div>
+            </div>
+
+            <p><strong>你的情况：</strong> 参加电赛，必须在48小时内完成设计</p>
+
+            <div class="highlight">
+                <strong>策略：</strong> 不要重新发明轮子！复用现成的设计，快速实现功能
+            </div>
+
+            <h3>快速方案</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>现在：理解设计（30分钟）</h4>
+                    <p>📖 快速浏览</p>
+                    <ul>
+                        <li>看 02 的"项目概述"框图</li>
+                        <li>看电路原理部分的框图</li>
+                        <li>了解大致思路</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>现在：参考设计（1小时）</h4>
+                    <p>🔧 复制现成的</p>
+                    <ul>
+                        <li>复制 02 中的参考原理图（直接用，不要自己重新设计！）</li>
+                        <li>复制参考的PCB布局</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>现在：快速实现（1.5-2小时）</h4>
+                    <p>⚡ 在嘉立创快速做</p>
+                    <ul>
+                        <li>快速放置器件</li>
+                        <li>使用自动布线加速</li>
+                        <li>快速DFM检查</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>立即：提交工厂（30分钟）</h4>
+                    <p>✅ 上传Gerber</p>
+                    <ul>
+                        <li>生成Gerber文件</li>
+                        <li>上传到嘉立创</li>
+                        <li>下单（可选加急）</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>总耗时：</strong> 4小时设计 + 7天制造 = <strong>完全来得及！</strong>
+            </div>
+
+            <div class="highlight">
+                <strong>💡 关键建议：</strong>
+                <ul style="margin-top: 10px; margin-left: 20px;">
+                    <li>不要过度设计，先能用再优化</li>
+                    <li>使用 02 中的参考电路和布局（已经验证过）</li>
+                    <li>如果很急，可以在嘉立创网站上选择加急配送</li>
+                    <li>第一次上电时要小心（用限流电源测试）</li>
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="./02-circuit-design.md" class="btn">直接打开项目设计</a>
+                <a href="./reference.html" class="btn btn-secondary">快速参考卡片</a>
+            </div>
+        </div>
+
+        <!-- 路线4：有经验 -->
+        <div id="path-expert" class="card path-content">
+            <button class="back-btn" onclick="goBack()">← 返回选择</button>
+
+            <h2>🔴 有工程经验 - 快速参考路线</h2>
+            <span class="time-badge">⏱️ 耗时：2小时</span>
+
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 100%"></div>
+            </div>
+
+            <p><strong>你很可能：</strong> 用过 Altium Designer 或 KiCAD，只想快速上手嘉立创和参考这个项目的设计</p>
+
+            <div class="highlight">
+                <strong>方法：</strong> 快速查阅工具差异，直接参考项目设计，快速出板
+            </div>
+
+            <h3>快速方案</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h4>快速参考工具（30分钟）</h4>
+                    <p>🔧 学习嘉立创特点</p>
+                    <ul>
+                        <li>查 README.md 的"快捷键速查表"</li>
+                        <li>与你熟悉的EDA比对差异</li>
+                        <li>了解嘉立创的库和工作流</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>浏览项目设计（30分钟）</h4>
+                    <p>📖 了解这个项目的特点</p>
+                    <ul>
+                        <li>扫一眼 02 的项目框图</li>
+                        <li>看光耦隔离、电源管理、TB6612驱动部分</li>
+                        <li>查看参考的PCB布局</li>
+                    </ul>
+                </div>
+
+                <div class="timeline-item">
+                    <h4>直接做项目（1小时）</h4>
+                    <p>⚡ 在嘉立创中快速实现</p>
+                    <ul>
+                        <li>根据 02 的参考设计快速实现</li>
+                        <li>用 README.md 的检查清单做 final review</li>
+                        <li>生成Gerber文件提交</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="success">
+                <strong>总耗时：</strong> 2小时 = <strong>快速出板！</strong>
+            </div>
+
+            <div class="action-buttons">
+                <a href="./02-circuit-design.md" class="btn">打开项目设计</a>
+                <a href="./reference.html" class="btn btn-secondary">快速参考</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p><strong>🎯 下一步：</strong> 选择你的情况，开始学习</p>
+        <p>💡 有问题？先查教程，再查数据手册，最后上嘉立创论坛提问</p>
+        <p>🎉 祝你设计顺利！你可以做到！</p>
+    </footer>
+
+    <script>
+        function showPath(pathType) {
+            // 隐藏主内容
+            document.getElementById('mainContent').style.display = 'none';
+
+            // 隐藏所有路线
+            document.querySelectorAll('.path-content').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // 显示选中的路线
+            const pathId = `path-${pathType}`;
+            const pathElement = document.getElementById(pathId);
+            if (pathElement) {
+                pathElement.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function goBack() {
+            // 隐藏所有路线
+            document.querySelectorAll('.path-content').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // 显示主内容
+            document.getElementById('mainContent').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

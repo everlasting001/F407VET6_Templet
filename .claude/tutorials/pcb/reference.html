@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCB设计 - 快速参考卡片</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 2.2em;
+            margin-bottom: 5px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.05em;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reference-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 1.6em;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #764ba2;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        thead {
+            background: #f0f4ff;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.95em;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+            transition: background 0.3s ease;
+        }
+
+        .shortcut {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            margin: 0 2px;
+            color: #333;
+        }
+
+        .shortcut:hover {
+            background: #e0e0e0;
+            cursor: pointer;
+        }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checklist li:hover::before {
+            color: #764ba2;
+            transform: scale(1.2);
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #333;
+            overflow-x: auto;
+        }
+
+        .tip {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #0c5aa0;
+        }
+
+        .formula {
+            background: #f0f4ff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #667eea;
+        }
+
+        .expandable-section {
+            margin: 20px 0;
+        }
+
+        .expandable-title {
+            background: #f0f4ff;
+            padding: 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        .expandable-title:hover {
+            background: #e0e8ff;
+            transform: translateX(5px);
+        }
+
+        .expandable-content {
+            display: none;
+            padding: 20px;
+            background: #fafbff;
+            border-left: 4px solid #667eea;
+            margin-top: 5px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .expandable-content.active {
+            display: block;
+        }
+
+        .formula-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .grid-item {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .grid-item h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 0.95em;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .reference-section {
+                page-break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .expandable-content {
+                display: block !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .reference-section {
+                padding: 20px;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ PCB设计快速参考卡片</h1>
+            <p>打印这个页面！粘贴在显示器旁，设计时快速查阅</p>
+        </header>
+
+        <!-- 快捷键速查 -->
+        <div class="reference-section">
+            <h2>🎮 嘉立创EDA快捷键速查表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>操作</th>
+                        <th>快捷键</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>放置器件</td>
+                        <td><span class="shortcut">D</span></td>
+                        <td>Design → 选择器件并放置</td>
+                    </tr>
+                    <tr>
+                        <td>绘制导线</td>
+                        <td><span class="shortcut">W</span></td>
+                        <td>连接器件引脚</td>
+                    </tr>
+                    <tr>
+                        <td>放置过孔</td>
+                        <td><span class="shortcut">V</span></td>
+                        <td>连接不同PCB层</td>
+                    </tr>
+                    <tr>
+                        <td>移动对象</td>
+                        <td><span class="shortcut">M</span></td>
+                        <td>移动已选中的对象</td>
+                    </tr>
+                    <tr>
+                        <td>旋转对象</td>
+                        <td><span class="shortcut">R</span></td>
+                        <td>旋转已选中的对象</td>
+                    </tr>
+                    <tr>
+                        <td>删除对象</td>
+                        <td><span class="shortcut">DEL</span></td>
+                        <td>删除已选中的对象</td>
+                    </tr>
+                    <tr>
+                        <td>全选</td>
+                        <td><span class="shortcut">Ctrl+A</span></td>
+                        <td>选中所有对象</td>
+                    </tr>
+                    <tr>
+                        <td>保存</td>
+                        <td><span class="shortcut">Ctrl+S</span></td>
+                        <td>保存当前工程</td>
+                    </tr>
+                    <tr>
+                        <td>撤销</td>
+                        <td><span class="shortcut">Ctrl+Z</span></td>
+                        <td>撤销上一步操作</td>
+                    </tr>
+                    <tr>
+                        <td>重做</td>
+                        <td><span class="shortcut">Ctrl+Y</span></td>
+                        <td>重做上一步操作</td>
+                    </tr>
+                    <tr>
+                        <td>放大</td>
+                        <td><span class="shortcut">Scroll Up</span></td>
+                        <td>鼠标滚轮向上</td>
+                    </tr>
+                    <tr>
+                        <td>缩小</td>
+                        <td><span class="shortcut">Scroll Down</span></td>
+                        <td>鼠标滚轮向下</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 设计规则检查清单 -->
+        <div class="reference-section">
+            <h2>✅ PCB设计规则检查清单</h2>
+
+            <h3>电气设计</h3>
+            <ul class="checklist">
+                <li>没有浮空引脚（未连接的焊盘）</li>
+                <li>所有VCC和GND都已连接</li>
+                <li>网表完整（无冲突或重复标号）</li>
+                <li>电压等级正确（3.3V/5V/12V分隔）</li>
+                <li>电流等级和线宽匹配</li>
+            </ul>
+
+            <h3>物理设计</h3>
+            <ul class="checklist">
+                <li>所有器件已放置</li>
+                <li>没有器件超出PCB边界</li>
+                <li>去耦电容距IC < 5mm</li>
+                <li>大容值电容靠近电源输入</li>
+                <li>连接器位置方便易用</li>
+            </ul>
+
+            <h3>制造工艺</h3>
+            <ul class="checklist">
+                <li>最小导线宽度 ≥ 8mil (0.2mm)</li>
+                <li>最小焊盘间距 ≥ 8mil (0.2mm)</li>
+                <li>最小过孔直径 ≥ 10mil (0.25mm)</li>
+                <li>焊盘尺寸合理（易焊接）</li>
+                <li>没有孤立导线或铜皮</li>
+            </ul>
+
+            <h3>可靠性</h3>
+            <ul class="checklist">
+                <li>高功率线和信号线分离</li>
+                <li>GND返回路径连续完整</li>
+                <li>没有锐角转弯（推荐圆角或45°）</li>
+                <li>高频信号有屏蔽（如需要）</li>
+                <li>反向二极管和保护器件已布置</li>
+            </ul>
+        </div>
+
+        <!-- 常用公式 -->
+        <div class="reference-section">
+            <h2>📐 PCB设计常用公式</h2>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>导线宽度计算（电流承载）</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="formula">
+                        W (mil) = I (mA) × L (cm) / (k × T × ΔV)<br>
+                        其中：k ≈ 1.378, T = 铜厚 (oz), ΔV = 允许压降 (mV)
+                    </div>
+                    <h4>简化表（允许压降20mV，铜厚1oz）</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>电流</th>
+                                <th>导线宽度</th>
+                                <th>应用举例</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>100mA</td>
+                                <td>≥ 8mil (0.2mm)</td>
+                                <td>GPIO、I2C、PWM信号</td>
+                            </tr>
+                            <tr>
+                                <td>500mA</td>
+                                <td>≥ 12mil (0.3mm)</td>
+                                <td>MCU电源、驱动器输入</td>
+                            </tr>
+                            <tr>
+                                <td>1A</td>
+                                <td>≥ 20mil (0.5mm)</td>
+                                <td>TB6612电源、电机驱动</td>
+                            </tr>
+                            <tr>
+                                <td>2A</td>
+                                <td>≥ 32mil (0.8mm)</td>
+                                <td>电机功率、大容值电源</td>
+                            </tr>
+                            <tr>
+                                <td>5A</td>
+                                <td>≥ 50mil (1.2mm)</td>
+                                <td>高功率应用</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>特征阻抗计算（高速信号）</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="formula">
+                        Z₀ = √(L/C) ≈ 50Ω（标准阻抗）
+                    </div>
+                    <div class="tip">
+                        <strong>本项目提示：</strong> 你的项目频率 < 10MHz，<strong>无需严格阻抗控制</strong>。只需确保导线间距和宽度合理即可。
+                    </div>
+                </div>
+            </div>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>热阻和散热计算</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <div class="formula">
+                        θ = ΔT / P<br>
+                        其中：θ = 热阻, ΔT = 温度差 (°C), P = 功耗 (W)
+                    </div>
+                    <h4>例如 LM2596，功耗 P ≈ 1W：</h4>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td><strong>无散热焊盘</strong></td>
+                                <td>θ ≈ 50-100°C/W → ΔT ≈ 50-100°C → <span style="color: red;">不可靠</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>有散热焊盘</strong></td>
+                                <td>θ ≈ 20-30°C/W → ΔT ≈ 20-30°C → <span style="color: green;">可靠</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="tip">
+                        <strong>关键结论：</strong> 一定要为大功耗芯片（LM2596等）焊接散热焊盘，并连接到内层GND！
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 元器件焊盘标准 -->
+        <div class="reference-section">
+            <h2>🔧 元器件焊盘标准 (IPC-A-610)</h2>
+
+            <h3>SMD焊盘（贴片器件）</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>器件封装</th>
+                        <th>器件尺寸</th>
+                        <th>焊盘尺寸</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>C0603</td>
+                        <td>1.6×0.8mm</td>
+                        <td>1.0×1.5mm</td>
+                    </tr>
+                    <tr>
+                        <td>C0805</td>
+                        <td>2.0×1.25mm</td>
+                        <td>1.2×1.8mm</td>
+                    </tr>
+                    <tr>
+                        <td>C1206</td>
+                        <td>3.2×1.6mm</td>
+                        <td>1.5×2.3mm</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>通孔焊盘（THT器件）</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>引脚直径</th>
+                        <th>焊盘直径</th>
+                        <th>铜圈宽</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0.5mm</td>
+                        <td>1.5mm</td>
+                        <td>0.5mm</td>
+                    </tr>
+                    <tr>
+                        <td>1.0mm</td>
+                        <td>2.5mm</td>
+                        <td>0.75mm</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>过孔（Via）标准</h3>
+            <table>
+                <tbody>
+                    <tr>
+                        <td><strong>外径</strong></td>
+                        <td>0.3-0.4mm</td>
+                    </tr>
+                    <tr>
+                        <td><strong>孔径</strong></td>
+                        <td>0.1-0.15mm</td>
+                    </tr>
+                    <tr>
+                        <td><strong>铜圈宽</strong></td>
+                        <td>0.1mm</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 焊接质量标准 -->
+        <div class="reference-section">
+            <h2>✨ 焊接质量标准 (IPC)</h2>
+
+            <div class="grid-2">
+                <div class="grid-item">
+                    <h4>✅ 良好焊接</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>锡的量适当</li>
+                        <li>润湿完全</li>
+                        <li>焊点呈光亮、光滑</li>
+                        <li>呈锥形（不是球形）</li>
+                        <li>没有虚焊或冷焊</li>
+                    </ul>
+                </div>
+
+                <div class="grid-item">
+                    <h4>❌ 不良焊接</h4>
+                    <ul style="margin-left: 20px;">
+                        <li>虚焊：接触不完全</li>
+                        <li>冷焊：有菱形纹理</li>
+                        <li>锡珠：焊盘附近有小球</li>
+                        <li>焊盘翘起</li>
+                        <li>焊点黑暗无光</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 嘉立创工作流 -->
+        <div class="reference-section">
+            <h2>🔄 嘉立创EDA工作流速览</h2>
+            <div class="code-block">
+创建项目
+    ↓
+设计原理图 (Schematic)
+├─ 放置器件（库中搜索）
+├─ 绘制导线连接
+├─ 标注网络号
+└─ 检查一致性
+    ↓
+生成网表 (Netlist)
+└─ 导出给PCB工程
+    ↓
+创建PCB工程
+├─ 导入网表
+├─ 放置器件 (Placement)
+├─ 布线 (Routing)
+└─ 验证 (DRC/DFM)
+    ↓
+输出制造文件
+├─ Gerber 文件 (.gbr)
+├─ 钻孔文件 (.xln)
+├─ BOM 清单 (.csv)
+└─ 位置文件 (.pos)
+    ↓
+提交到工厂 (jlcpcb.com)
+├─ 上传文件
+├─ 等待报价
+├─ 检查预览
+└─ 下单
+    ↓
+收取PCB 并焊接装配
+            </div>
+        </div>
+
+        <!-- 常见问题 -->
+        <div class="reference-section">
+            <h2>❓ 常见问题 FAQ</h2>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>导线宽度不对会怎样？</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <p><strong>后果：</strong> 线路发热、压降过大、甚至断线烧毁</p>
+                    <p><strong>解决：</strong> 用上面的公式或对应表选择合适的线宽。100mA用8mil，1A用20mil，遵循这个经验值一般没问题。</p>
+                </div>
+            </div>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>过孔间距太小会怎样？</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <p><strong>后果：</strong> 制造难度大、容易钻坏相邻焊盘、工厂可能拒单</p>
+                    <p><strong>解决：</strong> 保持最小间距 ≥ 8mil (0.2mm)。嘉立创的DFM检查会提醒你。</p>
+                </div>
+            </div>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>去耦电容放太远会怎样？</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <p><strong>后果：</strong> 无法有效吸收浪涌电流、IC电源不稳定、系统重启或崩溃</p>
+                    <p><strong>解决：</strong> 去耦电容距离IC < 5mm，直接靠近电源脚。</p>
+                </div>
+            </div>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>GND返回路径太长会怎样？</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <p><strong>后果：</strong> EMI干扰大、信号噪声高、模拟电路工作异常</p>
+                    <p><strong>解决：</strong> 每个电流都要有最短的GND返回路径。底层尽量铺满连续GND。</p>
+                </div>
+            </div>
+
+            <div class="expandable-section">
+                <div class="expandable-title" onclick="toggleExpand(this)">
+                    <span>芯片烧毁怎么办？</span>
+                    <span>▶</span>
+                </div>
+                <div class="expandable-content">
+                    <p><strong>排查步骤：</strong></p>
+                    <ol style="margin-left: 20px;">
+                        <li>检查电源极性是否反接</li>
+                        <li>用万用表量电源电压和地之间是否短路</li>
+                        <li>检查器件型号是否选对（有没有用错5V的器件在3.3V上）</li>
+                        <li>检查焊接有没有问题（虚焊导致短路）</li>
+                    </ol>
+                    <p><strong>预防：</strong> 设计时用 DRC 检查，焊接前再检查一遍，第一次上电时用限流电源。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速成本估算 -->
+        <div class="reference-section">
+            <h2>💰 项目成本预算</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>部分</th>
+                        <th>成本</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #f0f0f0;">
+                        <td><strong>核心器件</strong></td>
+                        <td><strong>20-30元</strong></td>
+                        <td>电源管理、MCU驱动、隔离和保护</td>
+                    </tr>
+                    <tr>
+                        <td>└─ 电源管理</td>
+                        <td>5元</td>
+                        <td>LM2596、AMS1117、滤波电容</td>
+                    </tr>
+                    <tr>
+                        <td>└─ MCU和驱动</td>
+                        <td>15元</td>
+                        <td>STM32F407可用核心板、TB6612</td>
+                    </tr>
+                    <tr>
+                        <td>└─ 隔离和保护</td>
+                        <td>5元</td>
+                        <td>TLP291光耦、反向保护</td>
+                    </tr>
+                    <tr style="background: #f0f0f0;">
+                        <td><strong>PCB制造</strong></td>
+                        <td><strong>10元</strong></td>
+                        <td>嘉立创标准2层PCB</td>
+                    </tr>
+                    <tr style="background: #e8f5e9;">
+                        <td><strong>总计</strong></td>
+                        <td><strong>30-40元</strong></td>
+                        <td>完整的双路电机驱动板</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p><strong>💡 使用建议：</strong> 打印这个页面！粘贴在显示器旁，设计时快速查阅。</p>
+            <p>更多详细内容请查看 02-circuit-design.md 和 01-pcb-design-fundamentals.md</p>
+            <p>PCB设计教程 | STM32F407 + TB6612 电赛项目 | 2026-04-26</p>
+        </footer>
+    </div>
+
+    <script>
+        function toggleExpand(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle('active');
+
+            const arrow = element.querySelector('span:last-child');
+            if (content.classList.contains('active')) {
+                arrow.textContent = '▼';
+            } else {
+                arrow.textContent = '▶';
+            }
+        }
+
+        // 点击复制快捷键
+        document.querySelectorAll('.shortcut').forEach(el => {
+            el.addEventListener('click', () => {
+                const text = el.textContent;
+                navigator.clipboard.writeText(text);
+                const oldText = el.textContent;
+                el.textContent = '✓ 已复制';
+                setTimeout(() => {
+                    el.textContent = oldText;
+                }, 1500);
+            });
+        });
+
+        // 页面加载完成提示
+        window.addEventListener('load', () => {
+            console.log('快速参考卡片已加载完成，建议打印此页面！');
+        });
+    </script>
+</body>
+</html>
