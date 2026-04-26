@@ -99,11 +99,11 @@ int main(void)
   uart_debug_init();
 
   /* 输出启动信息 */
-  debug_printf("System initialized, ready for debugging\r\n");
-  debug_printf("  Clock: 168MHz, USART1: 115200 8N1\r\n");
-  DEBUG_INFO("Debug level: %d, RX buffer: %d bytes\r\n",
-             DEBUG_LEVEL, UART_DEBUG_RX_BUF_SIZE);
-
+  // debug_printf("System initialized, ready for debugging\r\n");
+  // debug_printf("  Clock: 168MHz, USART1: 115200 8N1\r\n");
+  // DEBUG_INFO("Debug level: %d, RX buffer: %d bytes\r\n",
+  //            DEBUG_LEVEL, UART_DEBUG_RX_BUF_SIZE);
+  printf("Hello, World!\r\n");
   system_tick_init(1000);
   app_init();
 

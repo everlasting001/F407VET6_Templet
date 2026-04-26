@@ -141,7 +141,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         {
             /* 调用应用层数据处理函数 */
             uart_debug_data_handler(rx_buf, Size);
-
             /* 清除接收缓冲区（可选，便于调试观察） */
             memset(rx_buf, 0, Size);
         }
@@ -206,5 +205,6 @@ __attribute__((weak)) void uart_debug_data_handler(uint8_t *data, uint16_t len)
 {
     /* 默认行为：将接收到的数据回显 */
     /* 用户可以重写此函数实现自定义处理 */
-    uart_debug_send(data, len);
+    // uart_debug_send(data, len);
+    debug_printf("\r\nReceived: %s", data);
 }

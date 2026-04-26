@@ -107,3 +107,4 @@ uint8_t* uart_get_rx_buffer(void);
 #endif
 
 #endif /* __USART_H__ */
+
