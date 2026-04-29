@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -93,20 +94,12 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
+  MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
-
-  /* 初始化调试串口（DMA + IDLE空闲中断模式） */
-  uart_debug_init();
-
-  /* 输出启动信息 */
-  // debug_printf("System initialized, ready for debugging\r\n");
-  // debug_printf("  Clock: 168MHz, USART1: 115200 8N1\r\n");
-  // DEBUG_INFO("Debug level: %d, RX buffer: %d bytes\r\n",
-  //            DEBUG_LEVEL, UART_DEBUG_RX_BUF_SIZE);
-  printf("Hello, World!\r\n");
-  system_tick_init(1000);
-  app_init();
-
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,7 +109,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    app_main_loop();
+
   }
   /* USER CODE END 3 */
 }

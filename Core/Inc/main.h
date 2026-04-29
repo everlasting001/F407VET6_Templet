@@ -57,6 +57,18 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define PWML_Pin GPIO_PIN_6
+#define PWML_GPIO_Port GPIOA
+#define PWMR_Pin GPIO_PIN_7
+#define PWMR_GPIO_Port GPIOA
+#define EncoderL_1_Pin GPIO_PIN_9
+#define EncoderL_1_GPIO_Port GPIOE
+#define EncoderL_2_Pin GPIO_PIN_11
+#define EncoderL_2_GPIO_Port GPIOE
+#define EncoderR_1_Pin GPIO_PIN_6
+#define EncoderR_1_GPIO_Port GPIOC
+#define EncoderR_2_Pin GPIO_PIN_7
+#define EncoderR_2_GPIO_Port GPIOC
 #define TX_DEBUG_Pin GPIO_PIN_9
 #define TX_DEBUG_GPIO_Port GPIOA
 #define RX_DEBUG_Pin GPIO_PIN_10
