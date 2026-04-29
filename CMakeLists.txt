@@ -59,7 +59,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Core/Src/callback.c
 
     # # Debug utilities (printf redirect, debug output)
-    # Core/Src/debug_utils.c
+    # Core/Src/debug_utils.c   
 )
 
 # Add include paths
