@@ -51,3 +51,7 @@
     2.中断回调函数（Interrupt Callback Function）
         主要是处理中断的函数，用于响应外部事件，如按键按下、编码器旋转等
         主要是系统的核心，用于实现系统的功能
+    3.测试程序（Test Program）
+        主要是测试系统的功能，用于验证系统的功能是否正常
+    4.任务集成实现（Task Integration Implementation）
+        主要是将系统的不同功能集成起来，实现系统的完整功能

@@ -47,13 +47,20 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Device layer
     Devices/Src/DeviceClass/Modules/ModuleBase.c # 模块基类
     Devices/Src/DeviceClass/Modules/LED.c # LED模块
+
+    #application layer
+    Application/Src/TestProgram/LedTest.c
+    Application/Src/Callback.c # 回调函数
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # 模块基类layer    
+    # Device layer    
     Devices/Inc/DeviceClass/Modules
     
+    #application layer
+    Application/Inc/TestProgram
+    Application/Inc/
 )
 
 # Add project symbols (macros)
