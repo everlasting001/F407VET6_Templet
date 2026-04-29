@@ -79,6 +79,14 @@ void Error_Handler(void);
 #define TX_DEBUG_GPIO_Port GPIOA
 #define RX_DEBUG_Pin GPIO_PIN_10
 #define RX_DEBUG_GPIO_Port GPIOA
+#define AIN1_Pin GPIO_PIN_0
+#define AIN1_GPIO_Port GPIOD
+#define AIN2_Pin GPIO_PIN_1
+#define AIN2_GPIO_Port GPIOD
+#define BIN1_Pin GPIO_PIN_2
+#define BIN1_GPIO_Port GPIOD
+#define BIN2_Pin GPIO_PIN_3
+#define BIN2_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

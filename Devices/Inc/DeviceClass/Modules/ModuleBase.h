@@ -48,6 +48,7 @@
 #define __MODULE_BASE_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* ==================== 虚函数表（VTable）定义 ==================== */
 

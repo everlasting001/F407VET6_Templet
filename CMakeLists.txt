@@ -44,30 +44,16 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # # Framework layer
-    # Core/Framework/Src/system_tick.c
-    # Core/Framework/Src/task_scheduler.c
-    # Core/Framework/Src/state_machine.c
-
-    # # Device drivers
-    # Core/Drivers/Src/motor_driver.c
-
-    # # Application layer
-    # Core/App/Src/app_config.c
-
-    # # HAL callbacks (shared by all peripherals)
-    # Core/Src/callback.c
-
-    # # Debug utilities (printf redirect, debug output)
-    # Core/Src/debug_utils.c   
+    # Device layer
+    Devices/Src/DeviceClass/Modules/ModuleBase.c # 模块基类
+    Devices/Src/DeviceClass/Modules/LED.c # LED模块
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Core/Framework/Inc
-    # Core/Drivers/Inc
-    # Core/App/Inc
-    # Core/Inc
+    # 模块基类layer    
+    Devices/Inc/DeviceClass/Modules
+    
 )
 
 # Add project symbols (macros)
