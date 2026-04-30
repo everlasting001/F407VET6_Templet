@@ -63,6 +63,10 @@ void Error_Handler(void);
 #define KEY1_GPIO_Port GPIOC
 #define BUZZER1_Pin GPIO_PIN_2
 #define BUZZER1_GPIO_Port GPIOC
+#define K230_TX_Pin GPIO_PIN_2
+#define K230_TX_GPIO_Port GPIOA
+#define K230_RX_Pin GPIO_PIN_3
+#define K230_RX_GPIO_Port GPIOA
 #define PWML_Pin GPIO_PIN_6
 #define PWML_GPIO_Port GPIOA
 #define PWMR_Pin GPIO_PIN_7
@@ -71,6 +75,18 @@ void Error_Handler(void);
 #define EncoderL_1_GPIO_Port GPIOE
 #define EncoderL_2_Pin GPIO_PIN_11
 #define EncoderL_2_GPIO_Port GPIOE
+#define BT_TX_Pin GPIO_PIN_10
+#define BT_TX_GPIO_Port GPIOB
+#define BT_RX_Pin GPIO_PIN_11
+#define BT_RX_GPIO_Port GPIOB
+#define OUT_Pin GPIO_PIN_11
+#define OUT_GPIO_Port GPIOD
+#define AD0_Pin GPIO_PIN_12
+#define AD0_GPIO_Port GPIOD
+#define AD1_Pin GPIO_PIN_13
+#define AD1_GPIO_Port GPIOD
+#define AD2_Pin GPIO_PIN_14
+#define AD2_GPIO_Port GPIOD
 #define EncoderR_1_Pin GPIO_PIN_6
 #define EncoderR_1_GPIO_Port GPIOC
 #define EncoderR_2_Pin GPIO_PIN_7
@@ -87,6 +103,26 @@ void Error_Handler(void);
 #define BIN1_GPIO_Port GPIOD
 #define BIN2_Pin GPIO_PIN_3
 #define BIN2_GPIO_Port GPIOD
+#define H_IN1_Pin GPIO_PIN_4
+#define H_IN1_GPIO_Port GPIOD
+#define H_IN2_Pin GPIO_PIN_5
+#define H_IN2_GPIO_Port GPIOD
+#define H_IN3_Pin GPIO_PIN_6
+#define H_IN3_GPIO_Port GPIOD
+#define H_IN4_Pin GPIO_PIN_7
+#define H_IN4_GPIO_Port GPIOD
+#define V_IN1_Pin GPIO_PIN_3
+#define V_IN1_GPIO_Port GPIOB
+#define V_IN2_Pin GPIO_PIN_4
+#define V_IN2_GPIO_Port GPIOB
+#define V_IN3_Pin GPIO_PIN_5
+#define V_IN3_GPIO_Port GPIOB
+#define MPU6050_SCL_Pin GPIO_PIN_6
+#define MPU6050_SCL_GPIO_Port GPIOB
+#define MPU6050_SDA_Pin GPIO_PIN_7
+#define MPU6050_SDA_GPIO_Port GPIOB
+#define V_IN4_Pin GPIO_PIN_8
+#define V_IN4_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

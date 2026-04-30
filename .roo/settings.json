@@ -15,10 +15,19 @@
       "Bash(make *)",
       "Read(Core/)",
       "Read(Drivers/)",
+      "Read(Devices/)",
+      "Read(Application/)",
+      "Read(Framework/)",
+      "Read(docs/)",
       "Read(.roo/docs/)",
       "Read(.roo/memory/)",
+      "Read(.roo/prjconfigs/)",
+      "Read(.roo/rules/)",
+      "Read(.roo/skills/)",
       "Edit(Core/)",
-      "Edit(Drivers/)"
+      "Edit(Devices/)",
+      "Edit(Application/)",
+      "Edit(Framework/)"
     ],
     "deny": [
       "Bash(rm -rf *)",

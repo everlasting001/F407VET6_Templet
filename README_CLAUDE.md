@@ -14,28 +14,32 @@
 - ✅ 原理图和 PCB 阅读指南
 - ✅ 自动编译验证 hooks
 - ✅ 代码安全审查工具
+- ✅ C 语言面向对象设计模式（虚函数表）
 
-### 第二步：上传你的硬件文件（可选但推荐）
+### 第二步：查阅硬件文件
 
-放在 `.claude/docs/` 目录下：
+硬件资料存放在以下位置：
 
 ```bash
 .claude/docs/
-├── datasheets/
-│   ├── STM32F407VET6.pdf    # MCU参考手册
-│   ├── motor-model.pdf       # 你的电机型号
-│   └── driver-ic.pdf         # 驱动芯片
-├── schematics/
-│   ├── main-schematic.pdf
-│   ├── motor-driver-board.pdf
-│   └── power-supply.pdf
-└── pcb/
-    └── layout.pdf
+├── datasheets/               # 数据手册（PDF、DOC、JPG、PNG）
+│   ├── stm32f407参考手册.pdf
+│   ├── PS-MPU-6000A.pdf      # MPU6050
+│   ├── TB6612FNG Datasheet.pdf
+│   ├── 28BYJ48规格书.doc
+│   └── ... (共 20+ 文件)
+├── schematics/               # 原理图 PDF
+│   ├── FK407M3-VET6 原理图.pdf
+│   ├── TK-TB6612-MD220A V1.0.pdf
+│   └── 步进电机驱动板原理图.pdf
+└── pcb/                      # PCB 设计文件
+    ├── FK407M3-VET6 原理图库.json
+    └── FK407M3-VET6 封装库.json
 ```
 
 **我会自动**：
 - 📖 读取并理解你的硬件配置
-- 🔍 从 PDF 中提取规格参数
+- 🔍 从数据手册中提取规格参数
 - 💡 基于实际硬件给出代码建议
 - ✅ 在代码审查时检查硬件兼容性
 
@@ -43,7 +47,9 @@
 
 ```bash
 # 编辑代码
-vim Core/Src/main.c
+# 设备驱动 → Devices/Src/DeviceClass/<Category>/
+# 应用逻辑 → Application/Src/
+# 生成代码 → Core/Src/（USER CODE 标记内）
 
 # 我会自动：
 # ✓ 编译验证
@@ -57,36 +63,47 @@ vim Core/Src/main.c
 
 | 文档 | 内容 | 何时使用 |
 |------|------|--------|
-| [CLAUDE.md](CLAUDE.md) | 项目技术指南 | 第一次学习项目 |
-| [.claude/rules/embedded-best-practices.md](.claude/rules/embedded-best-practices.md) | 嵌入式开发规范 | 写代码时参考 |
-| [.claude/rules/motor-control-guide.md](.claude/rules/motor-control-guide.md) | 电机控制完整指南 | 实现电机控制 |
-| [.claude/rules/schematic-reading-guide.md](.claude/rules/schematic-reading-guide.md) | 原理图解读 | 理解硬件电路 |
-| [.claude/rules/code-review-checklist.md](.claude/rules/code-review-checklist.md) | 代码审查清单 | 提交代码前 |
-| [.claude/rules/hardware-integration.md](.claude/rules/hardware-integration.md) | 硬件集成清单 | 集成新硬件 |
-| [.claude/docs/README.md](.claude/docs/README.md) | 文档索引 | 查找具体资料 |
+| [`CLAUDE.md`](CLAUDE.md) | 项目技术指南 | 第一次学习项目 |
+| [`.claude/rules/embedded-best-practices.md`](.claude/rules/embedded-best-practices.md) | 嵌入式开发规范 | 写代码时参考 |
+| [`.claude/rules/motor-control-guide.md`](.claude/rules/motor-control-guide.md) | 电机控制完整指南 | 实现电机控制 |
+| [`.claude/rules/schematic-reading-guide.md`](.claude/rules/schematic-reading-guide.md) | 原理图解读 | 理解硬件电路 |
+| [`.claude/rules/code-review-checklist.md`](.claude/rules/code-review-checklist.md) | 代码审查清单 | 提交代码前 |
+| [`.claude/rules/hardware-integration.md`](.claude/rules/hardware-integration.md) | 硬件集成清单 | 集成新硬件 |
+| [`.claude/rules/sensor-modules-guide.md`](.claude/rules/sensor-modules-guide.md) | 传感器模块指南 | 传感器开发 |
+| [`.claude/docs/README.md`](.claude/docs/README.md) | 文档索引 | 查找具体资料 |
+| [`statemachine.md`](statemachine.md) | 架构与状态机指南 | 设计复杂逻辑 |
 
 ### 目录结构
 
 ```
 项目/
-├── Core/                    # 你的应用代码
-├── Drivers/                 # STM32 HAL 和 CMSIS
-├── cmake/                   # 构建配置
-├── CLAUDE.md                # 项目技术指南（必读）
+├── Core/                     # STM32CubeMX 生成代码
+│   ├── Inc/                  # 头文件
+│   └── Src/                  # 源代码（main.c, gpio.c, ...）
+├── Devices/                  # 设备层（硬件抽象）
+│   ├── Inc/DeviceClass/
+│   │   └── Modules/          # ModuleBase.h, LED.h
+│   └── Src/DeviceClass/
+│       └── Modules/          # ModuleBase.c, LED.c
+├── Application/              # 应用层（业务逻辑）
+│   ├── Inc/                  # Callback.h, TestProgram/
+│   └── Src/                  # Callback.c, TestProgram/
+├── Framework/                # 框架层（开发中）
+├── Drivers/                  # STM32 HAL 和 CMSIS
+├── cmake/                    # 构建配置
+├── docs/                     # 项目文档
+│   ├── htmls/                # HTML 参考
+│   └── mds/                  # 技术文档
+├── CLAUDE.md                 # 项目技术指南（必读）
 ├── .claude/
-│   ├── settings.json        # 权限和 hooks 配置
-│   ├── HARDWARE_SETUP.md    # 硬件接入指南
-│   ├── docs/                # 硬件文档库（放你的 PDF）
+│   ├── settings.json         # 权限和 hooks 配置
+│   ├── HARDWARE_SETUP.md     # 硬件接入指南
+│   ├── docs/                 # 硬件文档库
 │   │   ├── README.md
 │   │   ├── datasheets/
 │   │   ├── schematics/
 │   │   └── pcb/
-│   └── rules/               # 开发规范库
-│       ├── embedded-best-practices.md
-│       ├── motor-control-guide.md
-│       ├── schematic-reading-guide.md
-│       ├── code-review-checklist.md
-│       └── hardware-integration.md
+│   └── rules/                # 开发规范库
 └── CMakeLists.txt
 ```
 
@@ -159,19 +176,22 @@ openocd -f interface/cmsis-dap.cfg -f target/stm32f4x.cfg
 • 电机驱动
 • 电源管理
 • ADC 转换
+• C 面向对象设计（虚函数表）
 ```
 
 ## 📋 典型工作流
 
 ### Day 1: 项目学习
-1. 阅读 CLAUDE.md 了解项目结构
-2. 查看 embedded-best-practices.md 了解规范
-3. 如有硬件，上传到 .claude/docs/
+1. 阅读 [`CLAUDE.md`](CLAUDE.md) 了解项目结构
+2. 查看 [`README.md`](README.md) 了解三层架构设计
+3. 查看 [`embedded-best-practices.md`](.claude/rules/embedded-best-practices.md) 了解规范
+4. 如有硬件，上传到 `.claude/docs/`
 
 ### Day 2: 开始开发
-1. 编辑 Core/Src/main.c 或创建新模块
-2. 我会自动编译验证
-3. 遇到问题查阅对应规范文档
+1. 创建设备驱动 → [`Devices/Src/DeviceClass/`](Devices/Src/DeviceClass/)
+2. 编写应用逻辑 → [`Application/Src/`](Application/Src/)
+3. 我会自动编译验证
+4. 遇到问题查阅对应规范文档
 
 ### Day 3+: 迭代开发
 1. 实现功能
@@ -190,18 +210,24 @@ A: 直接放在 `.claude/docs/datasheets/`, `.claude/docs/schematics/` 等目录
 **Q: 编译失败了怎么办？**
 A: 
 1. 查看错误信息
-2. 检查 CMakeLists.txt 中是否包含新文件
-3. 确认 Core/ 中的源文件有对应头文件
+2. 检查 `CMakeLists.txt` 中是否包含新文件
+3. 确认源文件有对应头文件
 
 **Q: 怎样添加新的外设（如 ADC、SPI）？**
 A: 
-1. 在 STM32CubeMX 中配置（更新 .ioc 文件）
+1. 在 STM32CubeMX 中配置（更新 `.ioc` 文件）
 2. CubeMX 重新生成代码
 3. 我会自动识别新文件
-4. 查看 CLAUDE.md 中的 STM32CubeMX 工作流
+4. 查看 `CLAUDE.md` 中的 STM32CubeMX 工作流
 
 **Q: 可以改动生成的代码吗？**
 A: 只能在 `/* USER CODE BEGIN/END */` 标记内修改。其他地方的改动会在 CubeMX 重新生成时丢失。
+
+**Q: 怎样创建新设备？**
+A: 继承 `ModuleBase`（参考 `LED` 模块）：
+1. 在 `Devices/Inc/DeviceClass/<Category>/` 创建头文件
+2. 在 `Devices/Src/DeviceClass/<Category>/` 创建源文件
+3. 在 `CMakeLists.txt` 注册
 
 ## 🚀 现在就开始
 
@@ -209,7 +235,8 @@ A: 只能在 `/* USER CODE BEGIN/END */` 标记内修改。其他地方的改动
 ```bash
 # 我已经准备好帮你了
 # 编辑代码，我会自动验证
-vim Core/Src/main.c
+# 设备驱动 → Devices/
+# 应用逻辑 → Application/
 ```
 
 ### 选项 B: 完整配置（有硬件文档）
@@ -219,9 +246,10 @@ vim Core/Src/main.c
 4. 开始开发！
 
 ### 选项 C: 学习模式（理解最佳实践）
-1. 阅读 [.claude/rules/embedded-best-practices.md](.claude/rules/embedded-best-practices.md)
-2. 查看 [.claude/rules/motor-control-guide.md](.claude/rules/motor-control-guide.md)
-3. 问我任何关于嵌入式开发的问题
+1. 阅读 [`.claude/rules/embedded-best-practices.md`](.claude/rules/embedded-best-practices.md)
+2. 查看 [`.claude/rules/motor-control-guide.md`](.claude/rules/motor-control-guide.md)
+3. 查看 [`Simulation.md`](Simulation.md) 了解 C 面向对象设计
+4. 问我任何关于嵌入式开发的问题
 
 ---
 
@@ -238,9 +266,9 @@ vim Core/Src/main.c
 
 选择一个开始：
 
-1. 📖 **深入学习**：阅读 [CLAUDE.md](CLAUDE.md)
-2. 📁 **上传文件**：将硬件 PDF 放入 `.claude/docs/`
-3. 💻 **立即编码**：编辑 Core/Src/main.c，我来帮你验证
+1. 📖 **深入学习**：阅读 [`CLAUDE.md`](CLAUDE.md)
+2. 📁 **查阅文件**：浏览 `.claude/docs/` 中的硬件资料
+3. 💻 **立即编码**：编辑 `Devices/` 或 `Application/`，我来帮你验证
 4. 🔍 **参考文档**：查看 `.claude/rules/` 中的具体指南
 
 ---

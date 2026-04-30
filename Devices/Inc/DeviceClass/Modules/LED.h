@@ -5,7 +5,7 @@
   *
   * @details
   * 本文件定义了 LED 模块的结构体和公有接口，继承自 ModuleBase 基类。
-  * 支持以下功能：
+  * 基类提供 port 和 pin 属性，子类专注实现 LED 特有功能：
   *   - LED 开/关/翻转控制
   *   - 软件 PWM 亮度调节（0~100%）
   *   - 电平极性配置（高电平亮 / 低电平亮）
@@ -40,7 +40,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "ModuleBase.h"
-#include "gpio.h"
 #include <stdint.h>
 
 /* ==================== LED 状态枚举 ==================== */
@@ -59,11 +58,10 @@ typedef enum {
   * @brief LED 模块结构体（继承 ModuleBase）
   *
   * @note   ModuleBase_t 必须为第一个成员，确保指针可安全转换
+  * @note   port 和 pin 由基类 ModuleBase_t 提供，子类无需重复定义
   */
 typedef struct LED_s {
-    ModuleBase_t  base;             /**< 基类（必须为第一个成员）*/
-    GPIO_TypeDef *port;             /**< LED 所在 GPIO 端口 */
-    uint16_t      pin;              /**< LED 所在 GPIO 引脚 */
+    ModuleBase_t  base;             /**< 基类（必须为第一个成员，含 port/pin）*/
     uint8_t       active_high;      /**< 电平极性: 1=高电平亮, 0=低电平亮 */
     uint8_t       state;            /**< 当前开关状态 (LED_State_t) */
     uint8_t       brightness;       /**< 当前亮度值 (0~100, 0=灭, 100=最亮) */
@@ -73,7 +71,7 @@ typedef struct LED_s {
 
 /**
   * @brief  LED 构造函数
-  * @note   初始化基类成员，设置 GPIO 端口、引脚和电平极性。
+  * @note   初始化基类成员，通过 ModuleBase_SetPinPort() 设置 GPIO 端口和引脚。
   *         构造后默认熄灭，亮度为 100%。
   * @param  self         指向 LED 对象的指针
   * @param  port         LED 所在的 GPIO 端口（如 GPIOC）

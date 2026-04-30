@@ -7,6 +7,9 @@
   * 本文件定义了所有设备模块（如 LED、KEY、OLED、BUZZER 等）的基类接口。
   * 通过结构体 + 函数指针（虚函数表）的方式实现 C 语言多态。
   *
+  * 基类现在包含 port 和 pin 两个 GPIO 属性，所有子类自动继承，
+  * 无需各自重复定义。子类通过 ModuleBase_SetPinPort() 设置。
+  *
   * === 使用示例 ===
   *
   * // 1. 定义子类结构体（将 ModuleBase_t 作为第一个成员，模拟继承）
@@ -32,6 +35,7 @@
   * // 4. 构造子类对象
   * LED_t led;
   * ModuleBase_Constructor(&led.base, "LED");
+  * ModuleBase_SetPinPort(&led.base, GPIOC, GPIO_PIN_0);
   * led.base.vtable = &led_vtable;  // 替换为子类虚函数表
   *
   * // 5. 通过基类指针多态调用
@@ -49,6 +53,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "gpio.h"
 
 /* ==================== 虚函数表（VTable）定义 ==================== */
 
@@ -75,11 +80,16 @@ typedef struct {
   *
   * 子类必须将此结构体作为第一个成员，确保指针可以安全转换。
   * 这模拟了 C++ 的单继承：派生类对象指针 = 基类对象指针。
+  *
+  * port 和 pin 是所有基于 GPIO 的模块（LED、Buzzer 等）的共用属性，
+  * 提取到基类中避免了每个子类重复定义。
   */
 typedef struct ModuleBase_s {
-    const ModuleVTable_t *vtable;   /**< 虚函数表指针（指向子类或默认 vtable）*/
-    const char           *name;     /**< 模块名称（调试标识）*/
-    uint8_t               initialized; /**< 初始化标志 (0=未初始化, 1=已初始化) */
+    const ModuleVTable_t *vtable;       /**< 虚函数表指针（指向子类或默认 vtable）*/
+    const char           *name;         /**< 模块名称（调试标识）*/
+    uint8_t               initialized;  /**< 初始化标志 (0=未初始化, 1=已初始化) */
+    GPIO_TypeDef         *port;         /**< GPIO 端口（所有子类继承）*/
+    uint16_t              pin;          /**< GPIO 引脚（所有子类继承）*/
 } ModuleBase_t;
 
 /* ==================== 公有接口函数 ==================== */
@@ -88,6 +98,7 @@ typedef struct ModuleBase_s {
   * @brief  模块构造函数
   * @note   必须在任何模块操作之前调用。
   *         初始化 vtable 为默认表，设置模块名称，清空 initialized 标志。
+  *         port 和 pin 初始化为 NULL/0，需随后通过 ModuleBase_SetPinPort() 设置。
   * @param  self  指向模块基类对象的指针
   * @param  name  模块名称字符串（仅保存指针，不拷贝）
   */
@@ -127,6 +138,16 @@ int ModuleBase_Run(ModuleBase_t *self);
   * @return int   0 = 成功, 负数 = 错误码
   */
 int ModuleBase_Cleanup(ModuleBase_t *self);
+
+/**
+  * @brief  设置模块的 GPIO 端口和引脚
+  * @note   所有子类共用的属性设置接口。
+  *         推荐在子类构造函数中调用此方法设置硬件关联。
+  * @param  self  指向模块基类对象的指针
+  * @param  port  GPIO 端口（如 GPIOC）
+  * @param  pin   GPIO 引脚（如 GPIO_PIN_0）
+  */
+void ModuleBase_SetPinPort(ModuleBase_t *self, GPIO_TypeDef *port, uint16_t pin);
 
 /**
   * @brief  获取模块名称

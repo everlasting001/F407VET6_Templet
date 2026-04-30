@@ -4,88 +4,104 @@
 
 ```
 .claude/docs/
-├── datasheets/          # 数据手册 PDF
-│   ├── STM32F407VET6.pdf
-│   ├── motor-model.pdf
-│   ├── driver-ic.pdf
-│   ├── mpu6050.pdf              # 6轴 IMU
-│   ├── grayscale-sensor.pdf     # 灰度循迹模块
-│   └── stepper-motor.pdf        # 步进电机驱动
+├── datasheets/          # 数据手册 PDF（实际存在的文件）
+│   ├── stm32f407参考手册.pdf
+│   ├── stm32f407参考手册-中文版.pdf
+│   ├── stm32f407数据手册.pdf
+│   ├── stm32f407勘误.pdf
+│   ├── PS-MPU-6000A.pdf                  # MPU6050 Register Map
+│   ├── RM-MPU-6000A.pdf                  # MPU6050 Application Notes
+│   ├── TB6612FNG Datasheet.pdf           # TB6612 电机驱动数据手册
+│   ├── 塔克创新 l TB6612双路编码器电机驱动用户手册 V1.0.pdf
+│   ├── 塔克创新 l MC310编码器电机用户手册 V1.0.0.pdf
+│   ├── 28BYJ48规格书.doc
+│   ├── ULN2003英文数据手册.pdf
+│   ├── ULN2003中文数据手册.pdf
+│   ├── 亚博智能灰度循迹模块用户入门手册.pdf
+│   ├── 循迹模块数据读取.pdf
+│   ├── 循迹模块识别不良解决方案.pdf
+│   ├── 循迹模块小车巡线.pdf
+│   ├── RT8289GSP.PDF                     # 稳压器 1
+│   ├── RT9013-33GB.PDF                   # 稳压器 2
+│   ├── 塔克创新 l 机器人运动学模型教程V1.0.4.pdf
+│   ├── 塔克 l 无线高速DAP调试下载器手册V2.0.0.pdf
+│   ├── 电机兼容性说明 必看！.png
+│   ├── IO口复用说明.png
+│   ├── MPU6050-V1-SCH.jpg
+│   ├── MPU6050-V1.jpg
+│   ├── 丝印图-反面.png
+│   ├── 丝印图-正面.png
+│   └── 旧款关于按键按压的重要提醒(新款忽略).jpg
 │
 ├── schematics/          # 原理图 PDF
-│   ├── main-schematic.pdf
-│   ├── motor-driver-board.pdf
-│   ├── power-supply.pdf
-│   ├── mpu6050-interface.pdf    # MPU6050 接口原理图
-│   ├── grayscale-circuit.pdf    # 灰度传感器电路
-│   └── stepper-driver.pdf       # 步进电机驱动板
+│   ├── FK407M3-VET6 原理图.pdf           # 主控板原理图
+│   ├── FK407M3-VET6 机械尺寸.pdf
+│   ├── TK-TB6612-MD220A V1.0.pdf        # TB6612 驱动板原理图
+│   └── 步进电机驱动板原理图.pdf
 │
 └── pcb/                 # PCB 相关文件
-    ├── motor-driver-layout.pdf
-    ├── sensor-interface-layout.pdf
-    ├── gerber/
-    └── bom.csv
+    ├── FK407M3-VET6 原理图库.json
+    └── FK407M3-VET6 封装库.json
 ```
 
 ## 快速查询指南
 
 ### 🔧 我想了解...
 
-#### MCU 相关
+#### STM32F407 MCU 相关
 | 问题 | 查看文件 | 章节/页码 |
 |------|---------|---------|
-| GPIO 引脚分配 | STM32F407VET6.pdf | Ch. 8 |
-| 中断优先级配置 | STM32F407VET6.pdf | Ch. 11 |
-| PWM/定时器配置 | STM32F407VET6.pdf | Ch. 14-15 |
-| ADC 转换 | STM32F407VET6.pdf | Ch. 13 |
-| UART 波特率 | STM32F407VET6.pdf | Ch. 26 |
-| 时钟树 | STM32F407VET6.pdf | Ch. 6 |
-| I2C 通信 | STM32F407VET6.pdf | Ch. 27 |
+| GPIO 引脚分配 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 8 |
+| 中断优先级配置 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 11 |
+| PWM/定时器配置 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 14-15 |
+| ADC 转换 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 13 |
+| UART 波特率 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 26 |
+| 时钟树 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 6 |
+| I2C 通信 | [`stm32f407参考手册.pdf`](datasheets/stm32f407参考手册.pdf) | Ch. 27 |
 
 #### 电机驱动相关
 | 问题 | 查看文件 | 章节/页码 |
 |------|---------|---------|
-| 驱动板接线 | motor-driver-board.pdf | 接线图 |
-| PWM 频率要求 | motor-model.pdf | 规格说明 |
-| 最大电流限制 | driver-ic.pdf | 绝对最大值 |
-| 死区时间设置 | motor-driver-board.pdf | 参数表 |
-| 反电动势管理 | driver-ic.pdf | 应用电路 |
+| TB6612 驱动板接线 | [`TK-TB6612-MD220A V1.0.pdf`](schematics/TK-TB6612-MD220A%20V1.0.pdf) | 接线图 |
+| TB6612 PWM 频率要求 | [`TB6612FNG Datasheet.pdf`](datasheets/TB6612FNG%20Datasheet.pdf) | 规格说明 |
+| TB6612 最大电流限制 | [`TB6612FNG Datasheet.pdf`](datasheets/TB6612FNG%20Datasheet.pdf) | 绝对最大值 |
+| MC310 编码器电机 | [`塔克创新 l MC310编码器电机用户手册 V1.0.0.pdf`](datasheets/塔克创新%20l%20MC310编码器电机用户手册%20V1.0.0.pdf) | 全篇 |
+| 电机兼容性 | [`电机兼容性说明 必看！.png`](datasheets/电机兼容性说明%20必看！.png) | 图示 |
 
 #### MPU6050 传感器
 | 问题 | 查看文件 | 章节/页码 |
 |------|---------|---------|
-| I2C 地址和寄存器 | mpu6050.pdf | Register Map |
-| 加速度计配置 | mpu6050.pdf | Ch. 4 |
-| 陀螺仪配置 | mpu6050.pdf | Ch. 5 |
-| 中断配置 | mpu6050.pdf | Ch. 8 |
-| 温度传感器 | mpu6050.pdf | Ch. 6 |
-| DMP (动作处理器) | mpu6050.pdf | Ch. 9 |
+| I2C 地址和寄存器 | [`PS-MPU-6000A.pdf`](datasheets/PS-MPU-6000A.pdf) | Register Map |
+| 加速度计配置 | [`RM-MPU-6000A.pdf`](datasheets/RM-MPU-6000A.pdf) | Ch. 4 |
+| 陀螺仪配置 | [`RM-MPU-6000A.pdf`](datasheets/RM-MPU-6000A.pdf) | Ch. 5 |
+| 中断配置 | [`RM-MPU-6000A.pdf`](datasheets/RM-MPU-6000A.pdf) | Ch. 8 |
+| 温度传感器 | [`RM-MPU-6000A.pdf`](datasheets/RM-MPU-6000A.pdf) | Ch. 6 |
+| 模块外观和接口 | [`MPU6050-V1-SCH.jpg`](datasheets/MPU6050-V1-SCH.jpg) | 原理图 |
+| 物理照片 | [`MPU6050-V1.jpg`](datasheets/MPU6050-V1.jpg) | 实物图 |
 
 #### 灰度循迹传感器
 | 问题 | 查看文件 | 章节/页码 |
 |------|---------|---------|
-| ADC 输出范围 | grayscale-sensor.pdf | 规格 |
-| 数字输出逻辑 | grayscale-sensor.pdf | 接口 |
-| 检测距离 | grayscale-sensor.pdf | 性能参数 |
-| 接线方式 | grayscale-circuit.pdf | 原理图 |
-| 阈值调整 | grayscale-sensor.pdf | 应用 |
+| 用户入门手册 | [`亚博智能灰度循迹模块用户入门手册.pdf`](datasheets/亚博智能灰度循迹模块用户入门手册.pdf) | 全篇 |
+| ADC 数据读取 | [`循迹模块数据读取.pdf`](datasheets/循迹模块数据读取.pdf) | 全篇 |
+| 识别不良解决方案 | [`循迹模块识别不良解决方案.pdf`](datasheets/循迹模块识别不良解决方案.pdf) | 全篇 |
+| 巡线算法 | [`循迹模块小车巡线.pdf`](datasheets/循迹模块小车巡线.pdf) | 全篇 |
 
 #### 步进电机驱动
 | 问题 | 查看文件 | 章节/页码 |
 |------|---------|---------|
-| 驱动原理 | stepper-motor.pdf | 工作原理 |
-| 控制方式 | stepper-driver.pdf | 接口定义 |
-| 速度计算 | stepper-motor.pdf | 性能参数 |
-| 扭矩曲线 | stepper-motor.pdf | 规格表 |
-| 发热管理 | stepper-motor.pdf | 热特性 |
+| 28BYJ-48 规格 | [`28BYJ48规格书.doc`](datasheets/28BYJ48规格书.doc) | 规格参数 |
+| ULN2003 英文手册 | [`ULN2003英文数据手册.pdf`](datasheets/ULN2003英文数据手册.pdf) | 全篇 |
+| ULN2003 中文手册 | [`ULN2003中文数据手册.pdf`](datasheets/ULN2003中文数据手册.pdf) | 全篇 |
+| 步进电机驱动板原理图 | [`步进电机驱动板原理图.pdf`](schematics/步进电机驱动板原理图.pdf) | 全篇 |
 
-#### 电源管理
-| 问题 | 查看文件 | 章节/页码 |
-|------|---------|---------|
-| 电源输入范围 | power-supply.pdf | 规格 |
-| 稳压器配置 | power-supply.pdf | 应用电路 |
-| 去耦电容参数 | power-supply.pdf | BOM |
-| 多路电源隔离 | power-supply.pdf | 隔离方案 |
+#### PCB 设计参考
+| 问题 | 查看文件 |
+|------|---------|
+| FK407M3-VET6 原理图库 | [`FK407M3-VET6 原理图库.json`](pcb/FK407M3-VET6%20原理图库.json) |
+| FK407M3-VET6 封装库 | [`FK407M3-VET6 封装库.json`](pcb/FK407M3-VET6%20封装库.json) |
+| 主控板原理图 | [`FK407M3-VET6 原理图.pdf`](schematics/FK407M3-VET6%20原理图.pdf) |
+| 主控板机械尺寸 | [`FK407M3-VET6 机械尺寸.pdf`](schematics/FK407M3-VET6%20机械尺寸.pdf) |
 
 ## 数据手册快速检索
 
@@ -110,75 +126,6 @@ SystemCoreClock = 168 MHz  // 主时钟
 - 8-11：普通任务
 - 12-15：后台任务
 
-### 电机驱动板参数
-
-**需要填入的信息**（从原理图/数据手册提取）：
-
-| 参数 | 值 | 来源 |
-|------|-----|------|
-| 逻辑电压 | 3.3V 或 5V | 驱动 IC 数据手册 |
-| 最大输出电流 | _____ A | 驱动板规格 |
-| PWM 频率范围 | _____ kHz | 驱动 IC 数据手册 |
-| 工作温度范围 | _____ °C | 驱动板规格 |
-| 散热要求 | _____ W | 计算得出 |
-
-## 文件下载和更新
-
-### 数据手册获取渠道
-
-1. **STM32F407VET6**
-   - 官方来源：[ST 官网](https://www.st.com)
-   - 搜索：RM0090（参考手册）/ DS9046（数据手册）
-
-2. **电机相关文档**
-   - 电机型号: _________________
-   - 制造商: _________________
-   - 下载链接: _________________
-
-3. **驱动 IC 文档**
-   - 驱动型号: _________________
-   - 制造商: _________________
-   - 下载链接: _________________
-
-### 文件版本管理
-
-```
-datasheets/
-├── STM32F407VET6_v1.0.pdf  (日期: ____)
-├── motor_v2.1.pdf          (日期: ____)
-└── driver-ic_latest.pdf    (日期: ____)
-```
-
-**更新时机**：
-- 发现错误或遗漏 ✓
-- 硬件版本升级 ✓
-- 参数调整 ✓
-
-## 离线查询速查表
-
-### GPIO 引脚映射
-
-```
-STM32F407VET6 LQFP100 引脚排列
-（需要根据实际硬件填写）
-
-主要传感器和模块接口：
-┌──────────────────────────────────────────┐
-│ 功能           │ 端口 │ 引脚 │ 备注       │
-├──────────────────────────────────────────┤
-│ DC 电机 PWM    │ PA0  │ 	 │ TIM2_CH1   │
-│ DC 电机方向 1  │ PA1  │ 	 │ GPIO_OUT   │
-│ DC 电机方向 2  │ PA2  │ 	 │ GPIO_OUT   │
-│ 灰度传感器 1-8 │ PA3-PA10 │  │ ADC1 DMA   │
-│ 步进 IN1-4     │ PA8-PA11 │  │ GPIO_OUT   │
-│ 步进方向       │ PA12 │ 	 │ GPIO_OUT   │
-│ MPU6050 SCL    │ PB8  │ 	 │ I2C3_SCL   │
-│ MPU6050 SDA    │ PB9  │ 	 │ I2C3_SDA   │
-│ UART1 TX       │ PA9  │ 95 │ UART1_TX   │
-│ UART1 RX       │ PA10 │ 96 │ UART1_RX   │
-└──────────────────────────────────────────┘
-```
-
 ### I2C 设备地址列表
 
 ```
@@ -188,39 +135,7 @@ MPU6050（默认）         0x68            0xD1             0xD0
 MPU6050（AD0=1）        0x69            0xD3             0xD2
 ```
 
-### ADC 通道分配
-
-```
-ADC1 (用于灰度传感器):
-├─ CH0  (PA0):  灰度传感器 1
-├─ CH1  (PA1):  灰度传感器 2
-├─ CH2  (PA2):  灰度传感器 3
-├─ CH3  (PA3):  灰度传感器 4
-├─ CH4  (PA4):  灰度传感器 5
-├─ CH5  (PA5):  灰度传感器 6
-├─ CH6  (PA6):  灰度传感器 7
-├─ CH7  (PA7):  灰度传感器 8
-└─ ...
-
-ADC2/3: [可用于其他传感器]
-```
-
-### 定时器资源分配
-
-```
-TIM1:   [          ] (高级计时器)
-TIM2:   [DC 电机 PWM] ← PA0 (TIM2_CH1)
-TIM3:   [          ]
-TIM4:   [          ]
-TIM5:   [          ]
-TIM6:   [          ]
-TIM7:   [          ]
-TIM8:   [          ]
-```
-
-### 硬件参数参考表
-
-#### MPU6050 寄存器地址速查
+### MPU6050 寄存器地址速查
 
 ```c
 /* 电源管理 */
@@ -243,117 +158,14 @@ TIM8:   [          ]
 0x43-0x48 → GYRO_XOUT_H 到 GYRO_ZOUT_L（陀螺仪）
 ```
 
-#### 灰度传感器参数
+## 相关文档
 
-```
-参数              │ 值             │ 备注
-─────────────────┼────────────────┼─────────────────
-工作电压          │ 5V             │ 某些版本 3.3V
-输出类型          │ 模拟/数字      │ 分别配置 ADC/GPIO
-模拟输出范围      │ 0-1023 (10 bit)│ ADC 采样
-检测距离          │ 1-3 cm         │ 高度调节
-传感器数量        │ 8 路           │ 等距排列
-灵敏度调整        │ 电位器/寄存器  │ 根据光线调整
-```
-
-#### 步进电机参数
-
-```
-参数              │ 常见值         │ 备注
-─────────────────┼────────────────┼──────────────────
-工作电压          │ 5V 或 12V      │ 根据驱动模块
-线圈数            │ 4 相           │ ULN2003 标准
-单步角度          │ 5.625°         │ 每个完整周期 8 步
-每分钟步数        │ 可调 5-1000 rpm│ 延迟控制
-扭矩              │ 30-60 gcm      │ 无负载时最大
-最大相电流        │ 200-500 mA     │ 防过热设计
-```
-
-## 原理图符号速查
-
-### 常用器件符号解释
-
-| 器件 | 符号 | 功能 | 检查要点 |
-|------|------|------|--------|
-| 蜂鸣器 | ⟲ + 符号 | 声音提示 | 极性、驱动电流 |
-| LED | 三角 + 箭头 | 指示灯 | 亮度、限流电阻 |
-| 电容 | 两条平线 | 滤波、耦合 | 容值、耐压值 |
-| 电感 | 线圈 | 滤波 | 感值、饱和电流 |
-| 二极管 | 三角 + 竖线 | 整流、保护 | 极性、反向耐压 |
-| MOSFET | 特殊符号 | 开关、驱动 | 栅极驱动、通道类型 |
-
-## 常见参数转换
-
-### 电阻色环编码
-
-```
-棕-黑-红    = 1 kΩ
-橙-橙-黄    = 33 kΩ
-棕-黑-黑    = 10 Ω
-```
-
-### 电容标记
-
-```
-104     = 0.1 µF (10^4 pF)
-473     = 47 nF (47×10³ pF)
-107     = 100 µF (100×10⁶ pF)
-```
-
-### 二极管参数查询
-
-```
-1N4148: 快速开关二极管，Vr=100V
-1N4007: 整流二极管，Vr=1000V
-1N5819: 肖特基二极管，Vr=40V（续流用）
-```
-
-## 集成开发笔记
-
-### 硬件修改历史
-
-| 日期 | 修改内容 | 原因 | 审核 |
-|------|---------|------|------|
-| ____ | ________ | ____ | ____ |
-| ____ | ________ | ____ | ____ |
-
-### 已知 Issues
-
-- [ ] Issue 1: _________________
-- [ ] Issue 2: _________________
-- [ ] Issue 3: _________________
-
-### 优化建议
-
-- 建议 1: _________________
-- 建议 2: _________________
-
-## 相关资源链接
-
-### 官方文档
-- [ST 微电子](https://www.st.com)
-- [ARM Cortex-M4](https://developer.arm.com)
-- [IEEE 754 浮点](https://en.wikipedia.org/wiki/IEEE_754)
-
-### 社区资源
-- [STM32 论坛](https://community.st.com)
-- [Arduino 论坛](https://forum.arduino.cc)
-- [嵌入式系统论坛](https://www.edaboard.com)
-
-### 工具软件
-- STM32CubeMX：配置工具
-- OpenOCD：调试器
-- ST-Link Utility：烧录工具
-
-## 使用说明
-
-1. **查阅数据手册**：按上表索引，快速找到相关章节
-2. **离线参考**：复制速查表到项目笔记
-3. **更新维护**：发现错误或遗漏，及时更新本文件
-4. **团队协作**：新成员首先阅读本文件了解硬件
+- PCB 设计教程：[`tutorials/pcb/`](../tutorials/pcb/)
+- 串口调试教程：[`tutorials/serial/`](../tutorials/serial/)
+- 硬件配置文件：[`HARDWARE_CONFIG.md`](../HARDWARE_CONFIG.md)
+- 硬件设置指南：[`HARDWARE_SETUP.md`](../HARDWARE_SETUP.md)
+- 传感器集成指南：[`SENSOR_INTEGRATION.md`](../SENSOR_INTEGRATION.md)
 
 ---
 
-**最后更新**：__________  
-**维护人**：__________  
-**下次审查**：__________
+> 本文档索引了 `.claude/docs/` 目录下所有实际存在的硬件文档文件。

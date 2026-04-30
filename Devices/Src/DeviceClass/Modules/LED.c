@@ -57,7 +57,8 @@ static inline void LED_WritePin(LED_t *led, uint8_t on)
         pin_state = (on) ? GPIO_PIN_RESET : GPIO_PIN_SET;
     }
 
-    HAL_GPIO_WritePin(led->port, led->pin, pin_state);
+    /* port 和 pin 继承自基类 ModuleBase_t */
+    HAL_GPIO_WritePin(led->base.port, led->base.pin, pin_state);
 }
 
 /* ==================== 虚函数实现 ==================== */
@@ -74,8 +75,8 @@ static int LED_init(void *self)
 {
     LED_t *led = (LED_t *)self;
 
-    /* 参数完整性检查 */
-    if ((led->port == NULL) || (led->pin == 0)) {
+    /* 参数完整性检查（port/pin 继承自基类）*/
+    if ((led->base.port == NULL) || (led->base.pin == 0)) {
         return -1;
     }
 
@@ -206,14 +207,15 @@ void LED_Constructor(LED_t *self, GPIO_TypeDef *port, uint16_t pin, uint8_t acti
     /* 1. 调用基类构造函数 */
     ModuleBase_Constructor(&self->base, "LED");
 
-    /* 2. 初始化 LED 子类特有成员 */
-    self->port        = port;
-    self->pin         = pin;
+    /* 2. 设置 GPIO 端口和引脚到基类属性中 */
+    ModuleBase_SetPinPort(&self->base, port, pin);
+
+    /* 3. 初始化 LED 子类特有成员 */
     self->active_high = active_high;
     self->state       = LED_STATE_OFF;
     self->brightness  = LED_PWM_MAX_BRIGHTNESS;
 
-    /* 3. 替换为子类虚函数表 */
+    /* 4. 替换为子类虚函数表 */
     self->base.vtable = &led_vtable;
 }
 

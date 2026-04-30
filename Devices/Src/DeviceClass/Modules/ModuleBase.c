@@ -101,18 +101,21 @@ static const ModuleVTable_t default_vtable = {
   * @param  name  模块名称字符串（仅保存指针，不拷贝）
   * @note   name 指向的字符串必须在模块生命周期内有效。
   *         推荐使用字符串常量（如 "LED"、"KEY"），而非局部变量。
+  *         port 和 pin 初始化为 NULL/0，需通过 ModuleBase_SetPinPort() 设置。
   */
-void ModuleBase_Constructor(ModuleBase_t *self, const char *name)
-{
-    if (self == NULL) {
-        return;  /* 防止空指针写入 */
-    }
-
-    /* 指向默认虚函数表，子类可在构造后替换 */
-    self->vtable      = &default_vtable;
-    self->name        = name;
-    self->initialized = 0;
-}
+ void ModuleBase_Constructor(ModuleBase_t *self, const char *name)
+ {
+     if (self == NULL) {
+         return;  /* 防止空指针写入 */
+     }
+ 
+     /* 指向默认虚函数表，子类可在构造后替换 */
+     self->vtable      = &default_vtable;
+     self->name        = name;
+     self->initialized = 0;
+     self->port        = NULL;
+     self->pin         = 0;
+ }
 
 /**
   * @brief  模块析构函数
@@ -226,6 +229,24 @@ int ModuleBase_Cleanup(ModuleBase_t *self)
     self->initialized = 0;
 
     return ret;
+}
+
+/**
+  * @brief  设置模块的 GPIO 端口和引脚
+  * @param  self  指向模块基类对象的指针
+  * @param  port  GPIO 端口（如 GPIOC）
+  * @param  pin   GPIO 引脚（如 GPIO_PIN_0）
+ * @note   所有子类共用的属性设置接口。
+ *         子类构造函数中应调用此方法建立硬件关联。
+ */
+void ModuleBase_SetPinPort(ModuleBase_t *self, GPIO_TypeDef *port, uint16_t pin)
+{
+    if (self == NULL) {
+        return;
+    }
+
+    self->port = port;
+    self->pin  = pin;
 }
 
 /**

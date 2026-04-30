@@ -26,8 +26,9 @@
   - 方向1: _____ (GPIO_PIN___)  
   - 方向2: _____ (GPIO_PIN___)  
   - PWM: _____ (TIM_CHANNEL_)  
-- **数据手册**: `.claude/docs/datasheets/motor-model.pdf`  
-- **原理图**: `.claude/docs/schematics/motor-driver-board.pdf`  
+- **数据手册**: `.claude/docs/datasheets/TB6612FNG Datasheet.pdf`  
+- **驱动板原理图**: `.claude/docs/schematics/TK-TB6612-MD220A V1.0.pdf`  
+- **编码器电机手册**: `.claude/docs/datasheets/塔克创新 l MC310编码器电机用户手册 V1.0.0.pdf`  
 
 ---
 
@@ -38,13 +39,13 @@
 - **工作电压**: 3.3V / 5V ____  
 - **采样率**: _____ Hz (推荐 100-200 Hz)  
 - **GPIO 映射**:
-  - SCL: _____ (I2C3_SCL)  
-  - SDA: _____ (I2C3_SDA)  
+  - SCL: _____ (I2Cx_SCL)  
+  - SDA: _____ (I2Cx_SDA)  
   - INT (可选): _____ (GPIO)  
 - **I2C 速率**: 100 kHz / 400 kHz / 1 MHz ____  
 - **应用**: 姿态控制 / 运动检测 / 其他 ________________  
-- **数据手册**: `.claude/docs/datasheets/mpu6050.pdf`  
-- **原理图**: `.claude/docs/schematics/mpu6050-interface.pdf`  
+- **数据手册**: `.claude/docs/datasheets/PS-MPU-6000A.pdf` (寄存器映射)  
+- **应用笔记**: `.claude/docs/datasheets/RM-MPU-6000A.pdf`  
 
 ---
 
@@ -61,8 +62,9 @@
 - **检测距离**: _____ mm  
 - **黑线/白线阈值**: _____ (ADC 值)  
 - **应用**: 循迹 / 路径识别 / 其他 ________________  
-- **数据手册**: `.claude/docs/datasheets/grayscale-sensor.pdf`  
-- **原理图**: `.claude/docs/schematics/grayscale-circuit.pdf`  
+- **用户手册**: `.claude/docs/datasheets/亚博智能灰度循迹模块用户入门手册.pdf`  
+- **数据读取指南**: `.claude/docs/datasheets/循迹模块数据读取.pdf`  
+- **循迹算法**: `.claude/docs/datasheets/循迹模块小车巡线.pdf`  
 
 ---
 
@@ -92,9 +94,10 @@
 - **步进延迟**: _____ ms per step (推荐 2-10 ms)  
 - **最高速度**: _____ RPM (计算: 60000 / (step_delay_ms × steps_per_rev))  
 - **应用**: 位置控制 / 旋转拨盘 / 其他 ________________  
-- **数据手册**: `.claude/docs/datasheets/stepper-motor.pdf`  
-- **驱动IC数据手册**: `.claude/docs/datasheets/uln2003-datasheet.pdf` 或相应型号  
-- **原理图**: `.claude/docs/schematics/stepper-driver.pdf`  
+- **步进电机规格**: `.claude/docs/datasheets/28BYJ48规格书.doc`  
+- **驱动IC英文手册**: `.claude/docs/datasheets/ULN2003英文数据手册.pdf`  
+- **驱动IC中文手册**: `.claude/docs/datasheets/ULN2003中文数据手册.pdf`  
+- **驱动板原理图**: `.claude/docs/schematics/步进电机驱动板原理图.pdf`  
 
 ---
 
@@ -111,7 +114,8 @@
   - 电机驱动: 1000 µF  
 - **地回路**: 共地是否完整? ☐ 是 ☐ 否  
 - **散热**: 需要散热片? ☐ 是 ☐ 否  
-- **数据手册**: `.claude/docs/schematics/power-supply.pdf`  
+- **稳压器1手册**: `.claude/docs/datasheets/RT8289GSP.PDF`  
+- **稳压器2手册**: `.claude/docs/datasheets/RT9013-33GB.PDF`  
 
 ---
 
