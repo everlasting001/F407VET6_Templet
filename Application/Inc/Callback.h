@@ -1,0 +1,16 @@
+#ifndef __CALLBACK_H__
+#define __CALLBACK_H__
+
+#include "main.h"
+
+/* 定时分频标志（由 TIM2 1ms 中断设置，应用层查询并清除）*/
+extern volatile uint8_t Flag_1ms;
+extern volatile uint8_t Flag_10ms;
+extern volatile uint8_t Flag_100ms;
+extern volatile uint8_t Flag_500ms;
+extern volatile uint8_t Flag_1000ms;
+
+void Callback_Init(void);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+
+#endif

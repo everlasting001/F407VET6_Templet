@@ -1,0 +1,11 @@
+#ifndef __TASK_TEST_H__
+#define __TASK_TEST_H__
+
+#include "Config.h"
+#include "bsp_headers.h"
+
+void Task_Init(void);
+void Task_Data_Collection(void);
+void Task_Serial_Vofa(void);
+
+#endif
