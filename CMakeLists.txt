@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Device layer
     Devices/Src/DeviceClass/Modules/ModuleBase.c # 模块基类
     Devices/Src/DeviceClass/Modules/LED.c # LED模块
+    Devices/Src/DeviceClass/Modules/Buzzer.c # Buzzer模块
 
     #application layer
     Application/Src/TestProgram/LedTest.c
