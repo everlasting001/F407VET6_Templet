@@ -1,5 +1,6 @@
 #include "ModuleBase.h"     /* 模块基类：Init / Run / Cleanup 等公有接口 */
 #include "LED.h"            /* LED 子类：On / Off / Toggle / SetBrightness */
+#include "main.h"           /* HAL 硬件定义：LED1_Pin, LED1_GPIO_Port */
 
 /**
   * @brief LED1 实例（板载 LED：PC0，高电平点亮）
@@ -19,7 +20,15 @@ typedef enum {
 static LED_DemoPhase_t demo_phase = LED_DEMO_BLINK;
 static uint32_t phase_start_tick = 0;   /* 当前阶段起始时刻 */
 
+/* ==================== 中断回调相关状态 ==================== */
+
+static volatile uint8_t irq_led_toggle_flag = 0;  /* ISR 触发 LED 翻转标志 */
+
+/* ==================== 前向声明 ==================== */
+
 static void LED_Demo_Update(LED_t *led);
+
+/* ==================== 演示状态机实现 ==================== */
 
 /**
   * @brief  LED 功能演示状态机
@@ -103,67 +112,116 @@ static void LED_Demo_Update(LED_t *led)
     }
 }
 
-void LED_Test(void){
-    /*
-   * =============================================
-   *  LED 模块初始化
-   * =============================================
-   * 接线信息：
-   *   - LED1: PC0, GPIO_PIN_0, 高电平点亮
-   *   - 该引脚已在 MX_GPIO_Init() 中配置为推挽输出
-   *
-   * 初始化流程（与 ModuleBase 规范一致）：
-   *   1. LED_Constructor -- 构造子类对象，注册虚函数表
-   *   2. ModuleBase_Init  -- 通过 vtable 调用 LED_init，
-   *                          验证引脚合法性并初始熄灭
-   */
-  LED_Constructor(&led1, LED1_GPIO_Port, LED1_Pin, 1);  /* 构造：PC0, 高电平亮 */
-  if (ModuleBase_Init((ModuleBase_t *)&led1) != 0) {
-      Error_Handler();   /* 初始化失败（如端口/引脚参数无效） */
-  }
+/* ==================== 三分法测试函数 ==================== */
 
-  /* 记录演示起始时间 */
-  phase_start_tick = HAL_GetTick();
-    while(1){
-    /*
-        * =============================================
-        *  1. 非阻塞软件 PWM 刷新（必须周期性调用）
-        * =============================================
-        *
-        * ModuleBase_Run() 通过虚函数表调用 LED_run()，
-        * 后者基于 HAL_GetTick() 计算 PWM 相位，
-        * 实时调整 GPIO 输出电平以维持目标亮度。
-        *
-        * 若不调用此函数，亮度 < 100% 时将无法维持 PWM 波形。
-        * 调用频率建议 >= 200Hz（即周期 <= 5ms），
-        * 以保证 10ms PWM 周期有足够的刷新分辨率。
-        */
-        ModuleBase_Run((ModuleBase_t *)&led1);
-        /*
-        * =============================================
-        *  2. LED 演示状态机更新（每循环一次）
-        * =============================================
-        *
-        * 依次演示以下功能（每阶段 5 秒，循环）：
-        *   - LED_Toggle()        : 开关翻转
-        *   - LED_SetBrightness() : 亮度 0->100（渐亮）
-        *   - LED_SetBrightness() : 亮度 100->0（渐灭）
-        *   - LED_SetBrightness() : 固定 50%（稳态 PWM）
-        */
-        LED_Demo_Update(&led1);
-        /*
-        * =============================================
-        *  3. 其他周期任务（如按键检测、传感器读取等）
-        * =============================================
-        *
-        * 示例：检测 KEY1（PC1，低电平有效）
-        * 按键按下时切换 LED 开关状态：
-        *
-        * if (HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET) {
-        *     HAL_Delay(20);  // 消抖
-        *     LED_Toggle(&led1);
-        *     while (HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin) == GPIO_PIN_RESET);
-        * }
-        */
+/**
+  * @brief  LED_Test_Init — 第1部分：初始化
+  *
+  * @note   运行位置：main() 中 USER CODE BEGIN 2 区域
+  *         调用时机：外设初始化完成后，while(1) 主循环之前
+  *         调用频率：仅一次
+  *
+  * @note   接线信息：
+  *         - LED1: PC0, GPIO_PIN_0, 高电平点亮
+  *         - 该引脚已在 MX_GPIO_Init() 中配置为推挽输出
+  *
+  * @note   初始化流程（与 ModuleBase 规范一致）：
+  *         1. LED_Constructor -- 构造子类对象，注册虚函数表
+  *         2. ModuleBase_Init  -- 通过 vtable 调用 LED_init，
+  *                                验证引脚合法性并初始熄灭
+  */
+void LED_Test_Init(void)
+{
+    LED_Constructor(&led1, LED1_GPIO_Port, LED1_Pin, 1);  /* 构造：PC0, 高电平亮 */
+    if (ModuleBase_Init((ModuleBase_t *)&led1) != 0) {
+        Error_Handler();   /* 初始化失败（如端口/引脚参数无效）*/
     }
+
+    /* 记录演示起始时间 */
+    phase_start_tick = HAL_GetTick();
+}
+
+/**
+  * @brief  LED_Test_Loop — 第2部分：主循环
+  *
+  * @note   运行位置：main() 中 USER CODE BEGIN 3 区域
+  *         调用时机：while(1) 主循环中每个周期
+  *         调用频率：周期性（循环迭代速率）
+  *
+  * @note   包含三个周期任务：
+  *         1. ModuleBase_Run()     — 非阻塞软件 PWM 刷新（必须周期性调用）
+  *         2. LED_Demo_Update()    — 演示状态机更新（每循环一次）
+  *         3. ISR 标志检测         — 处理中断回调设置的 LED 翻转请求
+  */
+void LED_Test_Loop(void)
+{
+    /*
+     * =============================================
+     *  1. 非阻塞软件 PWM 刷新（必须周期性调用）
+     * =============================================
+     *
+     * ModuleBase_Run() 通过虚函数表调用 LED_run()，
+     * 后者基于 HAL_GetTick() 计算 PWM 相位，
+     * 实时调整 GPIO 输出电平以维持目标亮度。
+     *
+     * 若不调用此函数，亮度 < 100% 时将无法维持 PWM 波形。
+     * 调用频率建议 >= 200Hz（即周期 <= 5ms），
+     * 以保证 10ms PWM 周期有足够的刷新分辨率。
+     */
+    ModuleBase_Run((ModuleBase_t *)&led1);
+
+    /*
+     * =============================================
+     *  2. LED 演示状态机更新（每循环一次）
+     * =============================================
+     *
+     * 依次演示以下功能（每阶段 5 秒，循环）：
+     *   - LED_Toggle()        : 开关翻转
+     *   - LED_SetBrightness() : 亮度 0->100（渐亮）
+     *   - LED_SetBrightness() : 亮度 100->0（渐灭）
+     *   - LED_SetBrightness() : 固定 50%（稳态 PWM）
+     */
+    LED_Demo_Update(&led1);
+
+    /*
+     * =============================================
+     *  3. ISR 标志检测 — 中断驱动的 LED 控制
+     * =============================================
+     *
+     * 当 KEY1 按下时（EXIT 中断中设置 irq_led_toggle_flag），
+     * 主循环检测到标志后切换 LED 开关状态。
+     * 这种 "ISR 设标志 + 主循环处理" 的模式保证了中断快速返回。
+     */
+    if (irq_led_toggle_flag) {
+        irq_led_toggle_flag = 0;
+        LED_Toggle(&led1);
+    }
+}
+
+/**
+  * @brief  LED_Test_IRQHandler — 第3部分：中断回调
+  *
+  * @note   运行位置：Callback.c 的中断回调函数中
+  *         调用时机：由硬件中断触发（如 GPIO EXTI 按键中断）
+  *         调用频率：取决于中断频率
+  *
+  * @note   中断安全规则：
+  *         - 本函数仅设置标志位，不调用阻塞 API
+  *         - 实际的 LED 操作在 LED_Test_Loop() 中由主循环执行
+  *         - 保持 ISR 快速返回
+  *
+  * @note   使用示例（在 Callback.c 中）：
+  *         void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+  *             if (GPIO_Pin == KEY1_Pin) {
+  *                 LED_Test_IRQHandler();
+  *             }
+  *         }
+  */
+void LED_Test_IRQHandler(void)
+{
+    /*
+     * 中断安全：仅设置标志位。
+     * 主循环 LED_Test_Loop() 检测到此标志后执行实际的 LED 操作。
+     */
+    irq_led_toggle_flag = 1;
 }
