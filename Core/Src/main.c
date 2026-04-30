@@ -75,6 +75,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+  LED_Test_Init();   /* LED 测试：第1部分 — 初始化（构造对象、模块初始化）*/
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -82,7 +83,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  LED_Test();
+  LED_Test_Loop();   /* LED 测试：第2部分 — 主循环（周期刷新、状态机更新）*/
   /* USER CODE END 3 */
 }
 
