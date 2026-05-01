@@ -27,12 +27,12 @@
   *
   * // 1. 定义并构造编码器对象
   * Encoder_t left_enc;
-  * Encoder_Constructor(&left_enc, &htim1, 0);  // 左电机, TIM1
+  * Encoder_Constructor(&left_enc, &htim1, 0, -1);  // 左电机, TIM1, 极性反转
   *
   * // 2. 通过基类接口初始化
   * SensorBase_Init((SensorBase_t *)&left_enc);
   *
-  * // 3. 周期性更新（在定时中断中调用，周期 40ms）
+  * // 3. 周期性更新（在 TIM2 全局定时器 ISR 中软件分频调用，40ms）
   * SensorBase_Run((SensorBase_t *)&left_enc);
   *
   * // 4. 读取编码器数据
@@ -86,10 +86,10 @@ typedef struct Encoder_s {
     SensorBase_t       base;             /**< 基类（必须为第一个成员）*/
     TIM_HandleTypeDef  *tim_handle;      /**< TIM 句柄指针（编码器模式）*/
     uint8_t            motor_index;      /**< 电机索引 (0=左, 1=右) */
+    int8_t             polarity;         /**< 极性校正 (+1=正常, -1=反转)，补偿 A/B 相接线差异 */
 
     /* 脉冲计数 */
-    int16_t            current_cnt;      /**< 当前 TIM 计数器值 */
-    int16_t            last_cnt;         /**< 上次 TIM 计数器值 */
+    uint16_t           last_cnt;         /**< 上次 TIM 计数器原始值 (无符号，用于回绕安全减法) */
     int32_t            pulse_diff;       /**< 本次脉冲差（带符号）*/
     int64_t            total_pulse;      /**< 累计脉冲数 */
 
@@ -112,7 +112,7 @@ typedef struct Encoder_s {
   * @param  tim_handle   编码器模式 TIM 句柄指针
   * @param  motor_index  电机索引（0=左电机, 1=右电机）
   */
-void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t motor_index);
+void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t motor_index, int8_t polarity);
 
 /**
   * @brief  获取当前转速

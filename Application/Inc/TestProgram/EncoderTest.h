@@ -22,7 +22,7 @@ void Encoder_Test_Loop(void);
 /**
   * @brief  编码器测试 — 第3部分：中断回调
   * @note   运行于 Callback.c 的 HAL_TIM_PeriodElapsedCallback 中，
-  *         由 TIM2 全局定时器中断触发（周期 40ms / 25Hz）。
+  *         由 TIM2 全局定时器中断中软件分频触发（40ms / 25Hz）。
   *         负责：调用 SensorBase_Run 更新编码器读数。
   *         保持快速执行，仅调用 Run 和设置标志位。
   *

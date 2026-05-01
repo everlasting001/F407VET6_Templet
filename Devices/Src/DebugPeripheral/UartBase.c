@@ -110,8 +110,13 @@ int UartBase_SendDMA(UartBase_t *self, const uint8_t *data, uint16_t len)
     if (!self->initialized)
         return -1;
 
+    if (len > sizeof(self->tx_buffer)) {
+        len = (uint16_t)sizeof(self->tx_buffer);
+    }
+
     self->tx_busy = 1;
-    if (HAL_UART_Transmit_DMA(self->huart, (uint8_t *)data, len) != HAL_OK) {
+    memcpy(self->tx_buffer, data, len);
+    if (HAL_UART_Transmit_DMA(self->huart, self->tx_buffer, len) != HAL_OK) {
         self->tx_busy = 0;
         return -1;
     }

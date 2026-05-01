@@ -15,9 +15,9 @@
   * 右电机编码器: TIM8_CH1 (PC6) + TIM8_CH2 (PC7)
   *
   * === 中断配置 ===
-  * TIM2 全局定时器: 40ms 周期中断 (25Hz)
-  * 在 CubeMX 中配置 TIM2 为 40ms 周期，
-  * 在 NVIC 中启用 TIM2 全局中断。
+  * TIM2 全局定时器: 基准中断，在 ISR 中软件计数分频出 40ms (25Hz)
+  * 在 CubeMX 中配置 TIM2 为全局定时器基准，
+  * 在 NVIC 中启用 TIM2 全局中断，40ms 更新周期由软件分频实现。
   ******************************************************************************
   */
 
@@ -26,17 +26,6 @@
 #include "Encoder.h"
 #include "main.h"
 #include "DebugPrintf.h"
-
-/* ==================== 测试状态定义 ==================== */
-
-/**
-  * @brief 编码器测试演示阶段
-  */
-typedef enum {
-    ENC_DEMO_NORMAL,        /**< 阶段1：正常运转，实时显示数据 */
-    ENC_DEMO_CLEAR_DATA,    /**< 阶段2：演示数据清零（模拟转弯后重新计数）*/
-    ENC_DEMO_HARD_RESET,    /**< 阶段3：演示完全复位 */
-} EncDemoPhase_t;
 
 /* ==================== 全局实例 ==================== */
 
@@ -49,9 +38,6 @@ static Encoder_t left_encoder;
 static Encoder_t right_encoder;
 
 /* ==================== 演示状态机变量 ==================== */
-
-static EncDemoPhase_t demo_phase        = ENC_DEMO_NORMAL;
-static uint32_t       phase_start_tick  = 0;
 
 /* 中断计数（验证中断频率）*/
 static volatile uint32_t irq_call_count = 0;
@@ -74,9 +60,6 @@ static void Encoder_Demo_Update(void);
   */
 static void Encoder_Demo_Update(void)
 {
-    uint32_t now     = HAL_GetTick();
-    uint32_t elapsed = now - phase_start_tick;
-
     /* ========== 按键标志处理 ========== */
 
     if (flag_clear_data) {
@@ -114,17 +97,17 @@ static void Encoder_Demo_Update(void)
   *
   * @note   前置条件：
   *         - TIM1 和 TIM8 已在 CubeMX 中配置为 Encoder Mode (TI1+TI2)
-  *         - TIM2 已在 CubeMX 中配置为 40ms 周期中断
+  *         - TIM2 已在 CubeMX 中配置为全局定时器基准，40ms 由软件分频实现
   *         - htim1、htim2、htim8 在 tim.c 中已生成
   *         - SystemClock_Config() 和 MX_GPIO_Init() 已调用
   */
 void Encoder_Test_Init(void)
 {
-    /* 构造左编码器（TIM1, 索引 0）*/
-    Encoder_Constructor(&left_encoder, &htim1, 0);
+    /* 构造左编码器（TIM1, 索引 0, 极性反转：A/B 相接反）*/
+    Encoder_Constructor(&left_encoder, &htim1, 0, -1);
 
-    /* 构造右编码器（TIM8, 索引 1）*/
-    Encoder_Constructor(&right_encoder, &htim8, 1);
+    /* 构造右编码器（TIM8, 索引 1, 极性正常）*/
+    Encoder_Constructor(&right_encoder, &htim8, 1, +1);
 
     /* 通过基类接口初始化（内部调用 Encoder_init 虚函数）*/
     if (SensorBase_Init((SensorBase_t *)&left_encoder) != 0) {
@@ -134,8 +117,6 @@ void Encoder_Test_Init(void)
         Error_Handler();
     }
 
-    /* 记录演示起始时间 */
-    phase_start_tick = HAL_GetTick();
 }
 
 /**
@@ -150,7 +131,7 @@ void Encoder_Test_Init(void)
   *
   * @note   Run() 不在此处调用。
   *         编码器数据由 Encoder_Test_IRQHandler 中的 SensorBase_Run 更新，
-  *         保证了 40ms 固定周期的精确时序。
+  *         保证了软件分频 40ms 固定周期的精确时序。
   *         此处仅负责数据显示和用户交互处理。
   */
 void Encoder_Test_Loop(void)
@@ -162,7 +143,7 @@ void Encoder_Test_Loop(void)
   * @brief  Encoder_Test_IRQHandler — 第3部分：中断回调
   *
   * @note   运行位置：Callback.c 的 HAL_TIM_PeriodElapsedCallback 中
-  *         调用时机：TIM2 全局定时器中断，每 40ms 触发一次
+  *         调用时机：TIM2 全局定时器中断中软件分频，每 40ms 触发一次
   *         调用频率：25Hz
   *
   * @note   中断安全规则：
@@ -185,7 +166,4 @@ void Encoder_Test_IRQHandler(void)
 
     /* 更新右编码器数据 */
     SensorBase_Run((SensorBase_t *)&right_encoder);
-
-    /* 中断调用计数（用于验证中断频率）*/
-    irq_call_count++;
 }

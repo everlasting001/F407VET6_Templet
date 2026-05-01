@@ -27,7 +27,7 @@
 ### CubeMX 配置
 
 1. **TIM1 / TIM8**：设置 Combined Channels 为 **Encoder Mode**，Polarity 为 Rising Edge
-2. **TIM2**：配置为 40ms 周期中断（PSC=16799, ARR=399 @168MHz → 25Hz），NVIC 启用 TIM2 全局中断
+2. **TIM2**：配置为全局定时器基准（如 1ms 周期中断），40ms 更新周期由 ISR 中软件计数分频实现，NVIC 启用 TIM2 全局中断
 3. **GPIO**：PE9/PE11、PC6/PC7 配置为 AF 模式（TIM1/TIM8）
 
 ## 架构设计
@@ -59,7 +59,7 @@ SensorBase_t (基类)
 
 ### 更新周期
 
-默认更新周期 40ms（25Hz），由 `Encoder_Constructor()` 自动设置，可通过 `base.update_period_ms` 修改。
+默认更新周期 40ms（25Hz），由 `Encoder_Constructor()` 自动设置，可通过 `base.update_period_ms` 修改。该 40ms 由 TIM2 全局定时器 ISR 中软件分频实现。
 
 ### 公式推导
 
@@ -95,7 +95,7 @@ TIM 编码器计数器为 16 位（0~65535）。每次读取通过 `(int16_t)__H
 Encoder_t left_enc;
 
 // 构造
-void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t motor_index);
+void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t motor_index, int8_t polarity);
 
 // 初始化（基类接口，通过 vtable 调用 Encoder_init）
 int SensorBase_Init(SensorBase_t *self);
@@ -171,15 +171,15 @@ Encoder_t right_enc;
 
 void setup(void) {
     // 构造
-    Encoder_Constructor(&left_enc,  &htim1, 0);  // 左电机, TIM1
-    Encoder_Constructor(&right_enc, &htim8, 1);  // 右电机, TIM8
+    Encoder_Constructor(&left_enc,  &htim1, 0, -1);  // 左电机, TIM1, 极性反转
+    Encoder_Constructor(&right_enc, &htim8, 1, +1);  // 右电机, TIM8
 
     // 初始化
     SensorBase_Init((SensorBase_t *)&left_enc);
     SensorBase_Init((SensorBase_t *)&right_enc);
 }
 
-// 在 40ms 定时中断中调用
+// 在 TIM2 全局定时器 ISR 中软件分频后调用（40ms 间隔）
 void TIM2_IRQ_Handler(void) {
     SensorBase_Run((SensorBase_t *)&left_enc);
     SensorBase_Run((SensorBase_t *)&right_enc);

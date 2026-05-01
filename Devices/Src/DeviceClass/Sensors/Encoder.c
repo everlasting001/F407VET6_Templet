@@ -51,22 +51,20 @@
 /**
   * @brief  读取 TIM 计数器并计算脉冲差
   * @note   利用 int16_t 强制转换自动处理 16 位计数器回绕。
-  *         更新周期 40ms，最大可检测脉冲变化 ±32767，
+  *         更新周期 40ms（TIM2 全局定时器 ISR 中软件分频），最大可检测脉冲变化 ±32767，
   *         对应转速约 ±1852 RPM，远大于电机额定 460 RPM。
   * @param  enc  指向编码器对象的指针（调用方保证非空）
   */
 static void Encoder_GetPulse(Encoder_t *enc)
 {
-    /* 1. 读取当前 TIM 计数器值，强制转换为 int16_t
-     *    原理：丢弃高 16 位，将低 16 位解释为有符号数
-     *    使 65535→0 的回绕自然变为 -1 而非跳变 */
-    enc->current_cnt = (int16_t)__HAL_TIM_GetCounter(enc->tim_handle);
+    /* 1. 读取当前 TIM 计数器原始值 */
+    uint16_t raw = __HAL_TIM_GetCounter(enc->tim_handle);
 
-    /* 2. 计算差值（有符号，自动处理回绕）*/
-    enc->pulse_diff = (int32_t)(enc->current_cnt - enc->last_cnt);
+    /* 2. 无符号减法自动处理 16 位回绕，再转有符号得到正确差值 */
+    enc->pulse_diff = (int32_t)((int16_t)(raw - enc->last_cnt)) * enc->polarity;
 
-    /* 3. 更新上次计数器值 */
-    enc->last_cnt = enc->current_cnt;
+    /* 3. 保存本次原始值，供下次减法使用 */
+    enc->last_cnt = raw;
 
     /* 4. 累加到总脉冲数 */
     enc->total_pulse += enc->pulse_diff;
@@ -125,7 +123,6 @@ static int Encoder_init(void *self)
 
     /* 清零所有数据和计数器 */
     __HAL_TIM_SetCounter(enc->tim_handle, 0);
-    enc->current_cnt     = 0;
     enc->last_cnt        = 0;
     enc->pulse_diff      = 0;
     enc->total_pulse     = 0;
@@ -178,7 +175,6 @@ static int Encoder_cleanup(void *self)
     }
 
     /* 清零所有数据 */
-    enc->current_cnt     = 0;
     enc->last_cnt        = 0;
     enc->pulse_diff      = 0;
     enc->total_pulse     = 0;
@@ -205,7 +201,6 @@ static void Encoder_reset(void *self)
     }
 
     /* 清零所有软件数据 */
-    enc->current_cnt     = 0;
     enc->last_cnt        = 0;
     enc->pulse_diff      = 0;
     enc->total_pulse     = 0;
@@ -236,7 +231,7 @@ static const SensorVTable_t encoder_vtable = {
   * @param  tim_handle   编码器模式 TIM 句柄指针
   * @param  motor_index  电机索引（0=左电机, 1=右电机）
   */
-void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t motor_index)
+void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t motor_index, int8_t polarity)
 {
     if (self == NULL) {
         return;
@@ -251,7 +246,7 @@ void Encoder_Constructor(Encoder_t *self, TIM_HandleTypeDef *tim_handle, uint8_t
     /* 3. 初始化编码器特有成员 */
     self->tim_handle      = tim_handle;
     self->motor_index     = motor_index;
-    self->current_cnt     = 0;
+    self->polarity        = polarity;
     self->last_cnt        = 0;
     self->pulse_diff      = 0;
     self->total_pulse     = 0;
@@ -332,7 +327,7 @@ int32_t Encoder_GetPulseDiff(const Encoder_t *self)
 /**
   * @brief  清零所有累积数据（保留硬件计数器运行）
   * @note   用于多段运动场景，仅清零软件累积值。
-  *         当前帧的 last_cnt 同步为 current_cnt，避免下一帧产生虚假差值。
+  *         当前帧的 last_cnt 同步到硬件计数器当前值，避免下一帧产生虚假差值。
   * @param  self  指向编码器对象的指针
   */
 void Encoder_ClearData(Encoder_t *self)
@@ -341,8 +336,10 @@ void Encoder_ClearData(Encoder_t *self)
         return;
     }
 
-    /* 同步 last_cnt，避免清零后下一帧产生虚假跳变 */
-    self->last_cnt        = self->current_cnt;
+    /* 同步 last_cnt 到当前硬件计数器，避免清零后产生虚假跳变 */
+    if (self->tim_handle != NULL) {
+        self->last_cnt    = __HAL_TIM_GetCounter(self->tim_handle);
+    }
     self->pulse_diff      = 0;
     self->total_pulse     = 0;
     self->rpm             = 0.0f;
@@ -368,7 +365,6 @@ void Encoder_HardReset(Encoder_t *self)
     }
 
     /* 清零所有软件数据 */
-    self->current_cnt     = 0;
     self->last_cnt        = 0;
     self->pulse_diff      = 0;
     self->total_pulse     = 0;
@@ -405,12 +401,12 @@ void Encoder_PrintInfo(Encoder_t *self, DebugPrintf_t *dbg, char label, uint8_t 
     self->last_print_tick = now;
 
     /* 格式化并发送，格式: "[L] RPM=123.4 Speed=456.7mm/s Dist=100.0mm Pulse=500 Diff=10" */
-    DebugPrintf_Print(dbg, "[%c] RPM=%.1f Speed=%.1fmm/s Dist=%.1fmm Pulse=%lld Diff=%ld%s",
+    DebugPrintf_Print(dbg, "[%c] RPM=%.1f Speed=%.1fmm/s Dist=%.1fmm Pulse=%ld Diff=%ld%s",
                       label,
                       (double)self->rpm,
                       (double)self->mmps,
                       (double)self->distance_mm,
-                      (long long)self->total_pulse,
+                      (long)(int32_t)self->total_pulse,
                       (long)self->pulse_diff,
                       is_last ? "" : "\r\n");
 }
@@ -437,25 +433,17 @@ void Encoder_PrintDualInfo(Encoder_t *left, Encoder_t *right, DebugPrintf_t *dbg
         return;
     }
     left->last_print_tick = now;
-
-    /* 第1行: 标题头（时间戳） */
-    DebugPrintf_Print(dbg, "=== Encoder t=%lu.%03lus ===\r\n",
+    DebugPrintf_Print(dbg, "=== Encoder t=%lu.%03lus ===\r\n[L] RPM=%.1f Speed=%.1fmm/s Dist=%.1fmm Pulse=%ld Diff=%ld\r\n[R] RPM=%.1f Speed=%.1fmm/s Dist=%.1fmm Pulse=%ld Diff=%ld",
                       (unsigned long)(now / 1000),
-                      (unsigned long)(now % 1000));
-
-    /* 左编码器行 */
-    DebugPrintf_Print(dbg, "[L] RPM=%.1f Speed=%.1fmm/s Dist=%.1fmm Pulse=%lld Diff=%ld\r\n",
+                      (unsigned long)(now % 1000),
                       (double)left->rpm,
                       (double)left->mmps,
                       (double)left->distance_mm,
-                      (long long)left->total_pulse,
-                      (long)left->pulse_diff);
-
-    /* 最后一行：无尾随 \r\n */
-    DebugPrintf_Print(dbg, "[R] RPM=%.1f Speed=%.1fmm/s Dist=%.1fmm Pulse=%lld Diff=%ld",
+                      (long)(int32_t)left->total_pulse,
+                      (long)left->pulse_diff,
                       (double)right->rpm,
                       (double)right->mmps,
                       (double)right->distance_mm,
-                      (long long)right->total_pulse,
+                      (long)(int32_t)right->total_pulse,
                       (long)right->pulse_diff);
 }

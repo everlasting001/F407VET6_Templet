@@ -15,6 +15,7 @@
 #include "StepperMotorTest.h"
 #include "DCMotorTest.h"
 #include "DebugPrintfTest.h"
+#include "EncoderTest.h"
 #include "Callback.h"
 /* USER CODE END Includes */
 
@@ -88,14 +89,16 @@ int main(void)
   // LED_Test_Init();
   // Key_Test_Init();
   // StepperMotor_Test_Init();
-  // DCMotor_Test_Init();
+  DCMotor_Test_Init();
+  Encoder_Test_Init();
   DebugPrintf_Test_Init();
   while(1){
   // StepperMotor_Test_Loop();
-  // DCMotor_Test_Loop();
+  DCMotor_Test_Loop();
   // Key_Test_Loop();
   // LED_Test_Loop();
-    DebugPrintf_Test_Loop();
+  Encoder_Test_Loop();
+  // DebugPrintf_Test_Loop();
   }
     /* USER CODE END WHILE */
 

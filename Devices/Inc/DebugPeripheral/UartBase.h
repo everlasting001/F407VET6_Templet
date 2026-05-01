@@ -65,6 +65,7 @@ typedef struct UartBase_s {
     volatile uint16_t    rx_len;         /**< 本次接收到的字节数（IDLE 时更新） */
     volatile uint8_t     rx_done;        /**< 接收完成标志（IDLE 事件后置1，主循环清零） */
     volatile uint8_t     tx_busy;        /**< DMA 发送忙标志（1=发送中，0=空闲） */
+    uint8_t              tx_buffer[256]; /**< DMA 发送缓冲区（避免栈缓冲区被覆盖） */
 } UartBase_t;
 
 /* ==================== 公有接口 ==================== */

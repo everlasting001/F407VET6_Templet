@@ -2,6 +2,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "UartBase.h"
+#include "EncoderTest.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -47,6 +48,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // StepperMotor_Test_IRQHandler();  /* 当前为空, DWT 已接管时序 */
         /* 软件分频计数器递增 */
         Cnt_10ms++;
+        Cnt_40ms++;
         Cnt_100ms++;
         Cnt_500ms++;
         Cnt_1000ms++;
@@ -60,13 +62,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 40ms 分频 */
         if (Cnt_40ms >= 40) {
             Flag_40ms = 1;
+            Encoder_Test_IRQHandler();
             Cnt_40ms = 0;
-            /* 更新左编码器数据 */
-            SensorBase_Run((SensorBase_t *)&left_encoder);
-
-            /* 更新右编码器数据 */
-            SensorBase_Run((SensorBase_t *)&right_encoder);
-
         }
 
         /* 100ms 分频 */
@@ -78,7 +75,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 500ms 分频 — LED 翻转测试 */
         if (Cnt_500ms >= 500) {
             Flag_500ms = 1;
-            LED_Test_IRQHandler();
+            // LED_Test_IRQHandler();
             Cnt_500ms = 0;
         }
 

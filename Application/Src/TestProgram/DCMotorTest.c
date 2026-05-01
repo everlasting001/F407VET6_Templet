@@ -86,7 +86,7 @@ void DCMotor_Test_Loop(void)
     Motor_Run(&g_left_motor.base);
     Motor_Run(&g_right_motor.base);
     DCMotor_SetSpeed(&g_left_motor, 500);
-    DCMotor_SetSpeed(&g_right_motor, 0);
+    DCMotor_SetSpeed(&g_right_motor, 500);
     // /* 2. 演示状态机: 每 5 秒切换阶段 */
     // uint32_t now     = HAL_GetTick();
     // uint32_t elapsed = now - s_phase_start_tick;
