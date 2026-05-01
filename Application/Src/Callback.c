@@ -1,8 +1,8 @@
 #include "Callback.h"
+#include "Init.h"
 #include "tim.h"
 #include "usart.h"
 #include "UartBase.h"
-#include "EncoderTest.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -44,7 +44,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         /* 1ms 基准标志 */
         Flag_1ms = 1;
-        Key_Test_IRQHandler();
+        // Key_Test_IRQHandler();
         // StepperMotor_Test_IRQHandler();  /* 当前为空, DWT 已接管时序 */
         /* 软件分频计数器递增 */
         Cnt_10ms++;
@@ -62,8 +62,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 40ms 分频 */
         if (Cnt_40ms >= 40) {
             Flag_40ms = 1;
-            Encoder_Test_IRQHandler();
-            MC_IRQ_Handler();
+            Framework_IRQHandler();
             Cnt_40ms = 0;
         }
 

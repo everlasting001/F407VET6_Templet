@@ -1,6 +1,5 @@
 #include "DebugPrintfTest.h"
 #include "DebugPrintf.h"
-#include "Callback.h"
 #include "dma.h"
 #include "main.h"
 #include <stdio.h>
@@ -19,7 +18,7 @@ static uint8_t dbg_rx_buffer[512];
 /**
  * @brief DebugPrintf 实例
  */
-DebugPrintf_t dbg_printf;
+static DebugPrintf_t dbg_printf;
 
 /* ==================== 演示状态机 ==================== */
 

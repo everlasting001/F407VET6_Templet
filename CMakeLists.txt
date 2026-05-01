@@ -61,13 +61,14 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
     # Framework layer
     Framework/Src/MoveControl.c # 运动控制
+    Framework/Src/Init.c # 初始化函数
 
     #application layer
     Application/Src/TestProgram/LedTest.c
     Application/Src/TestProgram/StepperMotorTest.c
     Application/Src/TestProgram/KeyTest.c
     Application/Src/TestProgram/DCMotorTest.c
-    Application/Src/TestProgram/DebugPrintfTest.c
+    # Application/Src/TestProgram/DebugPrintfTest.c
     Application/Src/TestProgram/EncoderTest.c
     Application/Src/Callback.c # 回调函数
 )
