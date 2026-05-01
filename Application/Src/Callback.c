@@ -1,5 +1,7 @@
 #include "Callback.h"
 #include "tim.h"
+#include "usart.h"
+#include "UartBase.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -71,5 +73,30 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             Flag_1000ms = 1;
             Cnt_1000ms = 0;
         }
+    }
+}
+
+/* ==================== UART 回调 ==================== */
+
+/**
+  * @brief  UART IDLE 接收事件回调
+  * @note   由 HAL_UART_IRQHandler 在 IDLE 中断时调用。
+  *         USART1 数据分发到 DebugPrintf 实例。
+  */
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    if (huart->Instance == USART1) {
+        UartBase_RxIdleCallback(&dbg_printf.uart, Size);
+    }
+}
+
+/**
+  * @brief  UART DMA 发送完成回调
+  * @note   由 HAL_DMA_IRQHandler 在 TX DMA 传输完成时调用。
+  */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        UartBase_TxCpltCallback(&dbg_printf.uart);
     }
 }

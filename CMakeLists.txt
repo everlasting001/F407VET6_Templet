@@ -53,12 +53,15 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DeviceClass/Motors/StepperMotor.c # 步进电机
     Devices/Src/DeviceClass/Motors/DCMotor.c # DC有刷电机
     Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
+    Devices/Src/DebugPeripheral/UartBase.c # UART基类
+    Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
 
     #application layer
     Application/Src/TestProgram/LedTest.c
     Application/Src/TestProgram/StepperMotorTest.c
     Application/Src/TestProgram/KeyTest.c
     Application/Src/TestProgram/DCMotorTest.c
+    Application/Src/TestProgram/DebugPrintfTest.c
     Application/Src/Callback.c # 回调函数
 )
 
