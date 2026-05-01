@@ -48,9 +48,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DeviceClass/Modules/ModuleBase.c # 模块基类
     Devices/Src/DeviceClass/Modules/LED.c # LED模块
     Devices/Src/DeviceClass/Modules/Buzzer.c # Buzzer模块
+    Devices/Src/DeviceClass/Modules/Key.c # Key模块
 
     #application layer
     Application/Src/TestProgram/LedTest.c
+    Application/Src/TestProgram/KeyTest.c
     Application/Src/Callback.c # 回调函数
 )
 

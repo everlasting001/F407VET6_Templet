@@ -39,7 +39,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         /* 1ms 基准标志 */
         Flag_1ms = 1;
-
+        Key_Test_IRQHandler();
         /* 软件分频计数器递增 */
         Cnt_10ms++;
         Cnt_100ms++;
@@ -61,14 +61,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 500ms 分频 — LED 翻转测试 */
         if (Cnt_500ms >= 500) {
             Flag_500ms = 1;
-            HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+            LED_Test_IRQHandler();
             Cnt_500ms = 0;
         }
 
-        /* 1000ms 分频 — Buzzer 翻转测试 */
+        /* 1000ms 分频*/
         if (Cnt_1000ms >= 1000) {
             Flag_1000ms = 1;
-            HAL_GPIO_TogglePin(BUZZER1_GPIO_Port, BUZZER1_Pin);
             Cnt_1000ms = 0;
         }
     }

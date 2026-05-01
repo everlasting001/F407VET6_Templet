@@ -63,6 +63,12 @@ void Error_Handler(void);
 #define KEY1_GPIO_Port GPIOC
 #define BUZZER1_Pin GPIO_PIN_2
 #define BUZZER1_GPIO_Port GPIOC
+#define KEY2_Pin GPIO_PIN_3
+#define KEY2_GPIO_Port GPIOC
+#define KEY3_Pin GPIO_PIN_0
+#define KEY3_GPIO_Port GPIOA
+#define KEY4_Pin GPIO_PIN_1
+#define KEY4_GPIO_Port GPIOA
 #define K230_TX_Pin GPIO_PIN_2
 #define K230_TX_GPIO_Port GPIOA
 #define K230_RX_Pin GPIO_PIN_3

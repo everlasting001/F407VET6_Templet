@@ -2,6 +2,9 @@
 #define __CALLBACK_H__
 
 #include "main.h"
+#include "LEDTest.h"
+#include "KeyTest.h"
+#include "BuzzerTest.h"
 
 /* 定时分频标志（由 TIM2 1ms 中断设置，应用层查询并清除）*/
 extern volatile uint8_t Flag_1ms;
