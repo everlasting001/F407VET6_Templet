@@ -88,9 +88,9 @@ int main(void)
     Key_Test_Loop();
   //   LED_Test_Loop();
   }
-  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
   /* USER CODE END 3 */
 }
 
