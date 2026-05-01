@@ -63,6 +63,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (Cnt_40ms >= 40) {
             Flag_40ms = 1;
             Encoder_Test_IRQHandler();
+            MC_IRQ_Handler();
             Cnt_40ms = 0;
         }
 

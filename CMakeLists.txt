@@ -57,6 +57,10 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
     Devices/Src/DebugPeripheral/UartBase.c # UART基类
     Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
+    Devices/Src/FilterAlgorithm/PID.c # PID控制算法
+
+    # Framework layer
+    Framework/Src/MoveControl.c # 运动控制
 
     #application layer
     Application/Src/TestProgram/LedTest.c
@@ -75,6 +79,10 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Inc/DeviceClass/Motors
     Devices/Inc/DeviceClass/Sensors
     Devices/Inc/DebugPeripheral
+    Devices/Inc/FilterAlgorithm
+
+    # Framework layer
+    Framework/Inc
 
     #application layer
     Application/Inc/TestProgram

@@ -91,7 +91,9 @@ int main(void)
   // StepperMotor_Test_Init();
   DCMotor_Test_Init();
   Encoder_Test_Init();
+  
   DebugPrintf_Test_Init();
+  
   while(1){
   // StepperMotor_Test_Loop();
   DCMotor_Test_Loop();
