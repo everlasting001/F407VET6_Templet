@@ -6,6 +6,7 @@
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
 volatile uint8_t Flag_10ms   = 0;
+volatile uint8_t Flag_40ms   = 0;
 volatile uint8_t Flag_100ms  = 0;
 volatile uint8_t Flag_500ms  = 0;
 volatile uint8_t Flag_1000ms = 0;
@@ -35,6 +36,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &htim2) {
         static uint16_t Cnt_10ms   = 0;
+        static uint16_t Cnt_40ms   = 0;
         static uint16_t Cnt_100ms  = 0;
         static uint16_t Cnt_500ms  = 0;
         static uint16_t Cnt_1000ms = 0;
@@ -53,6 +55,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (Cnt_10ms >= 10) {
             Flag_10ms = 1;
             Cnt_10ms = 0;
+        }
+
+        /* 40ms 分频 */
+        if (Cnt_40ms >= 40) {
+            Flag_40ms = 1;
+            Cnt_40ms = 0;
+            /* 更新左编码器数据 */
+            SensorBase_Run((SensorBase_t *)&left_encoder);
+
+            /* 更新右编码器数据 */
+            SensorBase_Run((SensorBase_t *)&right_encoder);
+
         }
 
         /* 100ms 分频 */

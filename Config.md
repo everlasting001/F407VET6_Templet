@@ -53,8 +53,8 @@
 3. Car Configuration
     ENCODER_LINE        13        // 编码器线数
     GEAR_RATIO          20.409f       // 减速比
-    MOTOR_COUNT        2        // 电机数量(左轮前进：逆时针转；右轮前进顺时针转)
-    PULSE_PER_ROUND    (ENCODER_LINE * 4 * GEAR_RATIO)  // 四倍频后单圈脉冲数（实际意义上的一圈）
+    MOTOR_COUNT        2        // 电机数量
+    PULSE_PER_ROUND    (ENCODER_LINE * 4 * GEAR_RATIO)  // 四倍频后单圈脉冲数   
     WHEEL_DIAMETER           65.0f    // 车轮直径(mm)
     WHEEL_CIRCUMFERENCE      (WHEEL_DIAMETER * 3.1415926f) // 车轮周长(mm)
     WHEEL_BASE_DISTANCE      125.0f   // 轮基距离(mm)

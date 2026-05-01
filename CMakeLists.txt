@@ -52,6 +52,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DeviceClass/Motors/MotorBase.c # 电机基类
     Devices/Src/DeviceClass/Motors/StepperMotor.c # 步进电机
     Devices/Src/DeviceClass/Motors/DCMotor.c # DC有刷电机
+    Devices/Src/DeviceClass/Sensors/SensorBase.c # 传感器基类
+    Devices/Src/DeviceClass/Sensors/Encoder.c # 编码器传感器
     Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
     Devices/Src/DebugPeripheral/UartBase.c # UART基类
     Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
@@ -62,6 +64,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Application/Src/TestProgram/KeyTest.c
     Application/Src/TestProgram/DCMotorTest.c
     Application/Src/TestProgram/DebugPrintfTest.c
+    Application/Src/TestProgram/EncoderTest.c
     Application/Src/Callback.c # 回调函数
 )
 
@@ -70,6 +73,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Device layer    
     Devices/Inc/DeviceClass/Modules
     Devices/Inc/DeviceClass/Motors
+    Devices/Inc/DeviceClass/Sensors
     Devices/Inc/DebugPeripheral
 
     #application layer
