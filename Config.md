@@ -58,3 +58,26 @@
     WHEEL_DIAMETER           65.0f    // 车轮直径(mm)
     WHEEL_CIRCUMFERENCE      (WHEEL_DIAMETER * 3.1415926f) // 车轮周长(mm)
     WHEEL_BASE_DISTANCE      125.0f   // 轮基距离(mm)
+4. LineSensor Configuration
+    这是一个八路灰度循迹传感器，传感器的8个探测通道间距为11.5mm
+    传感器通过片选引脚的方式给出各个通道的检测结果，且使用二进制比特位的方式表示片选
+    引脚配置：
+        AD0->PD12
+        AD1->PD13
+        AD2->PD14
+        OUT->PD11
+    gpio配置上AD0-AD2为推挽输出，对应通过更改传感器上对应的引脚来选择不同的通道
+    通道片选表：
+        从左到右8个通道：
+              AD2   AD1   AD0
+        CH1    0     0     0
+        CH2    0     0     1
+        CH3    0     1     0
+        CH4    0     1     1
+        CH5    1     0     0
+        CH6    1     0     1
+        CH7    1     1     0
+        CH8    1     1     1
+    gpio配置上OUT为输入，对应传感器的输出引脚，用于接收传感器的检测结果
+    使用方式是写一个for循环，每次循环选择一个通道，读取OUT引脚的电平，根据电平判断该通道是否被检测到
+5.
