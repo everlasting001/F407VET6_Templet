@@ -40,6 +40,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         /* 1ms 基准标志 */
         Flag_1ms = 1;
         Key_Test_IRQHandler();
+        // StepperMotor_Test_IRQHandler();  /* 当前为空, DWT 已接管时序 */
         /* 软件分频计数器递增 */
         Cnt_10ms++;
         Cnt_100ms++;

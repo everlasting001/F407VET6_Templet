@@ -12,6 +12,7 @@
 /* USER CODE BEGIN Includes */
 #include "LedTest.h"
 #include "KeyTest.h"
+#include "StepperMotorTest.h"
 #include "Callback.h"
 /* USER CODE END Includes */
 
@@ -83,9 +84,11 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   // LED_Test_Init();
-  Key_Test_Init();
+  // Key_Test_Init();
+  StepperMotor_Test_Init();
   while(1){
-    Key_Test_Loop();
+    StepperMotor_Test_Loop();
+    // Key_Test_Loop();
   //   LED_Test_Loop();
   }
     /* USER CODE END WHILE */

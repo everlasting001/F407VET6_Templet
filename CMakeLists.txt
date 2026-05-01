@@ -50,9 +50,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DeviceClass/Modules/Buzzer.c # Buzzer模块
     Devices/Src/DeviceClass/Modules/Key.c # Key模块
     Devices/Src/DeviceClass/Motors/MotorBase.c # 电机基类
+    Devices/Src/DeviceClass/Motors/StepperMotor.c # 步进电机
+    Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
 
     #application layer
     Application/Src/TestProgram/LedTest.c
+    Application/Src/TestProgram/StepperMotorTest.c
     Application/Src/TestProgram/KeyTest.c
     Application/Src/Callback.c # 回调函数
 )
@@ -62,6 +65,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Device layer    
     Devices/Inc/DeviceClass/Modules
     Devices/Inc/DeviceClass/Motors
+    Devices/Inc/DebugPeripheral
 
     #application layer
     Application/Inc/TestProgram
