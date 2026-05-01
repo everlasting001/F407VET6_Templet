@@ -133,6 +133,16 @@ int UartBase_StartRx(UartBase_t *self)
     self->rx_done = 0;
     self->rx_len  = 0;
 
+    /* 使能 IDLE 中断 (HAL_UARTEx_ReceiveToIdle_DMA 内部也会设置, 此处显式保证) */
+    __HAL_UART_ENABLE_IT(self->huart, UART_IT_IDLE);
+
+    /* 确保 NVIC 中断已使能 (MspInit 中已使能, 此处保险) */
+    if (self->huart->Instance == USART1) {
+        HAL_NVIC_EnableIRQ(USART1_IRQn);
+    } else if (self->huart->Instance == USART2) {
+        HAL_NVIC_EnableIRQ(USART2_IRQn);
+    }
+
     if (HAL_UARTEx_ReceiveToIdle_DMA(self->huart, self->rx_buffer,
                                      self->rx_buf_size) != HAL_OK) {
         return -1;
