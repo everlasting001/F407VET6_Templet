@@ -133,10 +133,8 @@ int UartBase_StartRx(UartBase_t *self)
     self->rx_done = 0;
     self->rx_len  = 0;
 
-    /* 使能 IDLE 中断 (HAL_UARTEx_ReceiveToIdle_DMA 内部也会设置, 此处显式保证) */
     __HAL_UART_ENABLE_IT(self->huart, UART_IT_IDLE);
 
-    /* 确保 NVIC 中断已使能 (MspInit 中已使能, 此处保险) */
     if (self->huart->Instance == USART1) {
         HAL_NVIC_EnableIRQ(USART1_IRQn);
     } else if (self->huart->Instance == USART2) {
@@ -150,14 +148,19 @@ int UartBase_StartRx(UartBase_t *self)
     return 0;
 }
 
+/* ==================== ISR 回调实现 ==================== */
+
 void UartBase_RxIdleCallback(UartBase_t *self, uint16_t len)
 {
-    if (self == NULL || len == 0) return;
+    if (self == NULL) return;
 
     self->rx_len  = len;
     self->rx_done = 1;
 
-    /* 重启动 DMA+IDLE 以持续接收下一帧 */
+    if (len > 0) {
+        UartBase_DataHandler(self, self->rx_buffer, len);
+    }
+
     UartBase_StartRx(self);
 }
 
@@ -165,4 +168,49 @@ void UartBase_TxCpltCallback(UartBase_t *self)
 {
     if (self == NULL) return;
     self->tx_busy = 0;
+}
+
+void UartBase_ErrorCallback(UartBase_t *self)
+{
+    if (self == NULL || self->huart == NULL) return;
+
+    __HAL_UART_CLEAR_FLAG(self->huart,
+        UART_FLAG_ORE | UART_FLAG_NE | UART_FLAG_FE | UART_FLAG_PE);
+    HAL_UART_DMAStop(self->huart);
+    UartBase_StartRx(self);
+    __HAL_UART_CLEAR_IDLEFLAG(self->huart);
+}
+
+/* ==================== 状态查询接口 ==================== */
+
+uint8_t UartBase_IsTxIdle(const UartBase_t *self)
+{
+    if (self == NULL) return 0;
+    return (self->tx_busy == 0) ? 1 : 0;
+}
+
+uint8_t UartBase_IsRxReady(const UartBase_t *self)
+{
+    if (self == NULL) return 0;
+    return self->rx_done;
+}
+
+void UartBase_ClearRxReady(UartBase_t *self)
+{
+    if (self == NULL) return;
+    self->rx_done = 0;
+}
+
+uint16_t UartBase_GetLastRxSize(const UartBase_t *self)
+{
+    if (self == NULL) return 0;
+    return self->rx_len;
+}
+
+/* ==================== 弱函数数据处理器 ==================== */
+
+__attribute__((weak)) void UartBase_DataHandler(UartBase_t *self,
+                                                 uint8_t *data, uint16_t len)
+{
+    UartBase_SendDMA(self, data, len);
 }

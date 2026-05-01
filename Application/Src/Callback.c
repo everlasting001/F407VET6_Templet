@@ -79,6 +79,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 /* ==================== UART 回调 ==================== */
 
 /**
+  * @brief  UART 普通 DMA 接收完成回调
+  * @note   在 IDLE 模式下不触发（由 HAL_UARTEx_RxEventCallback 替代）。
+  *         此回调占位，保留给非 IDLE 模式使用。
+  */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    (void)huart;
+}
+
+/**
   * @brief  UART IDLE 接收事件回调
   * @note   由 HAL_UART_IRQHandler 在 IDLE 中断时调用。
   *         USART1 数据分发到 DebugPrintf 实例。
@@ -98,5 +108,17 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
         UartBase_TxCpltCallback(&dbg_printf.uart);
+    }
+}
+
+/**
+  * @brief  UART 错误回调 — 自动恢复机制
+  * @note   由 HAL_UART_IRQHandler 在发生 ORE/NE/FE/PE 错误时调用。
+  *         清除错误标志并重启 DMA+IDLE 接收，确保系统继续工作。
+  */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1) {
+        UartBase_ErrorCallback(&dbg_printf.uart);
     }
 }

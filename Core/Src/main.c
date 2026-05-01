@@ -14,6 +14,7 @@
 #include "KeyTest.h"
 #include "StepperMotorTest.h"
 #include "DCMotorTest.h"
+#include "DebugPrintfTest.h"
 #include "Callback.h"
 /* USER CODE END Includes */
 

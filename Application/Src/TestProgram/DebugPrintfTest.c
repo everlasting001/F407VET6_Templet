@@ -4,6 +4,7 @@
 #include "dma.h"
 #include "main.h"
 #include <stdio.h>
+#include <string.h>
 
 extern DMA_HandleTypeDef hdma_usart1_rx;
 
@@ -22,36 +23,59 @@ DebugPrintf_t dbg_printf;
 
 /* ==================== 演示状态机 ==================== */
 
-/* 周期打印相关 */
 static uint32_t last_print_tick = 0;
 static uint32_t print_counter   = 0;
 
-/* 命令行接收缓冲区 */
+/* ==================== 十六进制 dump 演示数据 ==================== */
+
+// static const uint8_t demo_data[] = {
+//     0xFF, 0x0A, 0x00, 0x3C, 0x1A, 0x2B, 0x00, 0x00,
+//     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+// };
 
 /* ==================== 状态机实现 ==================== */
 
 static void Dbg_Demo_Update(DebugPrintf_t *dbg)
 {
-    uint32_t now = HAL_GetTick();
+    // uint32_t now = HAL_GetTick();
 
-    /*
-     * =============================================
-     *  阶段1：周期性打印（每 1 秒一次）
-     * =============================================
-     * 演示 DebugPrintf_Print 格式化输出：
-     *  - 打印运行计数
-     *  - 打印 UART 寄存器状态（诊断 RX）
-     */
-    // if (now - last_print_tick >= 1000) {
+    // /*
+    //  * =============================================
+    //  *  阶段1：周期性打印（每 2 秒一次）
+    //  * =============================================
+    //  * 演示三种输出方式：
+    //  *  - DebugPrintf_Print   → 带 [s.ms] 时间戳
+    //  *  - printf              → _write() 重定向到 USART1
+    //  *  - DEBUG_INFO 宏       → [INFO] 级别标签
+    //  */
+    // if (now - last_print_tick >= 2000) {
     //     last_print_tick = now;
     //     print_counter++;
+
+    //     /* 方式1: DebugPrintf_Print — 带时间戳 */
     //     DebugPrintf_Print(dbg,
-    //         "[%lu] T=%lu SR=0x%08lX CR1=0x%08lX DMA_C=%lu\r\n",
-    //         (unsigned long)print_counter,
+    //         "Tick=%lu SR=0x%08lX CR1=0x%08lX\r\n",
     //         (unsigned long)now,
     //         (unsigned long)USART1->SR,
-    //         (unsigned long)USART1->CR1,
-    //         (unsigned long)__HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
+    //         (unsigned long)USART1->CR1);
+
+    //     /* 方式2: printf — 通过 _write() 重定向 */
+    //     printf("  [printf] counter=%lu, DMA_C=%lu\r\n",
+    //            (unsigned long)print_counter,
+    //            (unsigned long)__HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
+
+    //     /* 方式3: 调试级别宏 */
+    //     DEBUG_INFO("Periodic report #%lu\r\n", (unsigned long)print_counter);
+
+    //     /* 方式4: HexDump — 每 2 次报告输出一次 */
+    //     if (print_counter % 2 == 0) {
+    //         DebugPrintf_HexDump(dbg, "DEMO", demo_data, sizeof(demo_data));
+    //     }
+
+    //     /* 方式5: 状态查询 — 检查 TX 空闲 */
+    //     if (!UartBase_IsTxIdle(&dbg->uart)) {
+    //         DEBUG_WARN("TX still busy at report time\r\n");
+    //     }
     // }
 
     /*
@@ -89,7 +113,7 @@ static void Dbg_Demo_Update(DebugPrintf_t *dbg)
   * @note   初始化流程：
   *         1. DebugPrintf_Constructor — 构造子类对象，注册 VTable
   *         2. DebugPrintf_Init — 启动 DMA+IDLE 接收
-  *         3. 打印启动信息
+  *         3. 打印启动信息（演示多种输出方式）
   */
 void DebugPrintf_Test_Init(void)
 {
@@ -102,8 +126,9 @@ void DebugPrintf_Test_Init(void)
     last_print_tick = HAL_GetTick();
     print_counter   = 0;
 
+    /* 启动信息 — 演示多种输出方式 */
     DebugPrintf_Print(&dbg_printf,
-        "=== UART Test === Buf=%u Clk=%lu\r\n",
+        "=== UART Test === Buf=%u Clk=%lu ===\r\n",
         (unsigned int)sizeof(dbg_rx_buffer),
         (unsigned long)HAL_RCC_GetSysClockFreq());
 }
@@ -116,7 +141,7 @@ void DebugPrintf_Test_Init(void)
   *         调用频率：周期性
   *
   * @note   包含任务：
-  *         1. 周期性打印计数器（每秒）
+  *         1. 周期性打印（每 2 秒）— DebugPrintf_Print / printf / DEBUG_INFO / HexDump
   *         2. 接收数据回显（IDLE 触发）
   */
 void DebugPrintf_Test_Loop(void)
@@ -131,9 +156,10 @@ void DebugPrintf_Test_Loop(void)
   *
   * @note   RX 接收通过 HAL_UARTEx_RxEventCallback 自动触发
   *         UartBase_RxIdleCallback，无需在此额外处理。
+  *         TX 完成和 UART 错误也由 Callback.c 分发。
   *         此函数预留用于其他中断事件。
   */
 void DebugPrintf_Test_IRQHandler(void)
 {
-    /* UART RX 由 HAL_UARTEx_RxEventCallback 自动处理 */
+    /* UART RX/TX/Error 由 Callback.c 中 HAL 回调自动处理 */
 }

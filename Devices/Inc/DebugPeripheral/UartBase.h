@@ -146,6 +146,55 @@ void UartBase_RxIdleCallback(UartBase_t *self, uint16_t len);
   */
 void UartBase_TxCpltCallback(UartBase_t *self);
 
+/**
+  * @brief  UART 错误回调（由 HAL_UART_ErrorCallback 调用）
+  * @note   在 ISR 上下文中执行。清除 ORE/NE/FE/PE 错误标志，
+  *         停止 DMA，重启 IDLE 接收以确保系统能继续工作。
+  * @param  self  指向 UartBase_t 对象
+  */
+void UartBase_ErrorCallback(UartBase_t *self);
+
+/* ==================== 状态查询接口 ==================== */
+
+/**
+  * @brief  查询 TX 是否空闲
+  * @param  self  指向 UartBase_t 对象
+  * @retval 1 = 空闲, 0 = 忙或参数无效
+  */
+uint8_t UartBase_IsTxIdle(const UartBase_t *self);
+
+/**
+  * @brief  查询是否有新接收数据
+  * @param  self  指向 UartBase_t 对象
+  * @retval 1 = 有新数据, 0 = 无数据或参数无效
+  */
+uint8_t UartBase_IsRxReady(const UartBase_t *self);
+
+/**
+  * @brief  消费接收数据后清除标志
+  * @param  self  指向 UartBase_t 对象
+  */
+void UartBase_ClearRxReady(UartBase_t *self);
+
+/**
+  * @brief  获取上次接收的数据长度
+  * @param  self  指向 UartBase_t 对象
+  * @return 接收字节数（0 = 无数据或参数无效）
+  */
+uint16_t UartBase_GetLastRxSize(const UartBase_t *self);
+
+/* ==================== 弱函数数据处理器 ==================== */
+
+/**
+  * @brief  接收数据处理函数（弱函数，应用层可覆盖）
+  * @note   默认行为：回显接收到的数据。
+  *         应用层可在任意 .c 文件中重新定义此函数以覆盖默认行为。
+  * @param  self  指向 UartBase_t 对象
+  * @param  data  接收数据缓冲区
+  * @param  len   接收字节数
+  */
+void UartBase_DataHandler(UartBase_t *self, uint8_t *data, uint16_t len);
+
 #ifdef __cplusplus
 }
 #endif
