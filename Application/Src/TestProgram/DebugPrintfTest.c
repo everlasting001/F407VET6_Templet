@@ -1,8 +1,11 @@
 #include "DebugPrintfTest.h"
 #include "DebugPrintf.h"
 #include "Callback.h"
+#include "dma.h"
 #include "main.h"
 #include <stdio.h>
+
+extern DMA_HandleTypeDef hdma_usart1_rx;
 
 /* ==================== 全局实例 ==================== */
 
@@ -37,15 +40,18 @@ static void Dbg_Demo_Update(DebugPrintf_t *dbg)
      * =============================================
      * 演示 DebugPrintf_Print 格式化输出：
      *  - 打印运行计数
-     *  - 打印系统滴答
+     *  - 打印 UART 寄存器状态（诊断 RX）
      */
     if (now - last_print_tick >= 1000) {
         last_print_tick = now;
         print_counter++;
-        DebugPrintf_Print(dbg, "[%lu] Tick=%lu, Counter=%lu\r\n",
-                          (unsigned long)print_counter,
-                          (unsigned long)now,
-                          (unsigned long)print_counter);
+        DebugPrintf_Print(dbg,
+            "[%lu] T=%lu SR=0x%08lX CR1=0x%08lX DMA_C=%lu\r\n",
+            (unsigned long)print_counter,
+            (unsigned long)now,
+            (unsigned long)USART1->SR,
+            (unsigned long)USART1->CR1,
+            (unsigned long)__HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
     }
 
     /*
@@ -97,13 +103,9 @@ void DebugPrintf_Test_Init(void)
     print_counter   = 0;
 
     DebugPrintf_Print(&dbg_printf,
-                      "=== DebugPrintf Test Start ===\r\n");
-    DebugPrintf_Print(&dbg_printf,
-                      "RX Buffer: %u bytes\r\n",
-                      (unsigned int)sizeof(dbg_rx_buffer));
-    DebugPrintf_Print(&dbg_printf,
-                      "SystemClock: %lu Hz\r\n",
-                      (unsigned long)HAL_RCC_GetSysClockFreq());
+        "=== UART Test === Buf=%u Clk=%lu\r\n",
+        (unsigned int)sizeof(dbg_rx_buffer),
+        (unsigned long)HAL_RCC_GetSysClockFreq());
 }
 
 /**
