@@ -42,17 +42,17 @@ static void Dbg_Demo_Update(DebugPrintf_t *dbg)
      *  - 打印运行计数
      *  - 打印 UART 寄存器状态（诊断 RX）
      */
-    if (now - last_print_tick >= 1000) {
-        last_print_tick = now;
-        print_counter++;
-        DebugPrintf_Print(dbg,
-            "[%lu] T=%lu SR=0x%08lX CR1=0x%08lX DMA_C=%lu\r\n",
-            (unsigned long)print_counter,
-            (unsigned long)now,
-            (unsigned long)USART1->SR,
-            (unsigned long)USART1->CR1,
-            (unsigned long)__HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
-    }
+    // if (now - last_print_tick >= 1000) {
+    //     last_print_tick = now;
+    //     print_counter++;
+    //     DebugPrintf_Print(dbg,
+    //         "[%lu] T=%lu SR=0x%08lX CR1=0x%08lX DMA_C=%lu\r\n",
+    //         (unsigned long)print_counter,
+    //         (unsigned long)now,
+    //         (unsigned long)USART1->SR,
+    //         (unsigned long)USART1->CR1,
+    //         (unsigned long)__HAL_DMA_GET_COUNTER(&hdma_usart1_rx));
+    // }
 
     /*
      * =============================================
