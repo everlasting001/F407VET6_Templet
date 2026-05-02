@@ -47,7 +47,7 @@
 #define TASK1_ADJUST_DISTANCE_MM      60.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
-#define TASK1_BASE_PWM               400.0f
+#define TASK1_BASE_PWM               600.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK1_K_LINE                 100.0f
@@ -56,7 +56,7 @@
 #define TASK1_TURN_PWM               400.0f
 
 /** @brief 微调前进 PWM */
-#define TASK1_ADJUST_SPEED_PWM       300.0f
+#define TASK1_ADJUST_SPEED_PWM       320.0f
 
 /** @brief 状态打印间隔 (ms) */
 #define TASK1_PRINT_INTERVAL_MS      500U
@@ -107,6 +107,8 @@ void Task1_LineTrack_Init(void)
         (double)TASK1_BASE_PWM,
         (double)TASK1_K_LINE,
         (double)TASK1_TURN_PWM);
+    DebugPrintf_Print(&dbg_printf,
+        "  Initial Turn: 90 deg\r\n");
 
     last_print_tick = HAL_GetTick();
 }
@@ -148,9 +150,10 @@ void Task1_LineTrack_Loop(void)
     uint8_t edge = MoveControl_GetEdgeCount(&move_ctrl);
 
     static const char *state_names[] = {
-        "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE"
+        "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE",
+        "INITIAL_TURN"
     };
-    const char *sname = (move_ctrl.line_state < 5)
+    const char *sname = (move_ctrl.line_state < 6)
                         ? state_names[move_ctrl.line_state]
                         : "UNKNOWN";
 

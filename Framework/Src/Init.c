@@ -113,7 +113,15 @@ void Framework_Init(void)
     /* ==================== 6. MPU6050 陀螺仪 ==================== */
 
     Gyro_Constructor(&gyro, &hi2c1);
-    if (SensorBase_Init((SensorBase_t *)&gyro) == 0) {
+    int gyro_ret = SensorBase_Init((SensorBase_t *)&gyro);
+    if (gyro_ret != 0) {
+        /* 首次失败 → 重建对象并重试一次 */
+        DebugPrintf_Print(&dbg_printf,
+            "  Gyro: Init retry...\r\n");
+        Gyro_Constructor(&gyro, &hi2c1);
+        gyro_ret = SensorBase_Init((SensorBase_t *)&gyro);
+    }
+    if (gyro_ret == 0) {
         uint8_t id = Gyro_GetDeviceID(&gyro);
         DebugPrintf_Print(&dbg_printf,
             "  Gyro: MPU6050 ID=0x%02X OK\r\n", id);

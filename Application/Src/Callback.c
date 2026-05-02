@@ -172,3 +172,15 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
         Gyro_DMACpltCallback(&gyro);
     }
 }
+
+/**
+  * @brief  I2C 错误回调 — 恢复 DMA 忙标志防止永久卡死
+  * @note   当 I2C DMA 传输发生 NACK/总线错误/仲裁丢失时，
+  *         HAL 调用此回调。清除 gyro.dma_busy 使下一周期可重试。
+  */
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1) {
+        Gyro_ClearDMABusy(&gyro);
+    }
+}

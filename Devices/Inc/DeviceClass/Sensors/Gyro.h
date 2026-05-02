@@ -221,6 +221,13 @@ float Gyro_GetTemperature(const Gyro_t *self);
 uint8_t Gyro_IsStarted(const Gyro_t *self);
 
 /**
+  * @brief  清除 DMA 忙标志 (I2C 错误恢复)
+  * @note   在 HAL_I2C_ErrorCallback 中调用，防止 dma_busy 永久卡死。
+  * @param  self  指向陀螺仪对象的指针 (NULL 安全)
+  */
+void Gyro_ClearDMABusy(Gyro_t *self);
+
+/**
   * @brief  读取 MPU6050 设备 ID (WHO_AM_I)
   * @note   用于 I2C 总线诊断，确认设备在线。
   * @param  self  指向陀螺仪对象的指针

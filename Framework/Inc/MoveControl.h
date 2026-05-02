@@ -52,7 +52,8 @@ typedef enum {
     LINE_STATE_INTERSECTION_CONFIRM = 1,  /**< 疑似路口，连续确认中 */
     LINE_STATE_FORWARD_ADJUST      = 2,  /**< 路口确认，微调前进对齐轮轴 */
     LINE_STATE_TURNING             = 3,  /**< 直角转弯中 (陀螺仪 Yaw 闭环) */
-    LINE_STATE_EDGE_DONE           = 4   /**< 一条边完成，准备切换下一条边 */
+    LINE_STATE_EDGE_DONE           = 4,  /**< 一条边完成，准备切换下一条边 */
+    LINE_STATE_INITIAL_TURN        = 5   /**< 初始 90° 转弯 (对齐第一条线) */
 } LineTrackState_t;
 
 typedef struct {
@@ -99,6 +100,7 @@ typedef struct {
     uint8_t          intersection_threshold; /**< 路口确认阈值 (默认 5) */
     uint8_t          edge_count;        /**< 已完成边数 (0~3) */
     uint8_t          target_edges;      /**< 目标边数 (4 = 一圈) */
+    uint8_t          initial_turn_done; /**< 初始转弯完成标志 (1=已完成) */
 
     /* 直角转弯参数 */
     float            turn_target_yaw;   /**< 目标 Yaw 角 (°) */

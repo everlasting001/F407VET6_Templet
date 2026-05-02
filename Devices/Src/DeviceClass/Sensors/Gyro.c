@@ -79,15 +79,20 @@ static inline float Gyro_ApplyDeadband(float value, float threshold)
 /**
   * @brief  陀螺仪初始化虚函数 — 配置 MPU6050 寄存器
   * @note   执行 MPU6050 上电序列:
-  *          1. 唤醒设备 (PWR_MGMT_1 = 0x01)
-  *          2. 复位所有传感器 (PWR_MGMT_2 = 0x00)
-  *          3. 设置采样率分频 (SMPLRT_DIV = 4 → 200Hz)
-  *          4. 配置低通滤波器 (CONFIG = 0x06 → 42Hz)
-  *          5. 设置陀螺仪量程 (GYRO_CONFIG = 0x08 → ±500°/s)
-  *          6. 设置加速度计量程 (ACCEL_CONFIG = 0x00 → ±2g)
+  *          0. 等待 MPU6050 上电稳定 (30ms)
+  *          1. WHO_AM_I 预检 + 单次重试
+  *          2. 唤醒设备 (PWR_MGMT_1 = 0x01)
+  *          3. 复位所有传感器 (PWR_MGMT_2 = 0x00)
+  *          4. 设置采样率分频 (SMPLRT_DIV = 4 → 200Hz)
+  *          5. 配置低通滤波器 (CONFIG = 0x06 → 42Hz)
+  *          6. 设置陀螺仪量程 (GYRO_CONFIG = 0x08 → ±500°/s)
+  *          7. 设置加速度计量程 (ACCEL_CONFIG = 0x00 → ±2g)
+  *
+  *         寄存器写入带一次重试: 任意写入失败后延迟 10ms 重试整组。
   * @retval 0     成功
   * @retval -1    I2C 句柄无效
-  * @retval -2    寄存器写入失败
+  * @retval -2    设备未响应 (WHO_AM_I 失败)
+  * @retval -3    寄存器写入失败 (2 次尝试均失败)
   */
 static int Gyro_init(void *self)
 {
@@ -97,34 +102,59 @@ static int Gyro_init(void *self)
         return -1;
     }
 
-    /* 唤醒 MPU6050 (清除睡眠位) */
-    if (Gyro_WriteReg(gyro, MPU6050_PWR_MGMT_1, 0x01) != 0) {
+    /* MPU6050 上电稳定等待 */
+    HAL_Delay(30);
+
+    /* WHO_AM_I 预检: 确认设备在线，失败重试 1 次 */
+    uint8_t whoami;
+    int attempts;
+    for (attempts = 0; attempts < 2; attempts++) {
+        whoami = Gyro_GetDeviceID(gyro);
+        if (whoami == 0x68) break;
+        HAL_Delay(30);
+    }
+    if (whoami != 0x68) {
         return -2;
     }
 
-    /* 复位所有传感器 */
-    if (Gyro_WriteReg(gyro, MPU6050_PWR_MGMT_2, 0x00) != 0) {
-        return -2;
+    /* 寄存器配置: 带重试 (2 次尝试) */
+    int ret;
+    for (attempts = 0; attempts < 2; attempts++) {
+        /* 唤醒 MPU6050 (清除睡眠位) */
+        ret = Gyro_WriteReg(gyro, MPU6050_PWR_MGMT_1, 0x01);
+        if (ret != 0) goto reg_retry;
+
+        /* 复位所有传感器 */
+        ret = Gyro_WriteReg(gyro, MPU6050_PWR_MGMT_2, 0x00);
+        if (ret != 0) goto reg_retry;
+
+        /* 采样率 = 1kHz / (1 + SMPLRT_DIV) = 200Hz */
+        ret = Gyro_WriteReg(gyro, MPU6050_SMPLRT_DIV, 0x04);
+        if (ret != 0) goto reg_retry;
+
+        /* 低通滤波器 42Hz (DLPF_CFG=3) */
+        ret = Gyro_WriteReg(gyro, MPU6050_CONFIG, 0x06);
+        if (ret != 0) goto reg_retry;
+
+        /* 陀螺仪满量程 ±500°/s */
+        ret = Gyro_WriteReg(gyro, MPU6050_GYRO_CONFIG, GYRO_FS_SEL);
+        if (ret != 0) goto reg_retry;
+
+        /* 加速度计满量程 ±2g */
+        ret = Gyro_WriteReg(gyro, MPU6050_ACCEL_CONFIG, 0x00);
+        if (ret != 0) goto reg_retry;
+
+        /* 全部写入成功 */
+        break;
+
+    reg_retry:
+        if (attempts < 1) {
+            HAL_Delay(10);
+        }
     }
 
-    /* 采样率 = 1kHz / (1 + SMPLRT_DIV) = 200Hz */
-    if (Gyro_WriteReg(gyro, MPU6050_SMPLRT_DIV, 0x04) != 0) {
-        return -2;
-    }
-
-    /* 低通滤波器 42Hz (DLPF_CFG=3) */
-    if (Gyro_WriteReg(gyro, MPU6050_CONFIG, 0x06) != 0) {
-        return -2;
-    }
-
-    /* 陀螺仪满量程 ±500°/s */
-    if (Gyro_WriteReg(gyro, MPU6050_GYRO_CONFIG, GYRO_FS_SEL) != 0) {
-        return -2;
-    }
-
-    /* 加速度计满量程 ±2g */
-    if (Gyro_WriteReg(gyro, MPU6050_ACCEL_CONFIG, 0x00) != 0) {
-        return -2;
+    if (ret != 0) {
+        return -3;
     }
 
     /* 清零所有数据 */
@@ -410,6 +440,17 @@ uint8_t Gyro_IsStarted(const Gyro_t *self)
         return 0;
     }
     return self->flag_gyro_start;
+}
+
+/**
+  * @brief  清除 DMA 忙标志 (I2C 错误恢复)
+  * @note   在 HAL_I2C_ErrorCallback 中调用，防止 dma_busy 永久卡死。
+  *         仅清除软件标志，不影响硬件 DMA 状态。
+  */
+void Gyro_ClearDMABusy(Gyro_t *self)
+{
+    if (self == NULL) return;
+    self->dma_busy = 0;
 }
 
 /**

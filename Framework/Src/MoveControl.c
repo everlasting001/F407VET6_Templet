@@ -29,34 +29,34 @@
 #define DEFAULT_POS_KI            0.05f
 #define DEFAULT_POS_KD            0.06f
 #define DEFAULT_POS_INTEGRAL_LIM  200.0f
-#define DEFAULT_POS_OUTPUT_LIM    600.0f   /* RPM */
+#define DEFAULT_POS_OUTPUT_LIM    700.0f   /* RPM */
 
 /* 默认 PID 参数 (速度环: RPM→PWM)
    PWM 范围 0~2099, 电机最大转速约 300 RPM,
    kp=5 确保 100RPM 误差 → 500 PWM, kd 提供阻尼防振荡 */
-#define DEFAULT_VEL_KP            6.00f
+#define DEFAULT_VEL_KP            7.00f
 #define DEFAULT_VEL_KI            0.50f
 #define DEFAULT_VEL_KD            0.05f
 #define DEFAULT_VEL_INTEGRAL_LIM  400.0f
-#define DEFAULT_VEL_OUTPUT_LIM    1500.0f  /* PWM */
+#define DEFAULT_VEL_OUTPUT_LIM    1600.0f  /* PWM */
 
 /* 默认差速修正参数 (PID 控制: mm→RPM, mm/周期→RPM)
    I 项用于消除左右轮速度系统性差异导致的稳态距离偏差 */
-#define DEFAULT_BALANCE_KP        5.0f
+#define DEFAULT_BALANCE_KP        6.0f
 #define DEFAULT_BALANCE_KI        0.30f
 #define DEFAULT_BALANCE_KD        0.05f
 #define DEFAULT_BALANCE_INTEGRAL_LIM  300.0f
-#define DEFAULT_PWM_LIMIT         1500.0f
+#define DEFAULT_PWM_LIMIT         1600.0f
 
 /* 控制周期 (秒) */
 #define CONTROL_DT                0.04f
 
 /* 停止判定阈值 */
-#define STOP_POS_ERROR_MM         30.0f
+#define STOP_POS_ERROR_MM         20.0f
 #define STOP_BASE_VEL_RPM         3.0f
 
 /* 巡线默认参数 */
-#define DEFAULT_BASE_PWM          800.0f
+#define DEFAULT_BASE_PWM          1000.0f
 #define DEFAULT_K_LINE            100.0f
 #define DEFAULT_LINE_W0           -8.0f
 #define DEFAULT_LINE_W1           -2.0f
@@ -73,7 +73,7 @@
 #define DEFAULT_TURN_TOLERANCE          3.0f    /**< 转弯角度容差 (°) */
 #define DEFAULT_TURN_KP                 20.0f   /**< 转弯 P 增益 (PWM/°) */
 #define DEFAULT_ADJUST_DISTANCE_MM      80.0f   /**< 微调前进距离 (传感器到轮轴) */
-#define DEFAULT_ADJUST_SPEED_PWM        300.0f  /**< 微调前进 PWM */
+#define DEFAULT_ADJUST_SPEED_PWM        320.0f  /**< 微调前进 PWM */
 
 /* 直线循迹编码器反馈 */
 #define DEFAULT_LINE_ENCODER_KP         2.0f    /**< 编码器距离差→PWM 增益 */
@@ -82,7 +82,7 @@
 #define TURN_LINE_CHECK_YAW_DEG         20.0f   /**< 转弯后期循迹模块介入的 Yaw 误差阈值 (°) */
 
 /* 第 5 段边 (4 次转弯后最终接近) 慢速 PWM，确保精确停车 */
-#define DEFAULT_FINAL_SLOW_PWM          300.0f  /**< 最终段慢速循迹 PWM */
+#define DEFAULT_FINAL_SLOW_PWM          320.0f  /**< 最终段慢速循迹 PWM */
 
 /* ==================== 公有接口实现 ==================== */
 
@@ -151,6 +151,8 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->turn_kp                  = DEFAULT_TURN_KP;
     ctrl->adjust_distance_mm       = DEFAULT_ADJUST_DISTANCE_MM;
     ctrl->adjust_speed_pwm         = DEFAULT_ADJUST_SPEED_PWM;
+
+    ctrl->initial_turn_done = 0;
 
     ctrl->state          = MOVE_STATE_IDLE;
     ctrl->start_tick     = 0;
@@ -489,6 +491,70 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         }
         break;
 
+    /* ---- 状态 5: 初始 90° 转弯 (对齐第一条线) ---- */
+    case LINE_STATE_INITIAL_TURN: {
+        float current_yaw = 0.0f;
+        if (ctrl->gyro != NULL) {
+            current_yaw = Gyro_GetYaw(ctrl->gyro);
+        }
+
+        /* 若陀螺仪未启动 (无 DMA 数据), 使用固定时长死推算转弯 */
+        if (ctrl->gyro != NULL && !Gyro_IsStarted(ctrl->gyro)) {
+            /* 等待最多 500ms 让陀螺仪启动 */
+            if (HAL_GetTick() - ctrl->start_tick > 500U) {
+                /* 超时 → 以固定 PWM 转弯 1.5s 作为死推算 */
+                float dead_pwm = ctrl->turn_pwm * 0.6f;
+                DCMotor_SetSpeed(ctrl->motor_left,  -(int16_t)dead_pwm);
+                DCMotor_SetSpeed(ctrl->motor_right,  (int16_t)dead_pwm);
+                ctrl->line_left_pwm  = -dead_pwm;
+                ctrl->line_right_pwm =  dead_pwm;
+
+                if (HAL_GetTick() - ctrl->start_tick > 2000U) {
+                    DCMotor_Stop(ctrl->motor_left);
+                    DCMotor_Stop(ctrl->motor_right);
+                    ctrl->initial_turn_done = 1;
+                    ctrl->line_state = LINE_STATE_FOLLOWING;
+                }
+            }
+            break;
+        }
+
+        float yaw_error = ctrl->turn_target_yaw - current_yaw;
+
+        if (fabsf(yaw_error) <= ctrl->turn_tolerance) {
+            /* 初始转弯完成 → 停车, 清零 Yaw, 切换到循线模式 */
+            DCMotor_Stop(ctrl->motor_left);
+            DCMotor_Stop(ctrl->motor_right);
+
+            if (ctrl->gyro != NULL) {
+                Gyro_DisableIntegrate(ctrl->gyro);
+                Gyro_ResetYaw(ctrl->gyro);
+            }
+
+            ctrl->initial_turn_done = 1;
+            ctrl->line_state = LINE_STATE_FOLLOWING;
+        } else {
+            /* P 控制: 左轮反向、右轮正向 → 逆时针转弯 */
+            float turn_out = ctrl->turn_kp * yaw_error;
+            if (turn_out >  ctrl->turn_pwm) turn_out =  ctrl->turn_pwm;
+            if (turn_out < -ctrl->turn_pwm) turn_out = -ctrl->turn_pwm;
+
+            /* 保证最小转弯 PWM，克服静摩擦 */
+            if (turn_out > 0.0f && turn_out < 150.0f) turn_out = 150.0f;
+            if (turn_out < 0.0f && turn_out > -150.0f) turn_out = -150.0f;
+
+            float pwm_l = -turn_out;
+            float pwm_r =  turn_out;
+
+            ctrl->line_left_pwm  = pwm_l;
+            ctrl->line_right_pwm = pwm_r;
+
+            DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)pwm_l);
+            DCMotor_SetSpeed(ctrl->motor_right, (int16_t)pwm_r);
+        }
+        break;
+    }
+
     default:
         ctrl->line_state = LINE_STATE_FOLLOWING;
         break;
@@ -583,17 +649,17 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     ctrl->line_right_pwm = 0.0f;
     ctrl->line_ch_bits   = 0;
 
-    /* 初始化巡线状态机 */
-    ctrl->line_state         = LINE_STATE_FOLLOWING;
+    /* 初始化巡线状态机: 先执行初始 90° 转弯对齐第一条线 */
+    ctrl->line_state         = LINE_STATE_INITIAL_TURN;
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
-    ctrl->turn_target_yaw    = 0.0f;
+    ctrl->turn_target_yaw    = 90.0f;   /* 目标: 逆时针转 90° */
     ctrl->turn_start_yaw     = 0.0f;
 
-    /* 复位陀螺仪 Yaw，禁用积分 (直线循迹期间不积分) */
+    /* 启用陀螺仪积分用于初始转弯 */
     if (ctrl->gyro != NULL) {
-        Gyro_DisableIntegrate(ctrl->gyro);
         Gyro_ResetYaw(ctrl->gyro);
+        Gyro_EnableIntegrate(ctrl->gyro);
     }
 
     /* 复位编码器累积 (用于微调前进距离) */
@@ -665,16 +731,17 @@ void MoveControl_ResetLineTrack(MoveControl_t *ctrl)
 {
     if (ctrl == NULL) return;
 
-    ctrl->line_state         = LINE_STATE_FOLLOWING;
+    ctrl->line_state         = LINE_STATE_INITIAL_TURN;
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
-    ctrl->turn_target_yaw    = 0.0f;
+    ctrl->turn_target_yaw    = 90.0f;
     ctrl->turn_start_yaw     = 0.0f;
+    ctrl->initial_turn_done  = 0;
     ctrl->state              = MOVE_STATE_RUNNING;
 
     if (ctrl->gyro != NULL) {
-        Gyro_DisableIntegrate(ctrl->gyro);
         Gyro_ResetYaw(ctrl->gyro);
+        Gyro_EnableIntegrate(ctrl->gyro);
     }
     if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
     if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
