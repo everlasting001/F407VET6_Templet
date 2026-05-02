@@ -297,31 +297,26 @@ void Gyro_DMACpltCallback(Gyro_t *self)
     /* 清除忙标志 */
     self->dma_busy = 0;
 
-    /* 1. 解析 6 字节原始值 (大端: H << 8 | L) */
-    self->gyro_rx  = (int16_t)((self->dma_buf[0] << 8) | self->dma_buf[1]);
-    self->gyro_ry  = (int16_t)((self->dma_buf[2] << 8) | self->dma_buf[3]);
-    self->gyro_rz  = (int16_t)((self->dma_buf[4] << 8) | self->dma_buf[5]);
+    /* 1. 仅解析 Z 轴原始值 (dma_buf[4-5], 大端) */
+    self->gyro_rz = (int16_t)((self->dma_buf[4] << 8) | self->dma_buf[5]);
 
     /* 2. 转换为物理量 (°/s): raw / 32768 * 500 */
-    self->gyro_x = (float)self->gyro_rx / 32768.0f * 500.0f;
-    self->gyro_y = (float)self->gyro_ry / 32768.0f * 500.0f;
     self->gyro_z = (float)self->gyro_rz / 32768.0f * 500.0f;
 
     /* 首次数据就绪后开始积分 */
     self->flag_gyro_start = 1;
 
-    /* 3. 零漂门限滤波 */
-    float gx = Gyro_ApplyDeadband(self->gyro_x, self->zero_drift_threshold);
-    float gy = Gyro_ApplyDeadband(self->gyro_y, self->zero_drift_threshold);
+    /* 3. 零漂门限滤波 (仅 Z 轴) */
     float gz = Gyro_ApplyDeadband(self->gyro_z, self->zero_drift_threshold);
 
-    /* 4. 三轴欧拉积分: dt = 5ms */
+    /* 4. Z 轴角度积分: dt=5ms, |gz| < 1.25°/s 不计入积分 */
     float dt_s = MS_TO_SEC(self->base.update_period_ms > 0
                            ? self->base.update_period_ms
                            : GYRO_UPDATE_PERIOD_MS);
-    self->pitch += gx * dt_s;
-    self->roll  += gy * dt_s;
-    self->yaw   += gz * dt_s;
+    float abs_gz = (gz > 0.0f) ? gz : -gz;
+    if (abs_gz >= GYRO_INTEGRATION_THRESHOLD) {
+        self->yaw += gz * dt_s;
+    }
 }
 
 /**
@@ -428,7 +423,7 @@ uint8_t Gyro_GetDeviceID(Gyro_t *self)
 /**
   * @brief  打印陀螺仪信息（通过 DebugPrintf DMA 发送）
   * @note   内置 0.5s 速率限制（per-instance），避免刷屏。
-  *         格式: "channels:yaw,pitch,roll,gyro_z\n"
+  *         格式: "channels:yaw,gyro_z\n"
   *         符合 Vofa+ FireWater 协议多通道数据格式。
   */
 void Gyro_PrintInfo(Gyro_t *self, DebugPrintf_t *dbg)
@@ -445,9 +440,7 @@ void Gyro_PrintInfo(Gyro_t *self, DebugPrintf_t *dbg)
     }
     self->last_print_tick = now;
 
-    DebugPrintf_Print(dbg, "channels:%.2f,%.2f,%.2f,%.2f\r\n",
+    DebugPrintf_Print(dbg, "channels:%.2f,%.2f\r\n",
                       (double)self->yaw,
-                      (double)self->pitch,
-                      (double)self->roll,
                       (double)self->gyro_z);
 }
