@@ -80,9 +80,6 @@ void Framework_Init(void)
     /* 右电机: TIM3_CH2 (PA7) */
     DCMotor_Constructor(&right_motor, "Right_DCMotor", right_pins,
                         &htim3, TIM_CHANNEL_2);
-    /* 极性反转: 右电机物理接线导致正转命令实际反转，
-       设置 polarity=-1 交换 AIN1/AIN2 逻辑以补偿硬件反接 */
-    right_motor.polarity = -1;
     Motor_Init(&right_motor.base);
 
     DebugPrintf_Print(&dbg_printf,

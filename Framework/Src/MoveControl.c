@@ -24,25 +24,25 @@
 #include <math.h>
 
 /* 默认 PID 参数 (位置环: 距离→RPM) */
-#define DEFAULT_POS_KP            0.30f
+#define DEFAULT_POS_KP            1.00f
 #define DEFAULT_POS_KI            0.05f
-#define DEFAULT_POS_KD            0.30f
+#define DEFAULT_POS_KD            0.06f
 #define DEFAULT_POS_INTEGRAL_LIM  200.0f
-#define DEFAULT_POS_OUTPUT_LIM    200.0f   /* RPM */
+#define DEFAULT_POS_OUTPUT_LIM    600.0f   /* RPM */
 
 /* 默认 PID 参数 (速度环: RPM→PWM)
    PWM 范围 0~2099, 电机最大转速约 300 RPM,
    kp=5 确保 100RPM 误差 → 500 PWM, kd 提供阻尼防振荡 */
-#define DEFAULT_VEL_KP            5.00f
-#define DEFAULT_VEL_KI            2.00f
-#define DEFAULT_VEL_KD            4.00f
-#define DEFAULT_VEL_INTEGRAL_LIM  500.0f
+#define DEFAULT_VEL_KP            6.00f
+#define DEFAULT_VEL_KI            0.50f
+#define DEFAULT_VEL_KD            0.05f
+#define DEFAULT_VEL_INTEGRAL_LIM  400.0f
 #define DEFAULT_VEL_OUTPUT_LIM    1500.0f  /* PWM */
 
 /* 默认差速修正参数 (PD 控制: mm→RPM, mm/周期→RPM) */
-#define DEFAULT_BALANCE_KP        0.50f
-#define DEFAULT_BALANCE_KD        1.00f
-#define DEFAULT_PWM_LIMIT         1500.0f
+#define DEFAULT_BALANCE_KP        1.6f
+#define DEFAULT_BALANCE_KD        0.02f
+#define DEFAULT_PWM_LIMIT         1000.0f
 
 /* 控制周期 (秒) */
 #define CONTROL_DT                0.04f
