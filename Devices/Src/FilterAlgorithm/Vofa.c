@@ -131,16 +131,15 @@ void Vofa_SendTelemetry(void)
   *         复用 UartBase 的 rx_buffer，不启动自己的 DMA。
   *         仅快速解析 Key:Value 字符串，不调用阻塞 API。
   */
-void Vofa_IRQHandler(UartBase_t *uart)
+void Vofa_IRQHandler(UartBase_t *uart, uint16_t size)
 {
-    if (uart == NULL) return;
-    if (uart->rx_len == 0 || uart->rx_len >= uart->rx_buf_size) return;
-    if (uart->rx_buffer == NULL) return;
+    if (uart == NULL || uart->rx_buffer == NULL) return;
+    if (size == 0 || size >= uart->rx_buf_size) return;
 
-    /* 在 ISR 中仅查找冒号来快速过滤: 非 Vofa 下行命令则跳过 */
     uint8_t *data = uart->rx_buffer;
-    uint16_t len  = uart->rx_len;
+    uint16_t len  = size;
 
+    /* 快速过滤: 无冒号则非 Vofa 下行命令，跳过 */
     uint8_t has_colon = 0;
     for (uint16_t i = 0; i < len; i++) {
         if (data[i] == ':') {

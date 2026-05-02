@@ -110,8 +110,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == USART1) {
+        Vofa_IRQHandler(&dbg_printf.uart, Size);
         UartBase_RxIdleCallback(&dbg_printf.uart, Size);
-        Vofa_IRQHandler(&dbg_printf.uart);
     }
 }
 

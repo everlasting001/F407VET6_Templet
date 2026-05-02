@@ -41,6 +41,6 @@
 
 void Vofa_Init(UartBase_t *uart, MoveControl_t *ctrl);
 void Vofa_SendTelemetry(void);
-void Vofa_IRQHandler(UartBase_t *uart);
+void Vofa_IRQHandler(UartBase_t *uart, uint16_t size);
 
 #endif /* __VOFA_H__ */

@@ -105,18 +105,6 @@ int main(void)
         last_vofa = now;
         Vofa_SendTelemetry();
       }
-
-      /* 每 500ms 打印一次调试文本 */
-      static uint32_t last_print = 0;
-      if (now - last_print >= 500) {
-        last_print = now;
-        float avg = MoveControl_GetAvgDistance(&move_ctrl);
-        float err = MoveControl_GetPositionError(&move_ctrl);
-        DebugPrintf_Print(&dbg_printf,
-          "Dist=%.1f/%.0f Err=%.1f %s\r\n",
-          (double)avg, (double)move_ctrl.target_mm, (double)err,
-          MoveControl_IsComplete(&move_ctrl) ? "DONE" : "");
-      }
     }
   }
     /* USER CODE END WHILE */
