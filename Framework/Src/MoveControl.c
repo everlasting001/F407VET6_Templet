@@ -137,7 +137,11 @@ void MoveControl_Update(MoveControl_t *ctrl)
     }
 
     /* ---- 4. 差速修正 P：dist_diff * Kp → 转向修正量 (RPM) ---- */
-    float dist_diff = dis_r - dis_l;
+    /* 编码器极性归一化: 左(-1)右(+1) → 正转前进时 dis_r>0, dis_l<0,
+       直接用 dis_r-dis_l 会把符号相反的差值放大为正反馈。
+       分别乘各自极性后再做差，消除接线差异导致的符号反转。 */
+    float dist_diff = (dis_r * ctrl->encoder_right->polarity)
+                    - (dis_l * ctrl->encoder_left->polarity);
     float turn_correction = dist_diff * ctrl->balance_kp;
 
     /* ---- 5. 左轮速度环：base_vel + turn_correction → PWM ---- */
