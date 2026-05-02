@@ -2,10 +2,12 @@
 #include "Init.h"
 #include "tim.h"
 #include "usart.h"
+#include "i2c.h"
 #include "UartBase.h"
 #include "SensorBase.h"
 #include "Vofa.h"
 #include "LineSensor.h"
+#include "Gyro.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -66,6 +68,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             SensorBase_Run((SensorBase_t *)&line_sensor);
             MoveControl_LineTrackUpdate(&move_ctrl);
             Cnt_2ms = 0;
+        }
+
+        /* 5ms 分频 — 陀螺仪 I2C DMA 触发 (200Hz) */
+        if (Cnt_5ms >= 5) {
+            SensorBase_Run((SensorBase_t *)&gyro);
+            Cnt_5ms = 0;
         }
 
         /* 10ms 分频 */
@@ -148,5 +156,19 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
         UartBase_ErrorCallback(&dbg_printf.uart);
+    }
+}
+
+/* ==================== I2C 回调 ==================== */
+
+/**
+  * @brief  I2C DMA 接收完成回调
+  * @note   由 HAL_DMA_IRQHandler 在 I2C DMA 传输完成时调用。
+  *         分发到 Gyro_DMACpltCallback 处理陀螺仪三轴数据。
+  */
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1) {
+        Gyro_DMACpltCallback(&gyro);
     }
 }

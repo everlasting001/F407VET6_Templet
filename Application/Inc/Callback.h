@@ -19,5 +19,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size);
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart);
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart);
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c);
 
 #endif

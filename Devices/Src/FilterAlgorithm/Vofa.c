@@ -231,8 +231,8 @@ void Vofa_SendLineTrackTelemetry(void)
 
 /**
   * @brief  发送陀螺仪遥测数据帧 (FireWater CSV 格式, 非阻塞 DMA)
-  * @note   调用频率: 5Hz (每 200ms)。
-  *         4 通道: yaw, gyro_z, temperature, zero_drift_threshold
+  * @note   调用频率: 10Hz (每 100ms)。
+  *         3 通道: yaw, roll, pitch (欧拉角 °)
   *         使用前缀 "Gyro:" 与主遥测帧区分。
   */
 void Vofa_SendGyroTelemetry(void)
@@ -240,14 +240,13 @@ void Vofa_SendGyroTelemetry(void)
     if (vofa_gyro == NULL || vofa_uart == NULL) return;
 
     float yaw   = Gyro_GetYaw(vofa_gyro);
-    float gz    = Gyro_GetGyroZ(vofa_gyro);
-    float temp  = Gyro_GetTemperature(vofa_gyro);
-    float drift = vofa_gyro->zero_drift_threshold;
+    float roll  = Gyro_GetRoll(vofa_gyro);
+    float pitch = Gyro_GetPitch(vofa_gyro);
 
     char tx_buf[VOFA_TX_BUF_SIZE];
     int len = snprintf(tx_buf, sizeof(tx_buf),
-        "Gyro:%.2f,%.2f,%.1f,%.2f\r\n",
-        (double)yaw, (double)gz, (double)temp, (double)drift);
+        "Gyro:%.2f,%.2f,%.2f\r\n",
+        (double)yaw, (double)roll, (double)pitch);
 
     if (len > 0 && len < (int)sizeof(tx_buf)) {
         UartBase_SendStr(vofa_uart, tx_buf);

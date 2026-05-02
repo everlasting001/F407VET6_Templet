@@ -4,6 +4,7 @@
 #include "tim.h"
 #include "SensorBase.h"
 #include "MotorBase.h"
+#include "Vofa.h"
 
 /* ==================== 电机引脚配置 ==================== */
 

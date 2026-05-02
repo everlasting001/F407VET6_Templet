@@ -29,7 +29,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LINE_TRACK_MODE  1   /* 0=位置控制, 1=巡线控制 */
+#define LINE_TRACK_MODE    1   /* 0=位置控制, 1=巡线控制 */
+#define GYRO_DEBUG_PRINT   1   /* 0=仅Vofa遥测, 1=仅串口打印, 2=同时启用 */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,7 +61,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
   /* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------    ----------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -116,14 +117,20 @@ int main(void)
       }
     }
 
-    /* 陀螺仪更新: 每 200ms (5Hz) 读取 MPU6050 + 发送遥测
-       (使用阻塞 HAL I2C，不可放在 ISR 中) */
+    /* 陀螺仪遥测/打印: 每 200ms (5Hz)
+       DMA 读取由 TIM2 ISR 5ms 分频独占触发 (200Hz)，此处仅读取结果输出 */
     static uint32_t last_gyro = 0;
     uint32_t now = HAL_GetTick();
     if (now - last_gyro >= 200) {
       last_gyro = now;
-      SensorBase_Run((SensorBase_t *)&gyro);
+#if GYRO_DEBUG_PRINT == 0
       Vofa_SendGyroTelemetry();
+#elif GYRO_DEBUG_PRINT == 1
+      Gyro_PrintInfo(&gyro, &dbg_printf);
+#else
+      Vofa_SendGyroTelemetry();
+      Gyro_PrintInfo(&gyro, &dbg_printf);
+#endif
     }
   }
     /* USER CODE END WHILE */
