@@ -93,7 +93,7 @@ int main(void)
   Framework_Init();
   MoveControl_SetDistanceTarget(&move_ctrl, 600.0f);  // 前进 600mm
   while(1){
-    
+    Framework_Run();
   // StepperMotor_Test_Loop();
   // DCMotor_Test_Loop();
   // // Key_Test_Loop();
