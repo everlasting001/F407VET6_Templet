@@ -57,14 +57,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
     Devices/Src/DebugPeripheral/UartBase.c # UART基类
     Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
+    Devices/Src/FilterAlgorithm/PID.c # PID控制器
 
-    #application layer
-    Application/Src/TestProgram/LedTest.c
-    Application/Src/TestProgram/StepperMotorTest.c
-    Application/Src/TestProgram/KeyTest.c
-    Application/Src/TestProgram/DCMotorTest.c
-    Application/Src/TestProgram/DebugPrintfTest.c
-    Application/Src/TestProgram/EncoderTest.c
+    # Framework layer
+    Framework/Src/MoveControl.c # 运动控制系统
+    Framework/Src/Init.c # 全局初始化
+
+    # Application layer
     Application/Src/Callback.c # 回调函数
 )
 
@@ -75,6 +74,10 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Inc/DeviceClass/Motors
     Devices/Inc/DeviceClass/Sensors
     Devices/Inc/DebugPeripheral
+    Devices/Inc/FilterAlgorithm
+
+    # Framework layer
+    Framework/Inc
 
     #application layer
     Application/Inc/TestProgram

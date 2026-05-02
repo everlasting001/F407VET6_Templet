@@ -13,13 +13,10 @@ extern DMA_HandleTypeDef hdma_usart1_rx;
 /**
  * @brief 调试串口 DMA 接收缓冲区
  * @note  必须为全局数组，DMA 在后台持续访问
+ * @note  dbg_printf 实例已迁移到 Framework/Src/Init.c，
+ *        测试代码直接引用全局实例。
  */
 static uint8_t dbg_rx_buffer[512];
-
-/**
- * @brief DebugPrintf 实例
- */
-DebugPrintf_t dbg_printf;
 
 /* ==================== 演示状态机 ==================== */
 
