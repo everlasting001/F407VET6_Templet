@@ -168,7 +168,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
   */
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1) {
+    if (hi2c->Instance == I2C2) {
         Gyro_DMACpltCallback(&gyro);
     }
 }
@@ -180,7 +180,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
   */
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1) {
+    if (hi2c->Instance == I2C2) {
         Gyro_ClearDMABusy(&gyro);
     }
 }

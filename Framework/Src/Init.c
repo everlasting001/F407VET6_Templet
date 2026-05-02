@@ -112,13 +112,13 @@ void Framework_Init(void)
 
     /* ==================== 6. MPU6050 陀螺仪 ==================== */
 
-    Gyro_Constructor(&gyro, &hi2c1);
+    Gyro_Constructor(&gyro, &hi2c2);
     int gyro_ret = SensorBase_Init((SensorBase_t *)&gyro);
     if (gyro_ret != 0) {
         /* 首次失败 → 重建对象并重试一次 */
         DebugPrintf_Print(&dbg_printf,
             "  Gyro: Init retry...\r\n");
-        Gyro_Constructor(&gyro, &hi2c1);
+        Gyro_Constructor(&gyro, &hi2c2);
         gyro_ret = SensorBase_Init((SensorBase_t *)&gyro);
     }
     if (gyro_ret == 0) {

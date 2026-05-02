@@ -212,7 +212,7 @@ void LED_Test_Loop(void)
   *
   * @note   使用示例（在 Callback.c 中）：
   *         void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-  *             if (GPIO_Pin == KEY1_Pin) {
+  *             if (GPIO_Pin == GPIO_PIN_1) {
   *                 LED_Test_IRQHandler();
   *             }
   *         }

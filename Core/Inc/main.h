@@ -59,8 +59,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LED1_Pin GPIO_PIN_0
 #define LED1_GPIO_Port GPIOC
-#define KEY1_Pin GPIO_PIN_1
-#define KEY1_GPIO_Port GPIOC
 #define BUZZER1_Pin GPIO_PIN_2
 #define BUZZER1_GPIO_Port GPIOC
 #define KEY2_Pin GPIO_PIN_3
@@ -81,16 +79,18 @@ void Error_Handler(void);
 #define E1A_GPIO_Port GPIOE
 #define E1B_Pin GPIO_PIN_11
 #define E1B_GPIO_Port GPIOE
-#define BT_TX_Pin GPIO_PIN_10
-#define BT_TX_GPIO_Port GPIOB
-#define BT_RX_Pin GPIO_PIN_11
-#define BT_RX_GPIO_Port GPIOB
+#define MPU6050_SCL_Pin GPIO_PIN_10
+#define MPU6050_SCL_GPIO_Port GPIOB
+#define MPU6050_SDA_Pin GPIO_PIN_11
+#define MPU6050_SDA_GPIO_Port GPIOB
+#define BT_TX_Pin GPIO_PIN_8
+#define BT_TX_GPIO_Port GPIOD
+#define BT_RX_Pin GPIO_PIN_9
+#define BT_RX_GPIO_Port GPIOD
 #define OUT_Pin GPIO_PIN_11
 #define OUT_GPIO_Port GPIOD
 #define AD0_Pin GPIO_PIN_12
 #define AD0_GPIO_Port GPIOD
-#define AD1_Pin GPIO_PIN_13
-#define AD1_GPIO_Port GPIOD
 #define AD2_Pin GPIO_PIN_14
 #define AD2_GPIO_Port GPIOD
 #define E2A_Pin GPIO_PIN_6
@@ -123,10 +123,6 @@ void Error_Handler(void);
 #define V_IN2_GPIO_Port GPIOB
 #define V_IN3_Pin GPIO_PIN_5
 #define V_IN3_GPIO_Port GPIOB
-#define MPU6050_SCL_Pin GPIO_PIN_6
-#define MPU6050_SCL_GPIO_Port GPIOB
-#define MPU6050_SDA_Pin GPIO_PIN_7
-#define MPU6050_SDA_GPIO_Port GPIOB
 #define V_IN4_Pin GPIO_PIN_8
 #define V_IN4_GPIO_Port GPIOB
 

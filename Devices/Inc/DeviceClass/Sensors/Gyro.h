@@ -13,7 +13,7 @@
   *
   * === 硬件配置 ===
   *
-  * I2C 总线:     I2C1 (PB6=SCL, PB7=SDA)
+  * I2C 总线:     I2C2 (PB10=SCL, PB11=SDA)
   * 设备地址:     0x68 (7-bit)
   * 时钟频率:     100kHz
   * 陀螺仪量程:   ±500 °/s
@@ -31,7 +31,7 @@
   *
   * // 1. 构造
   * Gyro_t gyro;
-  * Gyro_Constructor(&gyro, &hi2c1);
+  * Gyro_Constructor(&gyro, &hi2c2);
   *
   * // 2. 初始化
   * SensorBase_Init((SensorBase_t *)&gyro);
@@ -114,7 +114,7 @@
   */
 typedef struct Gyro_s {
     SensorBase_t       base;             /**< 基类（必须为第一个成员）*/
-    I2C_HandleTypeDef  *i2c_handle;      /**< I2C 句柄指针 (hi2c1) */
+    I2C_HandleTypeDef  *i2c_handle;      /**< I2C 句柄指针 (hi2c2) */
 
     /* DMA 传输 */
     uint8_t            dma_buf[GYRO_DMA_BUF_SIZE]; /**< I2C DMA 接收缓冲区 (6 字节) */
@@ -151,7 +151,7 @@ typedef struct Gyro_s {
   * @note   初始化基类成员，设置 I2C 句柄。
   *         构造后默认清零所有数据字段。
   * @param  self        指向陀螺仪对象的指针
-  * @param  i2c_handle  I2C 句柄指针 (如 &hi2c1)
+  * @param  i2c_handle  I2C 句柄指针 (如 &hi2c2)
   */
 void Gyro_Constructor(Gyro_t *self, I2C_HandleTypeDef *i2c_handle);
 

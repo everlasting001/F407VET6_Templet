@@ -60,7 +60,7 @@ extern DCMotor_t      left_motor;     /**< 左轮电机 */
 extern DCMotor_t      right_motor;    /**< 右轮电机 */
 extern MoveControl_t  move_ctrl;      /**< 运动控制器 */
 extern LineSensor_t   line_sensor;    /**< 八路灰度循迹传感器 */
-extern Gyro_t         gyro;           /**< MPU6050 陀螺仪 (I2C1) */
+extern Gyro_t         gyro;           /**< MPU6050 陀螺仪 (I2C2) */
 
 /* ==================== 公有接口 ==================== */
 

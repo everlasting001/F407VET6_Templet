@@ -60,7 +60,7 @@ static Buzzer_t buzzer_test;
 void Key_Test_Init(void)
 {
     /* 构造 4 个 Key 对象（引脚根据实际硬件调整）*/
-    Key_Constructor(&key_objects[0], KEY1_GPIO_Port, KEY1_Pin, 1);
+    Key_Constructor(&key_objects[0], GPIOC, GPIO_PIN_1, 1);
     Key_Constructor(&key_objects[1], KEY2_GPIO_Port, KEY2_Pin, 1);
     Key_Constructor(&key_objects[2], KEY3_GPIO_Port, KEY3_Pin, 1);
     Key_Constructor(&key_objects[3], KEY4_GPIO_Port, KEY4_Pin, 1);
