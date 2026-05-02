@@ -30,6 +30,7 @@ Encoder_t      right_encoder;
 DCMotor_t      left_motor;
 DCMotor_t      right_motor;
 MoveControl_t  move_ctrl;
+LineSensor_t  line_sensor;
 
 /* ==================== Framework_Init — 一站式初始化 ==================== */
 
@@ -97,7 +98,17 @@ void Framework_Init(void)
     DebugPrintf_Print(&dbg_printf,
         "  MoveControl: Cascade PID OK\r\n");
 
-    /* ==================== 5. 后续模块初始化预留 ==================== */
+    /* ==================== 5. 灰度循迹传感器 ==================== */
+
+    LineSensor_Constructor(&line_sensor, GPIOD,
+                           GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14,
+                           GPIOD, GPIO_PIN_11);
+    SensorBase_Init((SensorBase_t *)&line_sensor);
+
+    DebugPrintf_Print(&dbg_printf,
+        "  LineSensor: 8ch OK\r\n");
+
+    /* ==================== 6. 后续模块初始化预留 ==================== */
     /*
      * TODO: 按需添加以下模块初始化:
      *

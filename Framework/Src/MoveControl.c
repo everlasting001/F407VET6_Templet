@@ -45,7 +45,7 @@
 #define DEFAULT_BALANCE_KI        0.30f
 #define DEFAULT_BALANCE_KD        0.05f
 #define DEFAULT_BALANCE_INTEGRAL_LIM  300.0f
-#define DEFAULT_PWM_LIMIT         1000.0f
+#define DEFAULT_PWM_LIMIT         1800.0f
 
 /* 控制周期 (秒) */
 #define CONTROL_DT                0.04f
@@ -53,6 +53,18 @@
 /* 停止判定阈值 */
 #define STOP_POS_ERROR_MM         30.0f
 #define STOP_BASE_VEL_RPM         3.0f
+
+/* 巡线默认参数 */
+#define DEFAULT_BASE_PWM          300.0f
+#define DEFAULT_K_LINE            500.0f
+#define DEFAULT_LINE_W0           -3.0f
+#define DEFAULT_LINE_W1           -1.0f
+#define DEFAULT_LINE_W2           -0.2f
+#define DEFAULT_LINE_W3           -0.02f
+#define DEFAULT_LINE_W4           0.02f
+#define DEFAULT_LINE_W5           0.2f
+#define DEFAULT_LINE_W6           1.0f
+#define DEFAULT_LINE_W7           3.0f
 
 /* ==================== 公有接口实现 ==================== */
 
@@ -90,6 +102,23 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->last_dist_diff = 0.0f;
     ctrl->pwm_limit      = DEFAULT_PWM_LIMIT;
 
+    /* 巡线控制默认参数 */
+    ctrl->line_sensor     = NULL;
+    ctrl->base_pwm        = DEFAULT_BASE_PWM;
+    ctrl->k_line          = DEFAULT_K_LINE;
+    ctrl->line_weights[0] = DEFAULT_LINE_W0;
+    ctrl->line_weights[1] = DEFAULT_LINE_W1;
+    ctrl->line_weights[2] = DEFAULT_LINE_W2;
+    ctrl->line_weights[3] = DEFAULT_LINE_W3;
+    ctrl->line_weights[4] = DEFAULT_LINE_W4;
+    ctrl->line_weights[5] = DEFAULT_LINE_W5;
+    ctrl->line_weights[6] = DEFAULT_LINE_W6;
+    ctrl->line_weights[7] = DEFAULT_LINE_W7;
+    ctrl->line_turn       = 0.0f;
+    ctrl->line_left_pwm   = 0.0f;
+    ctrl->line_right_pwm  = 0.0f;
+    ctrl->line_ch_bits    = 0;
+
     ctrl->state          = MOVE_STATE_IDLE;
     ctrl->start_tick     = 0;
 }
@@ -117,8 +146,12 @@ void MoveControl_SetTarget(MoveControl_t *ctrl, float target_mm)
 
 void MoveControl_Update(MoveControl_t *ctrl)
 {
-    if (ctrl == NULL
-        || ctrl->motor_left == NULL || ctrl->motor_right == NULL
+    if (ctrl == NULL) return;
+
+    /* 巡线模式由 MoveControl_LineTrackUpdate() 在 5ms ISR 中独立执行 */
+    if (ctrl->mode == MOVE_MODE_LINE_TRACK) return;
+
+    if (ctrl->motor_left == NULL || ctrl->motor_right == NULL
         || ctrl->encoder_left == NULL || ctrl->encoder_right == NULL) {
         return;
     }
@@ -179,6 +212,53 @@ void MoveControl_Update(MoveControl_t *ctrl)
     if (pwm_r < -ctrl->pwm_limit) pwm_r = -ctrl->pwm_limit;
 
     /* ---- 8. 执行 ---- */
+    DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)pwm_l);
+    DCMotor_SetSpeed(ctrl->motor_right, (int16_t)pwm_r);
+}
+
+/**
+  * @brief  巡线修正更新 (5ms/200Hz, 在 TIM2 ISR 5ms 分频中调用)
+  * @note   仅处理 MOVE_MODE_LINE_TRACK 模式，其他模式静默返回。
+  *         与 LineSensor 扫描同频 (200Hz)，确保修正延迟最小。
+  */
+void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
+{
+    if (ctrl == NULL) return;
+    if (ctrl->mode != MOVE_MODE_LINE_TRACK) return;
+    if (ctrl->state != MOVE_STATE_RUNNING) return;
+    if (ctrl->line_sensor == NULL || ctrl->motor_left == NULL
+        || ctrl->motor_right == NULL) return;
+
+    const uint8_t *ch = LineSensor_GetChannelValues(ctrl->line_sensor);
+    if (ch == NULL) return;
+
+    /* 计算 LineTurn = Σ(channel[i] × weight[i]) */
+    float line_turn = 0.0f;
+    uint8_t ch_bits = 0;
+    for (uint8_t i = 0; i < 8; i++) {
+        if (ch[i]) {
+            line_turn += ctrl->line_weights[i];
+            ch_bits |= (1 << i);
+        }
+    }
+
+    /* 存储遥测数据 */
+    ctrl->line_turn    = line_turn;
+    ctrl->line_ch_bits = ch_bits;
+
+    /* 左右轮 PWM = base_pwm ± LineTurn × k_line */
+    float pwm_l = ctrl->base_pwm + line_turn * ctrl->k_line;
+    float pwm_r = ctrl->base_pwm - line_turn * ctrl->k_line;
+
+    /* 输出限幅 */
+    if (pwm_l >  ctrl->pwm_limit) pwm_l =  ctrl->pwm_limit;
+    if (pwm_l < -ctrl->pwm_limit) pwm_l = -ctrl->pwm_limit;
+    if (pwm_r >  ctrl->pwm_limit) pwm_r =  ctrl->pwm_limit;
+    if (pwm_r < -ctrl->pwm_limit) pwm_r = -ctrl->pwm_limit;
+
+    ctrl->line_left_pwm  = pwm_l;
+    ctrl->line_right_pwm = pwm_r;
+
     DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)pwm_l);
     DCMotor_SetSpeed(ctrl->motor_right, (int16_t)pwm_r);
 }
@@ -252,4 +332,47 @@ void MoveControl_SetBalanceKd(MoveControl_t *ctrl, float kd)
 {
     if (ctrl == NULL) return;
     ctrl->balance_kd = kd;
+}
+
+/* ==================== 巡线控制接口 ==================== */
+
+void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
+{
+    if (ctrl == NULL || sensor == NULL) return;
+
+    ctrl->line_sensor = sensor;
+    ctrl->mode        = MOVE_MODE_LINE_TRACK;
+    ctrl->state       = MOVE_STATE_RUNNING;
+    ctrl->start_tick  = HAL_GetTick();
+
+    /* 复位巡线遥测数据 */
+    ctrl->line_turn      = 0.0f;
+    ctrl->line_left_pwm  = 0.0f;
+    ctrl->line_right_pwm = 0.0f;
+    ctrl->line_ch_bits   = 0;
+
+    /* 复位 PID 历史状态（避免模式切换时残余） */
+    PID_Reset(&ctrl->pos_pid);
+    PID_Reset(&ctrl->vel_l_pid);
+    PID_Reset(&ctrl->vel_r_pid);
+    ctrl->balance_integral = 0.0f;
+    ctrl->last_dist_diff   = 0.0f;
+}
+
+void MoveControl_SetBasePWM(MoveControl_t *ctrl, float pwm)
+{
+    if (ctrl == NULL) return;
+    ctrl->base_pwm = pwm;
+}
+
+void MoveControl_SetKLine(MoveControl_t *ctrl, float k)
+{
+    if (ctrl == NULL) return;
+    ctrl->k_line = k;
+}
+
+void MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w)
+{
+    if (ctrl == NULL || ch >= 8) return;
+    ctrl->line_weights[ch] = w;
 }

@@ -29,6 +29,7 @@
 #include "DCMotor.h"
 #include "Encoder.h"
 #include "PID.h"
+#include "LineSensor.h"
 
 typedef enum {
     MOVE_STATE_IDLE     = 0,
@@ -37,8 +38,9 @@ typedef enum {
 } MoveState_t;
 
 typedef enum {
-    MOVE_MODE_POSITION  = 0,
-    MOVE_MODE_SPEED     = 1
+    MOVE_MODE_POSITION    = 0,
+    MOVE_MODE_SPEED       = 1,
+    MOVE_MODE_LINE_TRACK  = 2
 } MoveMode_t;
 
 typedef struct {
@@ -68,6 +70,16 @@ typedef struct {
     /* 输出限幅 */
     float        pwm_limit;          /**< PWM 输出限幅 (绝对值) */
 
+    /* 巡线控制参数 (MOVE_MODE_LINE_TRACK) */
+    LineSensor_t *line_sensor;       /**< 灰度传感器引用 */
+    float         base_pwm;          /**< 巡线基准 PWM (600~1000) */
+    float         k_line;            /**< LineTurn→PWM 增益 (默认 200) */
+    float         line_weights[8];   /**< 8 通道权重 (Vofa 可调) */
+    float         line_turn;         /**< 当前 LineTurn (Vofa 遥测) */
+    float         line_left_pwm;     /**< 当前左轮 PWM (Vofa 遥测) */
+    float         line_right_pwm;    /**< 当前右轮 PWM (Vofa 遥测) */
+    uint8_t       line_ch_bits;      /**< 当前通道二进制值 (Vofa 遥测) */
+
     /* 运行状态 */
     MoveState_t  state;
     uint32_t     start_tick;         /**< 运动开始时刻 (ms) */
@@ -81,8 +93,19 @@ void     MoveControl_Init(MoveControl_t *ctrl,
 /* 设置目标距离并启动 */
 void     MoveControl_SetTarget(MoveControl_t *ctrl, float target_mm);
 
-/* 控制更新 (每 40ms 调用一次，由 Framework_IRQHandler 驱动) */
+/* 控制更新 (每 40ms 调用一次，由 Framework_IRQHandler 驱动，位置/速度模式) */
 void     MoveControl_Update(MoveControl_t *ctrl);
+
+/* 巡线修正更新 (5ms 周期, 200Hz, 由 TIM2 ISR 5ms 分频驱动) */
+void     MoveControl_LineTrackUpdate(MoveControl_t *ctrl);
+
+/* 启动巡线模式 */
+void     MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor);
+
+/* 巡线参数调整 (Vofa 上位机调参接口) */
+void     MoveControl_SetBasePWM(MoveControl_t *ctrl, float pwm);
+void     MoveControl_SetKLine(MoveControl_t *ctrl, float k);
+void     MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w);
 
 /* 紧急停止 */
 void     MoveControl_Stop(MoveControl_t *ctrl);

@@ -5,9 +5,11 @@
 #include "UartBase.h"
 #include "SensorBase.h"
 #include "Vofa.h"
+#include "LineSensor.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
+volatile uint8_t Flag_2ms    = 0;
 volatile uint8_t Flag_10ms   = 0;
 volatile uint8_t Flag_40ms   = 0;
 volatile uint8_t Flag_100ms  = 0;
@@ -38,6 +40,8 @@ void Callback_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim == &htim2) {
+        static uint16_t Cnt_5ms    = 0;
+        static uint16_t Cnt_2ms    = 0;
         static uint16_t Cnt_10ms   = 0;
         static uint16_t Cnt_40ms   = 0;
         static uint16_t Cnt_100ms  = 0;
@@ -49,11 +53,20 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         // Key_Test_IRQHandler();
         // StepperMotor_Test_IRQHandler();  /* 当前为空, DWT 已接管时序 */
         /* 软件分频计数器递增 */
+        Cnt_5ms++;
+        Cnt_2ms++;
         Cnt_10ms++;
         Cnt_40ms++;
         Cnt_100ms++;
         Cnt_500ms++;
         Cnt_1000ms++;
+
+        /* 2ms 分频 — 灰度传感器扫描 + 巡线修正 (200Hz) */
+        if (Cnt_2ms >= 2) {
+            SensorBase_Run((SensorBase_t *)&line_sensor);
+            MoveControl_LineTrackUpdate(&move_ctrl);
+            Cnt_2ms = 0;
+        }
 
         /* 10ms 分频 */
         if (Cnt_10ms >= 10) {

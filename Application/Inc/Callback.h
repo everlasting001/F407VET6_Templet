@@ -6,6 +6,7 @@
 
 /* 定时分频标志（由 TIM2 1ms 中断设置，应用层查询并清除）*/
 extern volatile uint8_t Flag_1ms;
+extern volatile uint8_t Flag_2ms;
 extern volatile uint8_t Flag_10ms;
 extern volatile uint8_t Flag_40ms;
 extern volatile uint8_t Flag_100ms;

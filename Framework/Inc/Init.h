@@ -47,6 +47,7 @@
 #include "DCMotor.h"
 #include "MoveControl.h"
 #include "DebugPrintf.h"
+#include "LineSensor.h"
 
 /* ==================== 全局实例 (extern) ==================== */
 
@@ -57,6 +58,7 @@ extern Encoder_t      right_encoder;  /**< 右轮编码器 */
 extern DCMotor_t      left_motor;     /**< 左轮电机 */
 extern DCMotor_t      right_motor;    /**< 右轮电机 */
 extern MoveControl_t  move_ctrl;      /**< 运动控制器 */
+extern LineSensor_t  line_sensor;    /**< 八路灰度循迹传感器 */
 
 /* ==================== 公有接口 ==================== */
 

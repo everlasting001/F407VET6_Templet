@@ -29,6 +29,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define LINE_TRACK_MODE  1   /* 0=位置控制, 1=巡线控制 */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -88,7 +89,11 @@ int main(void)
   Callback_Init();
   Framework_Init();
   Vofa_Init(&dbg_printf.uart, &move_ctrl);
-  MoveControl_SetTarget(&move_ctrl, -1000.0f);
+#if LINE_TRACK_MODE
+  MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
+#else
+  MoveControl_SetTarget(&move_ctrl, 1000.0f);
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,7 +108,11 @@ int main(void)
       uint32_t now = HAL_GetTick();
       if (now - last_vofa >= 100) {
         last_vofa = now;
+#if LINE_TRACK_MODE
+        Vofa_SendLineTrackTelemetry();
+#else
         Vofa_SendTelemetry();
+#endif
       }
     }
   }
