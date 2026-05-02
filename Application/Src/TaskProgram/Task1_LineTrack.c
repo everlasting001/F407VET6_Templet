@@ -31,14 +31,16 @@
 #include "Gyro.h"
 #include "Encoder.h"
 #include "DebugPrintf.h"
+#include "Buzzer.h"
+#include "main.h"
 
 /* ==================== 私有宏定义 ==================== */
 
 /** @brief 正方形边长 (mm) — 用于参考，实际由路口检测驱动 */
 #define SQUARE_EDGE_MM          1000.0f
 
-/** @brief 正方形边数 (4 条边 = 一圈) */
-#define SQUARE_TARGET_EDGES     4
+/** @brief 正方形边数 (3 条边 = 少转一次) */
+#define SQUARE_TARGET_EDGES     3
 
 /** @brief 路口确认连续次数 (2×2ms=4ms 持续检测) */
 #define TASK1_INTERSECTION_THRESHOLD  2
@@ -47,16 +49,16 @@
 #define TASK1_ADJUST_DISTANCE_MM      60.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
-#define TASK1_BASE_PWM               600.0f
+#define TASK1_BASE_PWM               700.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK1_K_LINE                 100.0f
 
 /** @brief 转弯基准 PWM (0~1500) */
-#define TASK1_TURN_PWM               400.0f
+#define TASK1_TURN_PWM               450.0f
 
 /** @brief 微调前进 PWM */
-#define TASK1_ADJUST_SPEED_PWM       320.0f
+#define TASK1_ADJUST_SPEED_PWM       330.0f
 
 /** @brief 状态打印间隔 (ms) */
 #define TASK1_PRINT_INTERVAL_MS      500U
@@ -64,6 +66,8 @@
 /* ==================== 私有变量 ==================== */
 
 static uint32_t last_print_tick = 0;
+static Buzzer_t buzzer;
+static uint8_t  buzzer_complete_done = 0;
 
 /* ==================== Part 1: 初始化 ==================== */
 
@@ -81,6 +85,12 @@ static uint32_t last_print_tick = 0;
   */
 void Task1_LineTrack_Init(void)
 {
+    /* 0. 初始化蜂鸣器 (低电平触发, 立即静音) */
+    Buzzer_Constructor(&buzzer, BUZZER1_GPIO_Port, BUZZER1_Pin,
+                       BUZZER_TYPE_ACTIVE, 0);
+    ModuleBase_Init((ModuleBase_t *)&buzzer);
+    buzzer_complete_done = 0;
+
     /* 1. 设置巡线基础参数 (Vofa 可运行时调整) */
     MoveControl_SetBasePWM(&move_ctrl, TASK1_BASE_PWM);
     MoveControl_SetKLine(&move_ctrl, TASK1_K_LINE);
@@ -95,10 +105,13 @@ void Task1_LineTrack_Init(void)
     /* 3. 设置微调前进速度 */
     move_ctrl.adjust_speed_pwm = TASK1_ADJUST_SPEED_PWM;
 
-    /* 4. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
+    /* 4. 启动巡线模式 (发车, ISR 开始驱动电机) */
     MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
 
-    /* 5. 打印启动信息 */
+    /* 5. 发车提示音 (车已启动, 短促蜂鸣 100ms) */
+    Buzzer_Beep(&buzzer, 100);
+
+    /* 6. 打印启动信息 */
     DebugPrintf_Print(&dbg_printf,
         "=== Task1: Square Border Track Start ===\r\n");
     DebugPrintf_Print(&dbg_printf,
@@ -143,6 +156,10 @@ void Task1_LineTrack_Loop(void)
         DebugPrintf_Print(&dbg_printf,
             "=== Task1: COMPLETE! %d edges tracked ===\r\n",
             MoveControl_GetEdgeCount(&move_ctrl));
+        if (!buzzer_complete_done) {
+            buzzer_complete_done = 1;
+            Buzzer_BeepDouble(&buzzer, 200, 100);
+        }
         return;
     }
 
@@ -151,9 +168,9 @@ void Task1_LineTrack_Loop(void)
 
     static const char *state_names[] = {
         "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE",
-        "INITIAL_TURN"
+        "INITIAL_TURN", "INITIAL_ADJUST"
     };
-    const char *sname = (move_ctrl.line_state < 6)
+    const char *sname = (move_ctrl.line_state < 7)
                         ? state_names[move_ctrl.line_state]
                         : "UNKNOWN";
 

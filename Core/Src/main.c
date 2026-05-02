@@ -77,6 +77,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  HAL_GPIO_WritePin(BUZZER1_GPIO_Port, BUZZER1_Pin, GPIO_PIN_SET);  /* 低电平触发蜂鸣器，初始静音 */
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_TIM1_Init();
