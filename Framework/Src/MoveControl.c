@@ -56,20 +56,20 @@
 #define STOP_BASE_VEL_RPM         3.0f
 
 /* 巡线默认参数 */
-#define DEFAULT_BASE_PWM          400.0f
+#define DEFAULT_BASE_PWM          800.0f
 #define DEFAULT_K_LINE            100.0f
-#define DEFAULT_LINE_W0           -2.0f
-#define DEFAULT_LINE_W1           -1.0f
+#define DEFAULT_LINE_W0           -4.0f
+#define DEFAULT_LINE_W1           -2.0f
 #define DEFAULT_LINE_W2           -0.30f
 #define DEFAULT_LINE_W3           -0.10f
 #define DEFAULT_LINE_W4           0.10f /* 0-1 */
 #define DEFAULT_LINE_W5           0.30f /* 0-2 */
-#define DEFAULT_LINE_W6           1.0f /* 0-8 */
-#define DEFAULT_LINE_W7           2.0f /* 0-12 */
+#define DEFAULT_LINE_W6           2.0f /* 0-8 */
+#define DEFAULT_LINE_W7           4.0f /* 0-12 */
 
 /* 巡线状态机默认参数 */
 #define DEFAULT_INTERSECTION_THRESHOLD  3       /**< 路口确认连续次数 (3次×2ms=6ms) */
-#define DEFAULT_TURN_PWM                400.0f  /**< 转弯基准 PWM */
+#define DEFAULT_TURN_PWM                800.0f  /**< 转弯基准 PWM */
 #define DEFAULT_TURN_TOLERANCE          3.0f    /**< 转弯角度容差 (°) */
 #define DEFAULT_TURN_KP                 20.0f   /**< 转弯 P 增益 (PWM/°) */
 #define DEFAULT_ADJUST_DISTANCE_MM      80.0f   /**< 微调前进距离 (传感器到轮轴) */
