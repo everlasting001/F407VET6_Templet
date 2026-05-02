@@ -88,7 +88,7 @@ int main(void)
   Callback_Init();
   Framework_Init();
   Vofa_Init(&dbg_printf.uart, &move_ctrl);
-  MoveControl_SetTarget(&move_ctrl, 1000.0f);
+  MoveControl_SetTarget(&move_ctrl, -1000.0f);
   /* USER CODE END 2 */
 
   /* Infinite loop */

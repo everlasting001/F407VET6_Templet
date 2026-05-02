@@ -58,9 +58,11 @@ typedef struct {
     PID_t        vel_l_pid;          /**< 左轮速度环: 速度误差 → PWM */
     PID_t        vel_r_pid;          /**< 右轮速度环: 速度误差 → PWM */
 
-    /* 差速修正参数 */
+    /* 差速修正参数 (PD→PID，I 项消除左右轮稳态偏差) */
     float        balance_kp;         /**< 差速修正比例系数 (mm→RPM) */
+    float        balance_ki;         /**< 差速修正积分系数 (mm*s→RPM) */
     float        balance_kd;         /**< 差速修正微分系数 (mm/周期→RPM) */
+    float        balance_integral;   /**< 差速修正积分累加 (mm*s) */
     float        last_dist_diff;     /**< 上一周期位移差 (用于微分计算) */
 
     /* 输出限幅 */
@@ -94,6 +96,7 @@ float    MoveControl_GetPositionError(const MoveControl_t *ctrl);
 void     MoveControl_SetPosPID(MoveControl_t *ctrl, float kp, float ki, float kd);
 void     MoveControl_SetVelPID(MoveControl_t *ctrl, float kp, float ki, float kd);
 void     MoveControl_SetBalanceKp(MoveControl_t *ctrl, float kp);
+void     MoveControl_SetBalanceKi(MoveControl_t *ctrl, float ki);
 void     MoveControl_SetBalanceKd(MoveControl_t *ctrl, float kd);
 
 #endif /* __MOVE_CONTROL_H__ */

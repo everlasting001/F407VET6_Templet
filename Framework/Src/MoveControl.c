@@ -39,16 +39,19 @@
 #define DEFAULT_VEL_INTEGRAL_LIM  400.0f
 #define DEFAULT_VEL_OUTPUT_LIM    1500.0f  /* PWM */
 
-/* 默认差速修正参数 (PD 控制: mm→RPM, mm/周期→RPM) */
-#define DEFAULT_BALANCE_KP        1.6f
-#define DEFAULT_BALANCE_KD        0.02f
+/* 默认差速修正参数 (PID 控制: mm→RPM, mm/周期→RPM)
+   I 项用于消除左右轮速度系统性差异导致的稳态距离偏差 */
+#define DEFAULT_BALANCE_KP        5.0f
+#define DEFAULT_BALANCE_KI        0.30f
+#define DEFAULT_BALANCE_KD        0.05f
+#define DEFAULT_BALANCE_INTEGRAL_LIM  300.0f
 #define DEFAULT_PWM_LIMIT         1000.0f
 
 /* 控制周期 (秒) */
 #define CONTROL_DT                0.04f
 
 /* 停止判定阈值 */
-#define STOP_POS_ERROR_MM         1.0f
+#define STOP_POS_ERROR_MM         30.0f
 #define STOP_BASE_VEL_RPM         3.0f
 
 /* ==================== 公有接口实现 ==================== */
@@ -81,7 +84,9 @@ void MoveControl_Init(MoveControl_t *ctrl,
              DEFAULT_VEL_INTEGRAL_LIM, DEFAULT_VEL_OUTPUT_LIM);
 
     ctrl->balance_kp     = DEFAULT_BALANCE_KP;
+    ctrl->balance_ki     = DEFAULT_BALANCE_KI;
     ctrl->balance_kd     = DEFAULT_BALANCE_KD;
+    ctrl->balance_integral = 0.0f;
     ctrl->last_dist_diff = 0.0f;
     ctrl->pwm_limit      = DEFAULT_PWM_LIMIT;
 
@@ -101,6 +106,7 @@ void MoveControl_SetTarget(MoveControl_t *ctrl, float target_mm)
     PID_Reset(&ctrl->pos_pid);
     PID_Reset(&ctrl->vel_l_pid);
     PID_Reset(&ctrl->vel_r_pid);
+    ctrl->balance_integral = 0.0f;
     ctrl->last_dist_diff = 0.0f;
 
     ctrl->mode           = MOVE_MODE_POSITION;
@@ -140,12 +146,21 @@ void MoveControl_Update(MoveControl_t *ctrl)
         return;
     }
 
-    /* ---- 4. 差速修正 PD：dist_diff*Kp + derivative*Kd → 转向修正量 (RPM) ---- */
+    /* ---- 4. 差速修正 PID：P + I + D → 转向修正量 (RPM) ---- */
     float dist_diff = dis_r - dis_l;
     float derivative = dist_diff - ctrl->last_dist_diff;
     ctrl->last_dist_diff = dist_diff;
-    float turn_correction = dist_diff * ctrl->balance_kp
-                          + derivative * ctrl->balance_kd;
+
+    /* I 项: 累积左右轮距离差，消除系统性速度差异导致的稳态偏差 */
+    ctrl->balance_integral += dist_diff * CONTROL_DT;
+    if (ctrl->balance_integral >  DEFAULT_BALANCE_INTEGRAL_LIM)
+        ctrl->balance_integral =  DEFAULT_BALANCE_INTEGRAL_LIM;
+    if (ctrl->balance_integral < -DEFAULT_BALANCE_INTEGRAL_LIM)
+        ctrl->balance_integral = -DEFAULT_BALANCE_INTEGRAL_LIM;
+
+    float turn_correction = dist_diff       * ctrl->balance_kp
+                          + ctrl->balance_integral * ctrl->balance_ki
+                          + derivative      * ctrl->balance_kd;
 
     /* ---- 5. 左轮速度环：base_vel + turn_correction → PWM ---- */
     float vel_l_target = base_vel + turn_correction;
@@ -225,6 +240,12 @@ void MoveControl_SetBalanceKp(MoveControl_t *ctrl, float kp)
 {
     if (ctrl == NULL) return;
     ctrl->balance_kp = kp;
+}
+
+void MoveControl_SetBalanceKi(MoveControl_t *ctrl, float ki)
+{
+    if (ctrl == NULL) return;
+    ctrl->balance_ki = ki;
 }
 
 void MoveControl_SetBalanceKd(MoveControl_t *ctrl, float kd)
