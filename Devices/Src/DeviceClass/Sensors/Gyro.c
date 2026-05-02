@@ -30,7 +30,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "Gyro.h"
-#include <stdio.h>
 
 /* ==================== 私有宏定义 ==================== */
 
@@ -102,18 +101,31 @@ static int Gyro_init(void *self)
         return -1;
     }
 
-    /* MPU6050 上电稳定等待 */
-    HAL_Delay(30);
+    /* 清零 DMA 缓冲区，防止残留数据干扰 */
+    /* 清零 DMA buffer (6 字节，不用 memset) */
+    gyro->dma_buf[0] = gyro->dma_buf[1] = gyro->dma_buf[2] = 0;
+    gyro->dma_buf[3] = gyro->dma_buf[4] = gyro->dma_buf[5] = 0;
 
-    /* WHO_AM_I 预检: 确认设备在线，失败重试 1 次 */
+    /* I2C 总线恢复: 若外设处于忙/错误状态，反初始化后重新初始化
+       防止上次运行中 DMA 传输中断导致 SDA 被 MPU6050 拉死 */
+    if (gyro->i2c_handle->State != HAL_I2C_STATE_READY) {
+        HAL_I2C_DeInit(gyro->i2c_handle);
+        HAL_I2C_Init(gyro->i2c_handle);
+    }
+
+    /* MPU6050 上电稳定等待 (国产芯片需更长时间) */
+    HAL_Delay(100);
+
+    /* WHO_AM_I 预检: 确认设备在线，失败重试 2 次
+       MPU6050 标准 ID=0x68，部分国产兼容芯片返回 0x70，两者均合法 */
     uint8_t whoami;
     int attempts;
-    for (attempts = 0; attempts < 2; attempts++) {
+    for (attempts = 0; attempts < 3; attempts++) {
         whoami = Gyro_GetDeviceID(gyro);
-        if (whoami == 0x68) break;
-        HAL_Delay(30);
+        if (whoami == 0x68 || whoami == 0x70) break;
+        HAL_Delay(50);
     }
-    if (whoami != 0x68) {
+    if (whoami != 0x68 && whoami != 0x70) {
         return -2;
     }
 
@@ -157,7 +169,10 @@ static int Gyro_init(void *self)
         return -3;
     }
 
-    /* 清零所有数据 */
+    /* 清零所有数据 (含 DMA buffer，防止残留数据) */
+    /* 清零 DMA buffer (6 字节，不用 memset) */
+    gyro->dma_buf[0] = gyro->dma_buf[1] = gyro->dma_buf[2] = 0;
+    gyro->dma_buf[3] = gyro->dma_buf[4] = gyro->dma_buf[5] = 0;
     gyro->gyro_rx              = 0;
     gyro->gyro_ry              = 0;
     gyro->gyro_rz              = 0;
@@ -226,7 +241,10 @@ static int Gyro_cleanup(void *self)
         Gyro_WriteReg(gyro, MPU6050_PWR_MGMT_1, 0x41);
     }
 
-    /* 清零所有数据 */
+    /* 清零所有数据 (含 DMA buffer) */
+    /* 清零 DMA buffer (6 字节，不用 memset) */
+    gyro->dma_buf[0] = gyro->dma_buf[1] = gyro->dma_buf[2] = 0;
+    gyro->dma_buf[3] = gyro->dma_buf[4] = gyro->dma_buf[5] = 0;
     gyro->gyro_rx               = 0;
     gyro->gyro_ry               = 0;
     gyro->gyro_rz               = 0;

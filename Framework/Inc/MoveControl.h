@@ -53,7 +53,8 @@ typedef enum {
     LINE_STATE_FORWARD_ADJUST      = 2,  /**< 路口确认，微调前进对齐轮轴 */
     LINE_STATE_TURNING             = 3,  /**< 直角转弯中 (陀螺仪 Yaw 闭环) */
     LINE_STATE_EDGE_DONE           = 4,  /**< 一条边完成，准备切换下一条边 */
-    LINE_STATE_INITIAL_TURN        = 5   /**< 初始 90° 转弯 (对齐第一条线) */
+    LINE_STATE_INITIAL_TURN        = 5,  /**< 初始 90° 转弯 (对齐第一条线) */
+    LINE_STATE_INITIAL_ADJUST      = 6   /**< Task1 起始微调前进 (传感器对齐轮轴) */
 } LineTrackState_t;
 
 typedef struct {

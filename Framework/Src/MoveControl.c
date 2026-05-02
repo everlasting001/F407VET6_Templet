@@ -58,21 +58,21 @@
 /* 巡线默认参数 */
 #define DEFAULT_BASE_PWM          1000.0f
 #define DEFAULT_K_LINE            100.0f
-#define DEFAULT_LINE_W0           -8.0f
+#define DEFAULT_LINE_W0           -6.0f
 #define DEFAULT_LINE_W1           -2.0f
 #define DEFAULT_LINE_W2           -0.30f
 #define DEFAULT_LINE_W3           -0.10f
 #define DEFAULT_LINE_W4           0.10f /* 0-1 */
 #define DEFAULT_LINE_W5           0.30f /* 0-2 */
 #define DEFAULT_LINE_W6           2.0f /* 0-8 */
-#define DEFAULT_LINE_W7           8.0f /* 0-12 */
+#define DEFAULT_LINE_W7           6.0f /* 0-12 */
 
 /* 巡线状态机默认参数 */
 #define DEFAULT_INTERSECTION_THRESHOLD  3       /**< 路口确认连续次数 (3次×2ms=6ms) */
 #define DEFAULT_TURN_PWM                800.0f  /**< 转弯基准 PWM */
 #define DEFAULT_TURN_TOLERANCE          3.0f    /**< 转弯角度容差 (°) */
 #define DEFAULT_TURN_KP                 20.0f   /**< 转弯 P 增益 (PWM/°) */
-#define DEFAULT_ADJUST_DISTANCE_MM      80.0f   /**< 微调前进距离 (传感器到轮轴) */
+#define DEFAULT_ADJUST_DISTANCE_MM      50.0f   /**< 微调前进距离 (传感器到轮轴) */
 #define DEFAULT_ADJUST_SPEED_PWM        320.0f  /**< 微调前进 PWM */
 
 /* 直线循迹编码器反馈 */
@@ -491,7 +491,37 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         }
         break;
 
-    /* ---- 状态 5: 初始 90° 转弯 (对齐第一条线) ---- */
+    /* ---- 状态 5: Task1 起始微调前进 (传感器对齐轮轴中心) ---- */
+    case LINE_STATE_INITIAL_ADJUST: {
+        float dist = 0.0f;
+        if (ctrl->encoder_left && ctrl->encoder_right) {
+            float dl = Encoder_GetDistance(ctrl->encoder_left);
+            float dr = Encoder_GetDistance(ctrl->encoder_right);
+            dist = (dl + dr) * 0.5f;
+        }
+
+        if (dist >= ctrl->adjust_distance_mm) {
+            /* 微调完成 → 停车, 进入初始转弯 */
+            DCMotor_Stop(ctrl->motor_left);
+            DCMotor_Stop(ctrl->motor_right);
+
+            if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+            if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+
+            ctrl->line_state = LINE_STATE_INITIAL_TURN;
+        } else {
+            /* 低速前进 */
+            float adj_pwm = ctrl->adjust_speed_pwm;
+            DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)adj_pwm);
+            DCMotor_SetSpeed(ctrl->motor_right, (int16_t)adj_pwm);
+
+            ctrl->line_left_pwm  = adj_pwm;
+            ctrl->line_right_pwm = adj_pwm;
+        }
+        break;
+    }
+
+    /* ---- 状态 6: 初始 90° 转弯 (对齐第一条线) ---- */
     case LINE_STATE_INITIAL_TURN: {
         float current_yaw = 0.0f;
         if (ctrl->gyro != NULL) {
@@ -649,8 +679,8 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     ctrl->line_right_pwm = 0.0f;
     ctrl->line_ch_bits   = 0;
 
-    /* 初始化巡线状态机: 先执行初始 90° 转弯对齐第一条线 */
-    ctrl->line_state         = LINE_STATE_INITIAL_TURN;
+    /* 初始化巡线状态机: 先微调前进再执行初始 90° 转弯对齐第一条线 */
+    ctrl->line_state         = LINE_STATE_INITIAL_ADJUST;
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
     ctrl->turn_target_yaw    = 90.0f;   /* 目标: 逆时针转 90° */
@@ -731,7 +761,7 @@ void MoveControl_ResetLineTrack(MoveControl_t *ctrl)
 {
     if (ctrl == NULL) return;
 
-    ctrl->line_state         = LINE_STATE_INITIAL_TURN;
+    ctrl->line_state         = LINE_STATE_INITIAL_ADJUST;
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
     ctrl->turn_target_yaw    = 90.0f;
