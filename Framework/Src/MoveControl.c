@@ -45,7 +45,7 @@
 #define DEFAULT_BALANCE_KI        0.30f
 #define DEFAULT_BALANCE_KD        0.05f
 #define DEFAULT_BALANCE_INTEGRAL_LIM  300.0f
-#define DEFAULT_PWM_LIMIT         1600.0f
+#define DEFAULT_PWM_LIMIT         2000.0f
 
 /* 控制周期 (秒) */
 #define CONTROL_DT                0.04f
@@ -57,14 +57,14 @@
 /* 巡线默认参数 */
 #define DEFAULT_BASE_PWM          400.0f
 #define DEFAULT_K_LINE            100.0f
-#define DEFAULT_LINE_W0           -30.0f
-#define DEFAULT_LINE_W1           -10.0f
-#define DEFAULT_LINE_W2           -0.0f
-#define DEFAULT_LINE_W3           -0.0f
-#define DEFAULT_LINE_W4           0.0f
-#define DEFAULT_LINE_W5           0.0f
-#define DEFAULT_LINE_W6           10.0f
-#define DEFAULT_LINE_W7           30.0f /* 0-12 */
+#define DEFAULT_LINE_W0           -14.0f
+#define DEFAULT_LINE_W1           -8.0f
+#define DEFAULT_LINE_W2           -0.40f
+#define DEFAULT_LINE_W3           -0.10f
+#define DEFAULT_LINE_W4           0.10f /* 0-1 */
+#define DEFAULT_LINE_W5           0.40f /* 0-2 */
+#define DEFAULT_LINE_W6           8.0f /* 0-8 */
+#define DEFAULT_LINE_W7           14.0f /* 0-12 */
 
 /* ==================== 公有接口实现 ==================== */
 
