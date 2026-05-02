@@ -20,6 +20,7 @@
 // #include "MoveControlTest.h"
 #include "Callback.h"
 #include "Init.h"
+#include "Vofa.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -86,6 +87,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Callback_Init();
   Framework_Init();
+  Vofa_Init(&dbg_printf.uart, &move_ctrl);
   MoveControl_SetTarget(&move_ctrl, 1000.0f);
   /* USER CODE END 2 */
 
@@ -96,9 +98,16 @@ int main(void)
       Flag_40ms = 0;
       Framework_IRQHandler();
 
-      /* 每 500ms 打印一次状态 */
-      static uint32_t last_print = 0;
+      /* Vofa 遥测: 每 100ms (10Hz) 发送 CSV 数据帧 */
+      static uint32_t last_vofa = 0;
       uint32_t now = HAL_GetTick();
+      if (now - last_vofa >= 100) {
+        last_vofa = now;
+        Vofa_SendTelemetry();
+      }
+
+      /* 每 500ms 打印一次调试文本 */
+      static uint32_t last_print = 0;
       if (now - last_print >= 500) {
         last_print = now;
         float avg = MoveControl_GetAvgDistance(&move_ctrl);

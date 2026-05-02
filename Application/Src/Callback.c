@@ -4,6 +4,7 @@
 #include "usart.h"
 #include "UartBase.h"
 #include "SensorBase.h"
+#include "Vofa.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -110,6 +111,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == USART1) {
         UartBase_RxIdleCallback(&dbg_printf.uart, Size);
+        Vofa_IRQHandler(&dbg_printf.uart);
     }
 }
 

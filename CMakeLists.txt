@@ -58,6 +58,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DebugPeripheral/UartBase.c # UART基类
     Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
     Devices/Src/FilterAlgorithm/PID.c # PID控制器
+    Devices/Src/FilterAlgorithm/Vofa.c # Vofa+ FireWater调参
 
     # Framework layer
     Framework/Src/MoveControl.c # 运动控制系统
