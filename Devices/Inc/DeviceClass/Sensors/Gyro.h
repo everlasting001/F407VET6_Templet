@@ -229,8 +229,8 @@ uint8_t Gyro_GetDeviceID(Gyro_t *self);
 /**
   * @brief  打印陀螺仪运动信息（通过 DebugPrintf DMA 发送）
   * @note   内置 0.5s 速率限制（per-instance），避免刷屏。
-  *         单行格式示例：
-  *         "[Gyro] Y=45.3 P=1.2 R=-0.8 Gz=12.5dps T=32.1C"
+  *         单行格式示例 (Vofa+ FireWater 协议):
+  *         "channels:45.31,1.23,-0.82,12.57\n"
   * @param  self  指向陀螺仪对象的指针（NULL 安全）
   * @param  dbg   指向 DebugPrintf 对象的指针（NULL 安全，NULL 时不输出）
   */

@@ -110,7 +110,7 @@ int main(void)
       if (now - last_vofa >= 100) {
         last_vofa = now;
 #if LINE_TRACK_MODE
-        Vofa_SendLineTrackTelemetry();
+        // Vofa_SendLineTrackTelemetry();
 #else
         Vofa_SendTelemetry();
 #endif

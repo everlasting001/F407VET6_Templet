@@ -428,7 +428,8 @@ uint8_t Gyro_GetDeviceID(Gyro_t *self)
 /**
   * @brief  打印陀螺仪信息（通过 DebugPrintf DMA 发送）
   * @note   内置 0.5s 速率限制（per-instance），避免刷屏。
-  *         格式: "[Gyro] Y=45.3 P=1.2 R=-0.8 Gz=12.5dps T=32.1C"
+  *         格式: "channels:yaw,pitch,roll,gyro_z\n"
+  *         符合 Vofa+ FireWater 协议多通道数据格式。
   */
 void Gyro_PrintInfo(Gyro_t *self, DebugPrintf_t *dbg)
 {
@@ -444,10 +445,9 @@ void Gyro_PrintInfo(Gyro_t *self, DebugPrintf_t *dbg)
     }
     self->last_print_tick = now;
 
-    DebugPrintf_Print(dbg, "[Gyro] Y=%.1f P=%.1f R=%.1f Gz=%.1fdps T=%.1fC\r\n",
+    DebugPrintf_Print(dbg, "channels:%.2f,%.2f,%.2f,%.2f\r\n",
                       (double)self->yaw,
                       (double)self->pitch,
                       (double)self->roll,
-                      (double)self->gyro_z,
-                      (double)self->temperature);
+                      (double)self->gyro_z);
 }
