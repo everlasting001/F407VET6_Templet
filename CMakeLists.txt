@@ -54,6 +54,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DeviceClass/Motors/DCMotor.c # DC有刷电机
     Devices/Src/DeviceClass/Sensors/SensorBase.c # 传感器基类
     Devices/Src/DeviceClass/Sensors/Encoder.c # 编码器传感器
+    Devices/Src/DeviceClass/Sensors/LineSensor.c # 八路灰度循迹传感器
     Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
     Devices/Src/DebugPeripheral/UartBase.c # UART基类
     Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
