@@ -58,14 +58,14 @@
 /* 巡线默认参数 */
 #define DEFAULT_BASE_PWM          800.0f
 #define DEFAULT_K_LINE            100.0f
-#define DEFAULT_LINE_W0           -4.0f
+#define DEFAULT_LINE_W0           -8.0f
 #define DEFAULT_LINE_W1           -2.0f
 #define DEFAULT_LINE_W2           -0.30f
 #define DEFAULT_LINE_W3           -0.10f
 #define DEFAULT_LINE_W4           0.10f /* 0-1 */
 #define DEFAULT_LINE_W5           0.30f /* 0-2 */
 #define DEFAULT_LINE_W6           2.0f /* 0-8 */
-#define DEFAULT_LINE_W7           4.0f /* 0-12 */
+#define DEFAULT_LINE_W7           8.0f /* 0-12 */
 
 /* 巡线状态机默认参数 */
 #define DEFAULT_INTERSECTION_THRESHOLD  3       /**< 路口确认连续次数 (3次×2ms=6ms) */
@@ -79,7 +79,10 @@
 #define DEFAULT_LINE_ENCODER_KP         2.0f    /**< 编码器距离差→PWM 增益 */
 
 /* 转弯后期循迹模块辅助对准 */
-#define TURN_LINE_CHECK_YAW_DEG         15.0f   /**< 转弯后期循迹模块介入的 Yaw 误差阈值 (°) */
+#define TURN_LINE_CHECK_YAW_DEG         20.0f   /**< 转弯后期循迹模块介入的 Yaw 误差阈值 (°) */
+
+/* 第 5 段边 (4 次转弯后最终接近) 慢速 PWM，确保精确停车 */
+#define DEFAULT_FINAL_SLOW_PWM          300.0f  /**< 最终段慢速循迹 PWM */
 
 /* ==================== 公有接口实现 ==================== */
 
@@ -292,10 +295,15 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         }
         float dist_diff = dist_r - dist_l;
 
-        /* 加权差速循线 + 编码器平衡修正 */
-        float pwm_l = ctrl->base_pwm + line_turn * ctrl->k_line
+        /* 加权差速循线 + 编码器平衡修正
+           前 4 段边用快速 PWM (1000-1200), 最后一段用慢速 PWM (300) 确保精确停车 */
+        float active_base = (ctrl->edge_count >= ctrl->target_edges)
+                          ? DEFAULT_FINAL_SLOW_PWM
+                          : ctrl->base_pwm;
+
+        float pwm_l = active_base + line_turn * ctrl->k_line
                     - dist_diff * DEFAULT_LINE_ENCODER_KP;
-        float pwm_r = ctrl->base_pwm - line_turn * ctrl->k_line
+        float pwm_r = active_base - line_turn * ctrl->k_line
                     + dist_diff * DEFAULT_LINE_ENCODER_KP;
 
         if (pwm_l >  ctrl->pwm_limit) pwm_l =  ctrl->pwm_limit;
@@ -316,22 +324,27 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         if (left4 || right4 || active_cnt >= 6) {
             ctrl->intersection_cnt++;
             if (ctrl->intersection_cnt >= ctrl->intersection_threshold) {
-                /* 路口确认 → 停车, 启动陀螺仪积分, 进入微调前进 */
+                /* 路口确认 → 停车 */
                 DCMotor_Stop(ctrl->motor_left);
                 DCMotor_Stop(ctrl->motor_right);
 
-                /* 清零编码器用于微调距离计量 */
-                if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
-                if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+                if (ctrl->edge_count >= ctrl->target_edges) {
+                    /* 第 5 次路口 (4 次转弯已完成): 立即停车，不转弯 */
+                    ctrl->state = MOVE_STATE_COMPLETE;
+                    ctrl->line_state = LINE_STATE_FOLLOWING;
+                } else {
+                    /* 前 4 次路口: 启动陀螺仪积分, 进入微调前进 → 直角转弯 */
+                    if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+                    if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
 
-                /* 启用陀螺仪 Yaw 积分 (从 0 开始累积转弯角度) */
-                if (ctrl->gyro != NULL) {
-                    Gyro_ResetYaw(ctrl->gyro);
-                    Gyro_EnableIntegrate(ctrl->gyro);
+                    if (ctrl->gyro != NULL) {
+                        Gyro_ResetYaw(ctrl->gyro);
+                        Gyro_EnableIntegrate(ctrl->gyro);
+                    }
+
+                    ctrl->intersection_cnt = 0;
+                    ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
                 }
-
-                ctrl->intersection_cnt = 0;
-                ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
             }
         } else {
             /* 未检测到路口，递减计数 (防噪声累积) */
@@ -455,9 +468,16 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         DCMotor_Stop(ctrl->motor_left);
         DCMotor_Stop(ctrl->motor_right);
 
-        if (ctrl->edge_count >= ctrl->target_edges) {
-            /* 全部边完成 → 任务结束 */
+        if (ctrl->edge_count > ctrl->target_edges) {
+            /* 安全兜底: 超出预期边数 → 强制停止 */
             ctrl->state = MOVE_STATE_COMPLETE;
+            ctrl->line_state = LINE_STATE_FOLLOWING;
+        } else if (ctrl->edge_count >= ctrl->target_edges) {
+            /* 4 次转弯完成，继续循线直行，等待第 5 次路口停车 */
+            if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+            if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+
+            ctrl->intersection_cnt = 0;
             ctrl->line_state = LINE_STATE_FOLLOWING;
         } else {
             /* 切换下一条边: 清零编码器, 回到循线模式 */
