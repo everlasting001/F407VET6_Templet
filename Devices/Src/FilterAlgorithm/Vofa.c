@@ -6,12 +6,12 @@
   * @details
   * 共用 USART1 (dbg_printf.uart) 与 Vofa+ 上位机通信。
   *
-  * === 上行 12 通道数据帧 (MCU→Vofa, 10Hz) ===
+  * === 上行 13 通道数据帧 (MCU→Vofa, 10Hz) ===
   *   Vofa:pos_Kp,pos_Ki,pos_Kd,vel_Kp,vel_Ki,vel_Kd,
-  *        balance_Kp,vel_l_rpm,vel_r_rpm,avg_dist,pos_error,target\r\n
+  *        balance_Kp,balance_Kd,vel_l_rpm,vel_r_rpm,avg_dist,pos_error,target\r\n
   *
-  * === 下行 8 命令 (Vofa→MCU, Key:Value) ===
-  *   pos_Kp, pos_Ki, pos_Kd, vel_Kp, vel_Ki, vel_Kd, balance_Kp, Target
+  * === 下行 9 命令 (Vofa→MCU, Key:Value) ===
+  *   pos_Kp, pos_Ki, pos_Kd, vel_Kp, vel_Ki, vel_Kd, balance_Kp, balance_Kd, Target
   ******************************************************************************
   */
 
@@ -67,6 +67,8 @@ static void Vofa_ParseCommand(char *cmd_str)
         vofa_ctrl->vel_r_pid.kd = value;
     } else if (strcmp(key, "balance_Kp") == 0) {
         vofa_ctrl->balance_kp = value;
+    } else if (strcmp(key, "balance_Kd") == 0) {
+        vofa_ctrl->balance_kd = value;
     } else if (strcmp(key, "Target") == 0) {
         MoveControl_SetTarget(vofa_ctrl, value);
     }
@@ -109,14 +111,15 @@ void Vofa_SendTelemetry(void)
     float vel_ki = vofa_ctrl->vel_l_pid.ki;
     float vel_kd = vofa_ctrl->vel_l_pid.kd;
     float bal_kp = vofa_ctrl->balance_kp;
+    float bal_kd = vofa_ctrl->balance_kd;
     float target = vofa_ctrl->target_mm;
 
     char tx_buf[VOFA_TX_BUF_SIZE];
     int len = snprintf(tx_buf, sizeof(tx_buf),
-        "Vofa:%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
+        "Vofa:%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.1f,%.1f,%.1f,%.1f\r\n",
         (double)pos_kp, (double)pos_ki, (double)pos_kd,
         (double)vel_kp, (double)vel_ki, (double)vel_kd,
-        (double)bal_kp,
+        (double)bal_kp, (double)bal_kd,
         (double)vel_l, (double)vel_r,
         (double)avg_dist, (double)pos_error, (double)target);
 

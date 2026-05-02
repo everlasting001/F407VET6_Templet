@@ -7,7 +7,7 @@
   * 算法参考 Algorithm.md 的 GoStraight_Control 三环级联结构：
   *   1. 读取左右编码器距离/速度，取平均位移
   *   2. 位置环 PID：距离误差 → 基础速度 base_velocity (RPM)
-  *   3. 差速修正 P：dist_diff = dis_r - dis_l, turn_correction = dist_diff * Kp
+  *   3. 差速修正 PD：dist_diff*Kp + derivative*Kd → turn_correction (RPM)
   *   4. 左轮速度环：target = base_vel + turn_correction → PWM_L
   *   5. 右轮速度环：target = base_vel - turn_correction → PWM_R
   *   6. 输出限幅后写入电机 PWM
@@ -39,8 +39,9 @@
 #define DEFAULT_VEL_INTEGRAL_LIM  500.0f
 #define DEFAULT_VEL_OUTPUT_LIM    1500.0f  /* PWM */
 
-/* 默认差速修正参数 */
+/* 默认差速修正参数 (PD 控制: mm→RPM, mm/周期→RPM) */
 #define DEFAULT_BALANCE_KP        0.50f
+#define DEFAULT_BALANCE_KD        1.00f
 #define DEFAULT_PWM_LIMIT         1500.0f
 
 /* 控制周期 (秒) */
@@ -80,6 +81,8 @@ void MoveControl_Init(MoveControl_t *ctrl,
              DEFAULT_VEL_INTEGRAL_LIM, DEFAULT_VEL_OUTPUT_LIM);
 
     ctrl->balance_kp     = DEFAULT_BALANCE_KP;
+    ctrl->balance_kd     = DEFAULT_BALANCE_KD;
+    ctrl->last_dist_diff = 0.0f;
     ctrl->pwm_limit      = DEFAULT_PWM_LIMIT;
 
     ctrl->state          = MOVE_STATE_IDLE;
@@ -98,6 +101,7 @@ void MoveControl_SetTarget(MoveControl_t *ctrl, float target_mm)
     PID_Reset(&ctrl->pos_pid);
     PID_Reset(&ctrl->vel_l_pid);
     PID_Reset(&ctrl->vel_r_pid);
+    ctrl->last_dist_diff = 0.0f;
 
     ctrl->mode           = MOVE_MODE_POSITION;
     ctrl->target_mm      = target_mm;
@@ -115,7 +119,7 @@ void MoveControl_Update(MoveControl_t *ctrl)
 
     if (ctrl->state != MOVE_STATE_RUNNING) return;
 
-    /* ---- 1. 反馈获取 ---- */
+    /* ---- 1. 反馈获取 (Encoder 内部已通过 polarity 处理符号) ---- */
     float dis_l = Encoder_GetDistance(ctrl->encoder_left);
     float dis_r = Encoder_GetDistance(ctrl->encoder_right);
     float vel_l = Encoder_GetRPM(ctrl->encoder_left);
@@ -126,7 +130,7 @@ void MoveControl_Update(MoveControl_t *ctrl)
     float base_vel = PID_Compute(&ctrl->pos_pid,
                                  ctrl->target_mm, avg_dist, CONTROL_DT);
 
-    /* ---- 3. 停止判定 (Algorithm.md: 位置误差小 且 基础速度低) ---- */
+    /* ---- 3. 停止判定 ---- */
     float pos_error = ctrl->target_mm - avg_dist;
     if (fabsf(pos_error) < STOP_POS_ERROR_MM
         && fabsf(base_vel) < STOP_BASE_VEL_RPM) {
@@ -136,13 +140,12 @@ void MoveControl_Update(MoveControl_t *ctrl)
         return;
     }
 
-    /* ---- 4. 差速修正 P：dist_diff * Kp → 转向修正量 (RPM) ---- */
-    /* 编码器极性归一化: 左(-1)右(+1) → 正转前进时 dis_r>0, dis_l<0,
-       直接用 dis_r-dis_l 会把符号相反的差值放大为正反馈。
-       分别乘各自极性后再做差，消除接线差异导致的符号反转。 */
-    float dist_diff = (dis_r * ctrl->encoder_right->polarity)
-                    - (dis_l * ctrl->encoder_left->polarity);
-    float turn_correction = dist_diff * ctrl->balance_kp;
+    /* ---- 4. 差速修正 PD：dist_diff*Kp + derivative*Kd → 转向修正量 (RPM) ---- */
+    float dist_diff = dis_r - dis_l;
+    float derivative = dist_diff - ctrl->last_dist_diff;
+    ctrl->last_dist_diff = dist_diff;
+    float turn_correction = dist_diff * ctrl->balance_kp
+                          + derivative * ctrl->balance_kd;
 
     /* ---- 5. 左轮速度环：base_vel + turn_correction → PWM ---- */
     float vel_l_target = base_vel + turn_correction;
@@ -222,4 +225,10 @@ void MoveControl_SetBalanceKp(MoveControl_t *ctrl, float kp)
 {
     if (ctrl == NULL) return;
     ctrl->balance_kp = kp;
+}
+
+void MoveControl_SetBalanceKd(MoveControl_t *ctrl, float kd)
+{
+    if (ctrl == NULL) return;
+    ctrl->balance_kd = kd;
 }

@@ -6,7 +6,7 @@
   * @details
   * 算法参考 Algorithm.md 的 GoStraight_Control 三环级联结构：
   *   1. 位置环 PID：平均距离 → 基础速度 (RPM)
-  *   2. 差速修正 P：左右轮距离差 → 转向修正量 (RPM)
+  *   2. 差速修正 PD：dist_diff*Kp + derivative*Kd → 转向修正量 (RPM)
   *   3. 速度环 PID×2：左右轮独立计算 PWM
   *
   * === 控制周期 ===
@@ -60,6 +60,8 @@ typedef struct {
 
     /* 差速修正参数 */
     float        balance_kp;         /**< 差速修正比例系数 (mm→RPM) */
+    float        balance_kd;         /**< 差速修正微分系数 (mm/周期→RPM) */
+    float        last_dist_diff;     /**< 上一周期位移差 (用于微分计算) */
 
     /* 输出限幅 */
     float        pwm_limit;          /**< PWM 输出限幅 (绝对值) */
@@ -92,5 +94,6 @@ float    MoveControl_GetPositionError(const MoveControl_t *ctrl);
 void     MoveControl_SetPosPID(MoveControl_t *ctrl, float kp, float ki, float kd);
 void     MoveControl_SetVelPID(MoveControl_t *ctrl, float kp, float ki, float kd);
 void     MoveControl_SetBalanceKp(MoveControl_t *ctrl, float kp);
+void     MoveControl_SetBalanceKd(MoveControl_t *ctrl, float kd);
 
 #endif /* __MOVE_CONTROL_H__ */

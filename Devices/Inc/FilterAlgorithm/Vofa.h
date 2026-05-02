@@ -8,9 +8,9 @@
   *
   * === FireWater 协议 ===
   *
-  * 上行 (MCU→Vofa), 12 通道 CSV:
+  * 上行 (MCU→Vofa), 13 通道 CSV:
   *   "Vofa:pos_Kp,pos_Ki,pos_Kd,vel_Kp,vel_Ki,vel_Kd,
-  *    balance_Kp,vel_l_rpm,vel_r_rpm,avg_dist,pos_error,target\r\n"
+  *    balance_Kp,balance_Kd,vel_l_rpm,vel_r_rpm,avg_dist,pos_error,target\r\n"
   *
   * 下行 (Vofa→MCU), Key:Value 格式:
   *   "pos_Kp:0.5\r\n"  设置位置环 Kp
@@ -19,7 +19,8 @@
   *   "vel_Kp:5.0\r\n"  设置速度环 Kp (左右共用)
   *   "vel_Ki:2.0\r\n"  设置速度环 Ki
   *   "vel_Kd:4.0\r\n"  设置速度环 Kd
-  *   "balance_Kp:0.5\r\n" 设置差速修正系数
+  *   "balance_Kp:0.5\r\n" 设置差速修正比例系数
+ *   "balance_Kd:1.0\r\n" 设置差速修正微分系数
   *   "Target:1000\r\n"  切换目标位置 (mm)
   *
   * === 集成步骤 ===
