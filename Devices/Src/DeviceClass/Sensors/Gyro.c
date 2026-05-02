@@ -209,6 +209,7 @@ static int Gyro_cleanup(void *self)
     gyro->roll                  = 0.0f;
     gyro->temperature           = 0.0f;
     gyro->flag_gyro_start       = 0;
+    gyro->integrate_enabled     = 0;
     gyro->zero_drift_threshold   = GYRO_ZERO_DRIFT_THRESHOLD;
     gyro->last_print_tick       = 0;
     gyro->dma_busy              = 0;
@@ -224,14 +225,15 @@ static void Gyro_reset(void *self)
 {
     Gyro_t *gyro = (Gyro_t *)self;
 
-    gyro->yaw             = 0.0f;
-    gyro->pitch           = 0.0f;
-    gyro->roll            = 0.0f;
-    gyro->gyro_z          = 0.0f;
-    gyro->gyro_x          = 0.0f;
-    gyro->gyro_y          = 0.0f;
-    gyro->flag_gyro_start = 0;
-    gyro->last_print_tick = 0;
+    gyro->yaw               = 0.0f;
+    gyro->pitch             = 0.0f;
+    gyro->roll              = 0.0f;
+    gyro->gyro_z            = 0.0f;
+    gyro->gyro_x            = 0.0f;
+    gyro->gyro_y            = 0.0f;
+    gyro->flag_gyro_start   = 0;
+    gyro->integrate_enabled = 0;
+    gyro->last_print_tick   = 0;
 }
 
 /* ==================== 子类虚函数表实例 ==================== */
@@ -274,6 +276,7 @@ void Gyro_Constructor(Gyro_t *self, I2C_HandleTypeDef *i2c_handle)
     self->roll                   = 0.0f;
     self->temperature            = 0.0f;
     self->flag_gyro_start        = 0;
+    self->integrate_enabled      = 0;
     self->zero_drift_threshold   = GYRO_ZERO_DRIFT_THRESHOLD;
     self->last_print_tick        = 0;
     self->dma_busy               = 0;
@@ -310,12 +313,14 @@ void Gyro_DMACpltCallback(Gyro_t *self)
     float gz = Gyro_ApplyDeadband(self->gyro_z, self->zero_drift_threshold);
 
     /* 4. Z 轴角度积分: dt=5ms, |gz| < 1.25°/s 不计入积分 */
-    float dt_s = MS_TO_SEC(self->base.update_period_ms > 0
-                           ? self->base.update_period_ms
-                           : GYRO_UPDATE_PERIOD_MS);
-    float abs_gz = (gz > 0.0f) ? gz : -gz;
-    if (abs_gz >= GYRO_INTEGRATION_THRESHOLD) {
-        self->yaw += gz * dt_s;
+    if (self->integrate_enabled) {
+        float dt_s = MS_TO_SEC(self->base.update_period_ms > 0
+                               ? self->base.update_period_ms
+                               : GYRO_UPDATE_PERIOD_MS);
+        float abs_gz = (gz > 0.0f) ? gz : -gz;
+        if (abs_gz >= GYRO_INTEGRATION_THRESHOLD) {
+            self->yaw += gz * dt_s;
+        }
     }
 }
 
@@ -426,6 +431,18 @@ void Gyro_ResetYaw(Gyro_t *self)
     if (self == NULL) return;
     self->yaw = 0.0f;
     self->gyro_z = 0.0f;
+}
+
+void Gyro_EnableIntegrate(Gyro_t *self)
+{
+    if (self == NULL) return;
+    self->integrate_enabled = 1;
+}
+
+void Gyro_DisableIntegrate(Gyro_t *self)
+{
+    if (self == NULL) return;
+    self->integrate_enabled = 0;
 }
 
 /* ==================== 调试打印接口 ==================== */

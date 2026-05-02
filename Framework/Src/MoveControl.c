@@ -58,22 +58,28 @@
 /* 巡线默认参数 */
 #define DEFAULT_BASE_PWM          400.0f
 #define DEFAULT_K_LINE            100.0f
-#define DEFAULT_LINE_W0           -14.0f
-#define DEFAULT_LINE_W1           -8.0f
+#define DEFAULT_LINE_W0           -2.0f
+#define DEFAULT_LINE_W1           -1.0f
 #define DEFAULT_LINE_W2           -0.30f
 #define DEFAULT_LINE_W3           -0.10f
 #define DEFAULT_LINE_W4           0.10f /* 0-1 */
 #define DEFAULT_LINE_W5           0.30f /* 0-2 */
-#define DEFAULT_LINE_W6           8.0f /* 0-8 */
-#define DEFAULT_LINE_W7           14.0f /* 0-12 */
+#define DEFAULT_LINE_W6           1.0f /* 0-8 */
+#define DEFAULT_LINE_W7           2.0f /* 0-12 */
 
 /* 巡线状态机默认参数 */
 #define DEFAULT_INTERSECTION_THRESHOLD  3       /**< 路口确认连续次数 (3次×2ms=6ms) */
 #define DEFAULT_TURN_PWM                400.0f  /**< 转弯基准 PWM */
 #define DEFAULT_TURN_TOLERANCE          3.0f    /**< 转弯角度容差 (°) */
 #define DEFAULT_TURN_KP                 20.0f   /**< 转弯 P 增益 (PWM/°) */
-#define DEFAULT_ADJUST_DISTANCE_MM      60.0f   /**< 微调前进距离 (传感器到轮轴) */
+#define DEFAULT_ADJUST_DISTANCE_MM      80.0f   /**< 微调前进距离 (传感器到轮轴) */
 #define DEFAULT_ADJUST_SPEED_PWM        300.0f  /**< 微调前进 PWM */
+
+/* 直线循迹编码器反馈 */
+#define DEFAULT_LINE_ENCODER_KP         2.0f    /**< 编码器距离差→PWM 增益 */
+
+/* 转弯后期循迹模块辅助对准 */
+#define TURN_LINE_CHECK_YAW_DEG         15.0f   /**< 转弯后期循迹模块介入的 Yaw 误差阈值 (°) */
 
 /* ==================== 公有接口实现 ==================== */
 
@@ -277,9 +283,20 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
 
     /* ---- 状态 0: 直线循线 + 路口检测 ---- */
     case LINE_STATE_FOLLOWING: {
-        /* 加权差速循线 */
-        float pwm_l = ctrl->base_pwm + line_turn * ctrl->k_line;
-        float pwm_r = ctrl->base_pwm - line_turn * ctrl->k_line;
+        /* 编码器距离差修正: 抑制左右轮行程偏差 */
+        float dist_l = 0.0f;
+        float dist_r = 0.0f;
+        if (ctrl->encoder_left && ctrl->encoder_right) {
+            dist_l = Encoder_GetDistance(ctrl->encoder_left);
+            dist_r = Encoder_GetDistance(ctrl->encoder_right);
+        }
+        float dist_diff = dist_r - dist_l;
+
+        /* 加权差速循线 + 编码器平衡修正 */
+        float pwm_l = ctrl->base_pwm + line_turn * ctrl->k_line
+                    - dist_diff * DEFAULT_LINE_ENCODER_KP;
+        float pwm_r = ctrl->base_pwm - line_turn * ctrl->k_line
+                    + dist_diff * DEFAULT_LINE_ENCODER_KP;
 
         if (pwm_l >  ctrl->pwm_limit) pwm_l =  ctrl->pwm_limit;
         if (pwm_l < -ctrl->pwm_limit) pwm_l = -ctrl->pwm_limit;
@@ -299,13 +316,19 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         if (left4 || right4 || active_cnt >= 6) {
             ctrl->intersection_cnt++;
             if (ctrl->intersection_cnt >= ctrl->intersection_threshold) {
-                /* 路口确认 → 停车, 进入微调前进 */
+                /* 路口确认 → 停车, 启动陀螺仪积分, 进入微调前进 */
                 DCMotor_Stop(ctrl->motor_left);
                 DCMotor_Stop(ctrl->motor_right);
 
                 /* 清零编码器用于微调距离计量 */
                 if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
                 if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+
+                /* 启用陀螺仪 Yaw 积分 (从 0 开始累积转弯角度) */
+                if (ctrl->gyro != NULL) {
+                    Gyro_ResetYaw(ctrl->gyro);
+                    Gyro_EnableIntegrate(ctrl->gyro);
+                }
 
                 ctrl->intersection_cnt = 0;
                 ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
@@ -364,7 +387,7 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         break;
     }
 
-    /* ---- 状态 3: 直角转弯 (陀螺仪 Yaw 闭环) ---- */
+    /* ---- 状态 3: 直角转弯 (陀螺仪 Yaw 闭环 + 循迹模块辅助对准) ---- */
     case LINE_STATE_TURNING: {
         float current_yaw = 0.0f;
         if (ctrl->gyro != NULL) {
@@ -373,12 +396,32 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
 
         float yaw_error = ctrl->turn_target_yaw - current_yaw;
 
+        /* 转弯后期 (误差 < 15°): 循迹模块中心通道辅助检测下一段黑线 */
+        if (fabsf(yaw_error) < TURN_LINE_CHECK_YAW_DEG) {
+            uint8_t center_hit = (ch[2] || ch[3] || ch[4] || ch[5]);
+            if (center_hit) {
+                /* 中心通道检测到黑线 → 对准完成，提前结束转弯 */
+                DCMotor_Stop(ctrl->motor_left);
+                DCMotor_Stop(ctrl->motor_right);
+
+                if (ctrl->gyro != NULL) {
+                    Gyro_DisableIntegrate(ctrl->gyro);
+                    Gyro_ResetYaw(ctrl->gyro);
+                }
+
+                ctrl->edge_count++;
+                ctrl->line_state = LINE_STATE_EDGE_DONE;
+                break;
+            }
+        }
+
         if (fabsf(yaw_error) <= ctrl->turn_tolerance) {
             /* 转弯完成 → 停车, 清零 Yaw 防零漂累积, 切换下一边 */
             DCMotor_Stop(ctrl->motor_left);
             DCMotor_Stop(ctrl->motor_right);
 
             if (ctrl->gyro != NULL) {
+                Gyro_DisableIntegrate(ctrl->gyro);
                 Gyro_ResetYaw(ctrl->gyro);
             }
 
@@ -527,8 +570,9 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
 
-    /* 复位陀螺仪 Yaw (从 0 开始本段循迹) */
+    /* 复位陀螺仪 Yaw，禁用积分 (直线循迹期间不积分) */
     if (ctrl->gyro != NULL) {
+        Gyro_DisableIntegrate(ctrl->gyro);
         Gyro_ResetYaw(ctrl->gyro);
     }
 
@@ -609,6 +653,7 @@ void MoveControl_ResetLineTrack(MoveControl_t *ctrl)
     ctrl->state              = MOVE_STATE_RUNNING;
 
     if (ctrl->gyro != NULL) {
+        Gyro_DisableIntegrate(ctrl->gyro);
         Gyro_ResetYaw(ctrl->gyro);
     }
     if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);

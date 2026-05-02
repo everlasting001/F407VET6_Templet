@@ -137,6 +137,7 @@ typedef struct Gyro_s {
 
     /* 运行状态 */
     uint8_t            flag_gyro_start;  /**< 陀螺仪首次数据就绪标志 */
+    uint8_t            integrate_enabled;/**< Yaw 积分使能标志 (1=积分, 0=暂停) */
     float              zero_drift_threshold; /**< 零漂门限 (°/s)，可运行时调整 */
 
     /* 打印速率限制 */
@@ -234,6 +235,22 @@ uint8_t Gyro_GetDeviceID(Gyro_t *self);
   * @param  self  指向陀螺仪对象的指针
   */
 void Gyro_ResetYaw(Gyro_t *self);
+
+/**
+  * @brief  启用 Yaw 角积分 (转弯开始时调用)
+  * @note   仅控制软件积分，不影响硬件 DMA 采样。
+  *         应在路口确认后调用，从 0 开始累积转弯角度。
+  * @param  self  指向陀螺仪对象的指针
+  */
+void Gyro_EnableIntegrate(Gyro_t *self);
+
+/**
+  * @brief  禁用 Yaw 角积分 (转弯完成后调用)
+  * @note   禁用后 Gyro_DMACpltCallback 不再累积 yaw，防止直线循迹零漂。
+  *         应在每次转弯完成后调用。
+  * @param  self  指向陀螺仪对象的指针
+  */
+void Gyro_DisableIntegrate(Gyro_t *self);
 
 /**
   * @brief  打印陀螺仪运动信息（通过 DebugPrintf DMA 发送）
