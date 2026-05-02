@@ -122,6 +122,9 @@ void Framework_Init(void)
             "  Gyro: MPU6050 Init FAILED\r\n");
     }
 
+    /* 绑定陀螺仪到运动控制器 (巡线转弯 Yaw 闭环) */
+    MoveControl_SetGyro(&move_ctrl, &gyro);
+
     Vofa_SetGyro(&gyro);
 
     /* ==================== 7. 后续模块初始化预留 ==================== */

@@ -228,6 +228,14 @@ uint8_t Gyro_IsStarted(const Gyro_t *self);
 uint8_t Gyro_GetDeviceID(Gyro_t *self);
 
 /**
+  * @brief  复位 Yaw 角累积值 (转弯完成后调用，防止零漂累积)
+  * @note   仅清零软件累积的 yaw 值，不重置 MPU6050 硬件。
+  *         应在每次直角转弯完成后调用，使下次转弯从 0° 开始。
+  * @param  self  指向陀螺仪对象的指针
+  */
+void Gyro_ResetYaw(Gyro_t *self);
+
+/**
   * @brief  打印陀螺仪运动信息（通过 DebugPrintf DMA 发送）
   * @note   内置 0.5s 速率限制（per-instance），避免刷屏。
   *         单行格式示例 (Vofa+ FireWater 协议):

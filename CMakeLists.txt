@@ -68,6 +68,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
     # Application layer
     Application/Src/Callback.c # 回调函数
+    Application/Src/TaskProgram/Task1_LineTrack.c # Task1: 正方形边框循迹一圈
 )
 
 # Add include paths
@@ -84,6 +85,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
     #application layer
     Application/Inc/TestProgram
+    Application/Inc/TaskProgram
     Application/Inc/
 )
 

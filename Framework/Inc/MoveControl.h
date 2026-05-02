@@ -31,6 +31,9 @@
 #include "PID.h"
 #include "LineSensor.h"
 
+/* 前向声明 (避免循环依赖，Gyro.h 在 Init.h 中引入) */
+typedef struct Gyro_s Gyro_t;
+
 typedef enum {
     MOVE_STATE_IDLE     = 0,
     MOVE_STATE_RUNNING  = 1,
@@ -42,6 +45,15 @@ typedef enum {
     MOVE_MODE_SPEED       = 1,
     MOVE_MODE_LINE_TRACK  = 2
 } MoveMode_t;
+
+/** @brief 巡线子状态机 — 正方形边框循迹的状态转移 */
+typedef enum {
+    LINE_STATE_FOLLOWING           = 0,  /**< 直线循线中，持续检测路口 */
+    LINE_STATE_INTERSECTION_CONFIRM = 1,  /**< 疑似路口，连续确认中 */
+    LINE_STATE_FORWARD_ADJUST      = 2,  /**< 路口确认，微调前进对齐轮轴 */
+    LINE_STATE_TURNING             = 3,  /**< 直角转弯中 (陀螺仪 Yaw 闭环) */
+    LINE_STATE_EDGE_DONE           = 4   /**< 一条边完成，准备切换下一条边 */
+} LineTrackState_t;
 
 typedef struct {
     /* 设备引用 */
@@ -71,14 +83,33 @@ typedef struct {
     float        pwm_limit;          /**< PWM 输出限幅 (绝对值) */
 
     /* 巡线控制参数 (MOVE_MODE_LINE_TRACK) */
-    LineSensor_t *line_sensor;       /**< 灰度传感器引用 */
-    float         base_pwm;          /**< 巡线基准 PWM (600~1000) */
-    float         k_line;            /**< LineTurn→PWM 增益 (默认 200) */
-    float         line_weights[8];   /**< 8 通道权重 (Vofa 可调) */
-    float         line_turn;         /**< 当前 LineTurn (Vofa 遥测) */
-    float         line_left_pwm;     /**< 当前左轮 PWM (Vofa 遥测) */
-    float         line_right_pwm;    /**< 当前右轮 PWM (Vofa 遥测) */
-    uint8_t       line_ch_bits;      /**< 当前通道二进制值 (Vofa 遥测) */
+    LineSensor_t    *line_sensor;       /**< 灰度传感器引用 */
+    float            base_pwm;          /**< 巡线基准 PWM (600~1000) */
+    float            k_line;            /**< LineTurn→PWM 增益 (默认 200) */
+    float            line_weights[8];   /**< 8 通道权重 (Vofa 可调) */
+    float            line_turn;         /**< 当前 LineTurn (Vofa 遥测) */
+    float            line_left_pwm;     /**< 当前左轮 PWM (Vofa 遥测) */
+    float            line_right_pwm;    /**< 当前右轮 PWM (Vofa 遥测) */
+    uint8_t          line_ch_bits;      /**< 当前通道二进制值 (Vofa 遥测) */
+
+    /* 巡线状态机 (正方形边框循迹) */
+    Gyro_t          *gyro;              /**< 陀螺仪引用 (转弯 Yaw 闭环) */
+    LineTrackState_t line_state;        /**< 巡线子状态 */
+    uint8_t          intersection_cnt;  /**< 连续路口确认计数 */
+    uint8_t          intersection_threshold; /**< 路口确认阈值 (默认 5) */
+    uint8_t          edge_count;        /**< 已完成边数 (0~3) */
+    uint8_t          target_edges;      /**< 目标边数 (4 = 一圈) */
+
+    /* 直角转弯参数 */
+    float            turn_target_yaw;   /**< 目标 Yaw 角 (°) */
+    float            turn_start_yaw;    /**< 转弯起始 Yaw (°) */
+    float            turn_pwm;          /**< 转弯基准 PWM (300~600) */
+    float            turn_tolerance;    /**< 转弯角度容差 (°, 默认 3.0) */
+    float            turn_kp;           /**< 转弯 P 增益 (PWM/°) */
+
+    /* 路口微调参数 */
+    float            adjust_distance_mm;    /**< 微调前进距离 (传感器到轮轴距离) */
+    float            adjust_speed_pwm;       /**< 微调前进 PWM */
 
     /* 运行状态 */
     MoveState_t  state;
@@ -106,6 +137,17 @@ void     MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor);
 void     MoveControl_SetBasePWM(MoveControl_t *ctrl, float pwm);
 void     MoveControl_SetKLine(MoveControl_t *ctrl, float k);
 void     MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w);
+
+/* 巡线状态机控制 (正方形边框循迹) */
+void     MoveControl_SetGyro(MoveControl_t *ctrl, Gyro_t *gyro);
+void     MoveControl_SetLineTrackConfig(MoveControl_t *ctrl,
+                                        uint8_t target_edges,
+                                        uint8_t intersect_threshold,
+                                        float turn_pwm,
+                                        float adjust_mm);
+void     MoveControl_ResetLineTrack(MoveControl_t *ctrl);
+uint8_t  MoveControl_GetEdgeCount(const MoveControl_t *ctrl);
+uint8_t  MoveControl_GetLineTrackDone(const MoveControl_t *ctrl);
 
 /* 紧急停止 */
 void     MoveControl_Stop(MoveControl_t *ctrl);

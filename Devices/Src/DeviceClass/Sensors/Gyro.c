@@ -418,6 +418,16 @@ uint8_t Gyro_GetDeviceID(Gyro_t *self)
     return Gyro_ReadReg(self, MPU6050_WHO_AM_I);
 }
 
+/**
+  * @brief  复位 Yaw 角累积值 (转弯完成后调用，防止零漂累积)
+  */
+void Gyro_ResetYaw(Gyro_t *self)
+{
+    if (self == NULL) return;
+    self->yaw = 0.0f;
+    self->gyro_z = 0.0f;
+}
+
 /* ==================== 调试打印接口 ==================== */
 
 /**
