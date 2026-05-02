@@ -17,6 +17,8 @@
 
 #include "Vofa.h"
 #include "Encoder.h"
+#include "Gyro.h"
+#include "SensorBase.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -25,6 +27,7 @@
 
 static UartBase_t    *vofa_uart;
 static MoveControl_t *vofa_ctrl;
+static Gyro_t        *vofa_gyro;
 
 /* ==================== 下行解析 ==================== */
 
@@ -87,6 +90,14 @@ static void Vofa_ParseCommand(char *cmd_str)
     } else if (strcmp(key, "w7") == 0) {
         MoveControl_SetLineWeight(vofa_ctrl, 7,  value);  /* CH8 */
         MoveControl_SetLineWeight(vofa_ctrl, 0, -value);  /* CH1 = -CH8 */
+    } else if (strcmp(key, "Gyro_Reset") == 0) {
+        if (vofa_gyro != NULL && value > 0.5f) {
+            SensorBase_Reset((SensorBase_t *)vofa_gyro);
+        }
+    } else if (strcmp(key, "Gyro_ZeroDrift") == 0) {
+        if (vofa_gyro != NULL && value > 0.0f) {
+            vofa_gyro->zero_drift_threshold = value;
+        }
     }
 }
 
@@ -96,6 +107,16 @@ void Vofa_Init(UartBase_t *uart, MoveControl_t *ctrl)
 {
     vofa_uart = uart;
     vofa_ctrl = ctrl;
+    vofa_gyro = NULL;
+}
+
+/**
+  * @brief  绑定陀螺仪实例 (供遥测和下行命令使用)
+  * @param  gyro  指向 Gyro_t 实例的指针，传 NULL 则解绑
+  */
+void Vofa_SetGyro(Gyro_t *gyro)
+{
+    vofa_gyro = gyro;
 }
 
 /**
@@ -202,6 +223,31 @@ void Vofa_SendLineTrackTelemetry(void)
         "Vofa:%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.1f,%.1f,%u\r\n",
         (double)w4, (double)w5, (double)w6, (double)w7,
         (double)lt, (double)bp, (double)lp, (double)rp, cb);
+
+    if (len > 0 && len < (int)sizeof(tx_buf)) {
+        UartBase_SendStr(vofa_uart, tx_buf);
+    }
+}
+
+/**
+  * @brief  发送陀螺仪遥测数据帧 (FireWater CSV 格式, 非阻塞 DMA)
+  * @note   调用频率: 5Hz (每 200ms)。
+  *         4 通道: yaw, gyro_z, temperature, zero_drift_threshold
+  *         使用前缀 "Gyro:" 与主遥测帧区分。
+  */
+void Vofa_SendGyroTelemetry(void)
+{
+    if (vofa_gyro == NULL || vofa_uart == NULL) return;
+
+    float yaw   = Gyro_GetYaw(vofa_gyro);
+    float gz    = Gyro_GetGyroZ(vofa_gyro);
+    float temp  = Gyro_GetTemperature(vofa_gyro);
+    float drift = vofa_gyro->zero_drift_threshold;
+
+    char tx_buf[VOFA_TX_BUF_SIZE];
+    int len = snprintf(tx_buf, sizeof(tx_buf),
+        "Gyro:%.2f,%.2f,%.1f,%.2f\r\n",
+        (double)yaw, (double)gz, (double)temp, (double)drift);
 
     if (len > 0 && len < (int)sizeof(tx_buf)) {
         UartBase_SendStr(vofa_uart, tx_buf);

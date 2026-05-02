@@ -39,10 +39,13 @@
 
 #include "MoveControl.h"
 #include "UartBase.h"
+#include "Gyro.h"
 
 void Vofa_Init(UartBase_t *uart, MoveControl_t *ctrl);
+void Vofa_SetGyro(Gyro_t *gyro);
 void Vofa_SendTelemetry(void);
 void Vofa_SendLineTrackTelemetry(void);
+void Vofa_SendGyroTelemetry(void);
 void Vofa_IRQHandler(UartBase_t *uart, uint16_t size);
 
 #endif /* __VOFA_H__ */

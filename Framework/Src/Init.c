@@ -31,6 +31,7 @@ DCMotor_t      left_motor;
 DCMotor_t      right_motor;
 MoveControl_t  move_ctrl;
 LineSensor_t  line_sensor;
+Gyro_t        gyro;
 
 /* ==================== Framework_Init — 一站式初始化 ==================== */
 
@@ -108,12 +109,24 @@ void Framework_Init(void)
     DebugPrintf_Print(&dbg_printf,
         "  LineSensor: 8ch OK\r\n");
 
-    /* ==================== 6. 后续模块初始化预留 ==================== */
+    /* ==================== 6. MPU6050 陀螺仪 ==================== */
+
+    Gyro_Constructor(&gyro, &hi2c1);
+    if (SensorBase_Init((SensorBase_t *)&gyro) == 0) {
+        uint8_t id = Gyro_GetDeviceID(&gyro);
+        DebugPrintf_Print(&dbg_printf,
+            "  Gyro: MPU6050 ID=0x%02X OK\r\n", id);
+    } else {
+        DebugPrintf_Print(&dbg_printf,
+            "  Gyro: MPU6050 Init FAILED\r\n");
+    }
+
+    Vofa_SetGyro(&gyro);
+
+    /* ==================== 7. 后续模块初始化预留 ==================== */
     /*
      * TODO: 按需添加以下模块初始化:
      *
-     *   MPU6050_Init(&gyro);
-     *   Grayscale_Init(&line_sensor);
      *   StepperMotor_Init(&stepper);
      *   Servo_Init(&servo);
      *   ...

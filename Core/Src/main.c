@@ -115,6 +115,16 @@ int main(void)
 #endif
       }
     }
+
+    /* 陀螺仪更新: 每 200ms (5Hz) 读取 MPU6050 + 发送遥测
+       (使用阻塞 HAL I2C，不可放在 ISR 中) */
+    static uint32_t last_gyro = 0;
+    uint32_t now = HAL_GetTick();
+    if (now - last_gyro >= 200) {
+      last_gyro = now;
+      SensorBase_Run((SensorBase_t *)&gyro);
+      Vofa_SendGyroTelemetry();
+    }
   }
     /* USER CODE END WHILE */
 
