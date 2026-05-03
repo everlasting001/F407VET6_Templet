@@ -58,14 +58,14 @@
 /* 巡线默认参数 */
 #define DEFAULT_BASE_PWM          400.0f
 #define DEFAULT_K_LINE            100.0f
-#define DEFAULT_LINE_W0           -14.0f
-#define DEFAULT_LINE_W1           -8.0f
-#define DEFAULT_LINE_W2           -0.30f
-#define DEFAULT_LINE_W3           -0.10f
-#define DEFAULT_LINE_W4           0.10f /* 0-1 */
-#define DEFAULT_LINE_W5           0.30f /* 0-2 */
-#define DEFAULT_LINE_W6           8.0f /* 0-8 */
-#define DEFAULT_LINE_W7           14.0f /* 0-12 */
+#define DEFAULT_LINE_W0           -4.0f
+#define DEFAULT_LINE_W1           -2.5f
+#define DEFAULT_LINE_W2           -1.5f
+#define DEFAULT_LINE_W3           -0.5f
+#define DEFAULT_LINE_W4           +0.5f
+#define DEFAULT_LINE_W5           +1.5f
+#define DEFAULT_LINE_W6           +2.5f
+#define DEFAULT_LINE_W7           +4.0f
 
 /* 巡线状态机默认参数 */
 #define DEFAULT_INTERSECTION_THRESHOLD  3       /**< 路口确认连续次数 (3次×2ms=6ms) */

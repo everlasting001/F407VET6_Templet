@@ -44,7 +44,7 @@
 #define TASK1_INTERSECTION_THRESHOLD  2
 
 /** @brief 路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
-#define TASK1_ADJUST_DISTANCE_MM      60.0f
+#define TASK1_ADJUST_DISTANCE_MM      165.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
 #define TASK1_BASE_PWM               400.0f
