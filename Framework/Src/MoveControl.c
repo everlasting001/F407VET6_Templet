@@ -391,8 +391,8 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
             if (turn_out < -ctrl->turn_pwm) turn_out = -ctrl->turn_pwm;
 
             /* 保证最小转弯 PWM，克服静摩擦 */
-            if (turn_out > 0.0f && turn_out < 150.0f) turn_out = 150.0f;
-            if (turn_out < 0.0f && turn_out > -150.0f) turn_out = -150.0f;
+            if (turn_out > 0.0f && turn_out < 60.0f) turn_out = 60.0f;
+            if (turn_out < 0.0f && turn_out > -60.0f) turn_out = -60.0f;
 
             float pwm_l = -turn_out;
             float pwm_r =  turn_out;
