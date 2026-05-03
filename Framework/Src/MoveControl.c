@@ -135,6 +135,8 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->intersection_threshold   = DEFAULT_INTERSECTION_THRESHOLD;
     ctrl->edge_count               = 0;
     ctrl->target_edges             = 4;
+    ctrl->is_slow_phase            = 0;
+    ctrl->slow_pwm                 = 400.0f;
     ctrl->turn_target_yaw          = 0.0f;
     ctrl->turn_start_yaw           = 0.0f;
     ctrl->turn_pwm                 = DEFAULT_TURN_PWM;
@@ -307,8 +309,13 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                 if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
                 if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
 
-                ctrl->intersection_cnt = 0;
-                ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
+                if (ctrl->is_slow_phase) {
+                    /* 慢速阶段: 检测到路口 → 任务结束 */
+                    ctrl->state = MOVE_STATE_COMPLETE;
+                } else {
+                    ctrl->intersection_cnt = 0;
+                    ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
+                }
             }
         } else {
             /* 未检测到路口，递减计数 (防噪声累积) */
@@ -414,7 +421,9 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
 
         if (ctrl->edge_count >= ctrl->target_edges) {
             /* 全部边完成 → 任务结束 */
-            ctrl->state = MOVE_STATE_COMPLETE;
+            ctrl->is_slow_phase = 1;
+            ctrl->base_pwm = ctrl->slow_pwm;
+            ctrl->intersection_cnt = 0;
             ctrl->line_state = LINE_STATE_FOLLOWING;
         } else {
             /* 切换下一条边: 清零编码器, 回到循线模式 */
@@ -524,6 +533,7 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     ctrl->line_state         = LINE_STATE_FOLLOWING;
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
+    ctrl->is_slow_phase      = 0;
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
 
@@ -604,6 +614,7 @@ void MoveControl_ResetLineTrack(MoveControl_t *ctrl)
     ctrl->line_state         = LINE_STATE_FOLLOWING;
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
+    ctrl->is_slow_phase      = 0;
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
     ctrl->state              = MOVE_STATE_RUNNING;

@@ -99,6 +99,8 @@ typedef struct {
     uint8_t          intersection_threshold; /**< 路口确认阈值 (默认 5) */
     uint8_t          edge_count;        /**< 已完成边数 (0~3) */
     uint8_t          target_edges;      /**< 目标边数 (4 = 一圈) */
+    uint8_t          is_slow_phase;     /**< 慢速循迹阶段 (第4个弯之后) */
+    float            slow_pwm;          /**< 慢速循迹基准 PWM (默认 400) */
 
     /* 直角转弯参数 */
     float            turn_target_yaw;   /**< 目标 Yaw 角 (°) */

@@ -44,19 +44,22 @@
 #define TASK1_INTERSECTION_THRESHOLD  2
 
 /** @brief 路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
-#define TASK1_ADJUST_DISTANCE_MM      120.0f
+#define TASK1_ADJUST_DISTANCE_MM      90.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
-#define TASK1_BASE_PWM               400.0f
+#define TASK1_BASE_PWM               670.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK1_K_LINE                 100.0f
 
 /** @brief 转弯基准 PWM (0~1500) */
-#define TASK1_TURN_PWM               400.0f
+#define TASK1_TURN_PWM               430.0f
 
 /** @brief 微调前进 PWM */
-#define TASK1_ADJUST_SPEED_PWM       300.0f
+#define TASK1_ADJUST_SPEED_PWM       350.0f
+
+/** @brief 慢速循迹基准 PWM (第4个弯之后) */
+#define TASK1_SLOW_PWM              330.0f
 
 /** @brief 状态打印间隔 (ms) */
 #define TASK1_PRINT_INTERVAL_MS      500U
@@ -94,6 +97,7 @@ void Task1_LineTrack_Init(void)
 
     /* 3. 设置微调前进速度 */
     move_ctrl.adjust_speed_pwm = TASK1_ADJUST_SPEED_PWM;
+    move_ctrl.slow_pwm         = TASK1_SLOW_PWM;
 
     /* 4. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
     MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
@@ -158,6 +162,7 @@ void Task1_LineTrack_Loop(void)
         "[Task1] Edge:%d/4 State:%s LT:%.1f CH:0x%02X "
         "LPWM:%.0f RPWM:%.0f\r\n",
         edge + 1, sname,
+        move_ctrl.is_slow_phase ? "(Slow)" : "",
         (double)move_ctrl.line_turn,
         move_ctrl.line_ch_bits,
         (double)move_ctrl.line_left_pwm,
