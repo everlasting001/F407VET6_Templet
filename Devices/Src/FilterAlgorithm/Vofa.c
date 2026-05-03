@@ -18,6 +18,7 @@
 #include "Vofa.h"
 #include "Encoder.h"
 #include "Gyro.h"
+#include "LineSensor.h"
 #include "SensorBase.h"
 #include <stdio.h>
 #include <string.h>
@@ -78,18 +79,8 @@ static void Vofa_ParseCommand(char *cmd_str)
         MoveControl_SetBasePWM(vofa_ctrl, value);
     } else if (strcmp(key, "k_line") == 0) {
         MoveControl_SetKLine(vofa_ctrl, value);
-    } else if (strcmp(key, "w4") == 0) {
-        MoveControl_SetLineWeight(vofa_ctrl, 4,  value);  /* CH5 */
-        MoveControl_SetLineWeight(vofa_ctrl, 3, -value);  /* CH4 = -CH5 */
-    } else if (strcmp(key, "w5") == 0) {
-        MoveControl_SetLineWeight(vofa_ctrl, 5,  value);  /* CH6 */
-        MoveControl_SetLineWeight(vofa_ctrl, 2, -value);  /* CH3 = -CH6 */
-    } else if (strcmp(key, "w6") == 0) {
-        MoveControl_SetLineWeight(vofa_ctrl, 6,  value);  /* CH7 */
-        MoveControl_SetLineWeight(vofa_ctrl, 1, -value);  /* CH2 = -CH7 */
-    } else if (strcmp(key, "w7") == 0) {
-        MoveControl_SetLineWeight(vofa_ctrl, 7,  value);  /* CH8 */
-        MoveControl_SetLineWeight(vofa_ctrl, 0, -value);  /* CH1 = -CH8 */
+    } else if (strcmp(key, "kp_line") == 0) {
+        MoveControl_SetKpLine(vofa_ctrl, value);
     } else if (strcmp(key, "Gyro_Reset") == 0) {
         if (vofa_gyro != NULL && value > 0.5f) {
             SensorBase_Reset((SensorBase_t *)vofa_gyro);
@@ -201,17 +192,18 @@ void Vofa_IRQHandler(UartBase_t *uart, uint16_t size)
 /**
   * @brief  发送巡线遥测数据帧 (FireWater CSV 格式, 非阻塞 DMA)
   * @note   调用频率: 10Hz (每 100ms)。
-  *         10 通道: w4~w7, line_turn, base_pwm, left_pwm, right_pwm, ch_bits
-  *         w0~w3 由对称关系自动推导 (w3=-w4, w2=-w5, w1=-w6, w0=-w7)
+  *         8 通道: pos_mm, kp_line, line_turn, base_pwm, left_pwm, right_pwm, ch_bits
+  *         方案 B: line_turn = pos_mm × kp_line，PV 和增益分离显示
   */
 void Vofa_SendLineTrackTelemetry(void)
 {
     if (vofa_ctrl == NULL || vofa_uart == NULL) return;
 
-    float w4  = vofa_ctrl->line_weights[4];
-    float w5  = vofa_ctrl->line_weights[5];
-    float w6  = vofa_ctrl->line_weights[6];
-    float w7  = vofa_ctrl->line_weights[7];
+    float pos_mm = 0.0f;
+    if (vofa_ctrl->line_sensor) {
+        pos_mm = LineSensor_GetPosition(vofa_ctrl->line_sensor);
+    }
+    float kp  = vofa_ctrl->kp_line;
     float lt  = vofa_ctrl->line_turn;
     float bp  = vofa_ctrl->base_pwm;
     float lp  = vofa_ctrl->line_left_pwm;
@@ -220,9 +212,9 @@ void Vofa_SendLineTrackTelemetry(void)
 
     char tx_buf[VOFA_TX_BUF_SIZE];
     int len = snprintf(tx_buf, sizeof(tx_buf),
-        "Vofa:%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.1f,%.1f,%u\r\n",
-        (double)w4, (double)w5, (double)w6, (double)w7,
-        (double)lt, (double)bp, (double)lp, (double)rp, cb);
+        "Line:%.1f,%.2f,%.1f,%.1f,%.1f,%.1f,%u\r\n",
+        (double)pos_mm, (double)kp, (double)lt,
+        (double)bp, (double)lp, (double)rp, cb);
 
     if (len > 0 && len < (int)sizeof(tx_buf)) {
         UartBase_SendStr(vofa_uart, tx_buf);

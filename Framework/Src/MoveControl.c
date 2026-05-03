@@ -58,6 +58,7 @@
 /* 巡线默认参数 */
 #define DEFAULT_BASE_PWM          400.0f
 #define DEFAULT_K_LINE            100.0f
+#define DEFAULT_KP_LINE           8.0f    /**< 巡线 P 增益 (PWM/mm, 方案 B) */
 #define DEFAULT_LINE_W0           -14.0f
 #define DEFAULT_LINE_W1           -8.0f
 #define DEFAULT_LINE_W2           -0.30f
@@ -115,6 +116,7 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->line_sensor     = NULL;
     ctrl->base_pwm        = DEFAULT_BASE_PWM;
     ctrl->k_line          = DEFAULT_K_LINE;
+    ctrl->kp_line         = DEFAULT_KP_LINE;
     ctrl->line_weights[0] = DEFAULT_LINE_W0;
     ctrl->line_weights[1] = DEFAULT_LINE_W1;
     ctrl->line_weights[2] = DEFAULT_LINE_W2;
@@ -257,13 +259,15 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
     const uint8_t *ch = LineSensor_GetChannelValues(ctrl->line_sensor);
     if (ch == NULL) return;
 
-    /* 计算 LineTurn 和 ch_bits (所有状态共用) */
-    float line_turn = 0.0f;
+    /* 计算 line_turn = 传感器加权位置(mm) × P增益 (方案B: 线性位置控制) */
+    float line_turn = LineSensor_GetPosition(ctrl->line_sensor)
+                    * ctrl->kp_line;
+
+    /* 计算 ch_bits 和 active_cnt (用于路口检测和遥测) */
     uint8_t ch_bits = 0;
     uint8_t active_cnt = 0;
     for (uint8_t i = 0; i < 8; i++) {
         if (ch[i]) {
-            line_turn += ctrl->line_weights[i];
             ch_bits |= (1 << i);
             active_cnt++;
         }
@@ -554,6 +558,12 @@ void MoveControl_SetKLine(MoveControl_t *ctrl, float k)
 {
     if (ctrl == NULL) return;
     ctrl->k_line = k;
+}
+
+void MoveControl_SetKpLine(MoveControl_t *ctrl, float kp)
+{
+    if (ctrl == NULL) return;
+    ctrl->kp_line = kp;
 }
 
 void MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w)

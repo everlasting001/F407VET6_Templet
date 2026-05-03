@@ -86,7 +86,8 @@ typedef struct {
     LineSensor_t    *line_sensor;       /**< 灰度传感器引用 */
     float            base_pwm;          /**< 巡线基准 PWM (600~1000) */
     float            k_line;            /**< LineTurn→PWM 增益 (默认 200) */
-    float            line_weights[8];   /**< 8 通道权重 (Vofa 可调) */
+    float            line_weights[8];   /**< 8 通道权重 (方案 B 中不再使用，保留兼容) */
+    float            kp_line;           /**< 巡线 P 增益 (PWM/mm, 方案 B, 默认 8.0) */
     float            line_turn;         /**< 当前 LineTurn (Vofa 遥测) */
     float            line_left_pwm;     /**< 当前左轮 PWM (Vofa 遥测) */
     float            line_right_pwm;    /**< 当前右轮 PWM (Vofa 遥测) */
@@ -136,6 +137,7 @@ void     MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor);
 /* 巡线参数调整 (Vofa 上位机调参接口) */
 void     MoveControl_SetBasePWM(MoveControl_t *ctrl, float pwm);
 void     MoveControl_SetKLine(MoveControl_t *ctrl, float k);
+void     MoveControl_SetKpLine(MoveControl_t *ctrl, float kp);
 void     MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w);
 
 /* 巡线状态机控制 (正方形边框循迹) */
