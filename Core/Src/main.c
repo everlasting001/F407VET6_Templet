@@ -83,9 +83,9 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM8_Init();
-  MX_I2C1_Init();
   MX_USART2_UART_Init();
   MX_USART3_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   Callback_Init();           /* 启动 TIM2 1ms 基时 + 软件分频 */
   Framework_Init();          /* 初始化所有硬件模块 + 运动控制 */
