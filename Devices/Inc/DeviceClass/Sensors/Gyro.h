@@ -98,7 +98,7 @@
 #define GYRO_PRINT_INTERVAL_MS     500U    /**< 打印速率限制 (ms) */
 #define GYRO_FS_SEL                0x08    /**< 陀螺仪满量程 ±500°/s */
 #define GYRO_ZERO_DRIFT_THRESHOLD  1.0f    /**< 零漂门限 (°/s)，低于此值视为静止 */
-#define GYRO_INTEGRATION_THRESHOLD 1.5f   /**< 角度积分门限 (°/s)，低于此值不计入积分 */
+#define GYRO_INTEGRATION_THRESHOLD 1.0f   /**< 角度积分门限 (°/s)，低于此值不计入积分 */
 #define GYRO_DMA_BUF_SIZE          6       /**< DMA 读取字节数 (X_H/X_L/Y_H/Y_L/Z_H/Z_L) */
 #define MPU6050_I2C_TIMEOUT_MS     100     /**< I2C 读写超时 (ms) */
 /**
@@ -119,6 +119,7 @@ typedef struct Gyro_s {
     /* DMA 传输 */
     uint8_t            dma_buf[GYRO_DMA_BUF_SIZE]; /**< I2C DMA 接收缓冲区 (6 字节) */
     volatile uint8_t   dma_busy;         /**< DMA 传输忙标志 (1=传输中, 0=空闲) */
+    uint32_t           dma_start_tick;   /**< DMA 启动时刻 (HAL_GetTick)，用于超时检测 */
 
     /* 原始数据 */
     int16_t            gyro_rx;          /**< 陀螺仪 X 轴原始值 */

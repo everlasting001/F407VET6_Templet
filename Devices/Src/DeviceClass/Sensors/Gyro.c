@@ -188,6 +188,7 @@ static int Gyro_init(void *self)
     gyro->zero_drift_threshold  = GYRO_ZERO_DRIFT_THRESHOLD;
     gyro->last_print_tick      = 0;
     gyro->dma_busy             = 0;
+    gyro->dma_start_tick       = 0;
 
     return 0;
 }
@@ -210,11 +211,17 @@ static int Gyro_run(void *self)
         return -2;
     }
 
-    /* DMA 重叠防护: 若上次传输未完成则跳过 */
+    /* DMA 重叠防护 + 超时恢复: 若上次传输超时未完成则强制清除 */
     if (gyro->dma_busy) {
-        return -1;
+        if (HAL_GetTick() - gyro->dma_start_tick > 50) {
+            /* 50ms 无 DMA 回调 → 强制清除, 下周期重试 */
+            gyro->dma_busy = 0;
+        } else {
+            return -1;
+        }
     }
 
+    gyro->dma_start_tick = HAL_GetTick();
     gyro->dma_busy = 1;
 
     /* 启动 DMA 读取 6 字节: GYRO_XOUT_H ~ GYRO_ZOUT_L */
@@ -261,6 +268,7 @@ static int Gyro_cleanup(void *self)
     gyro->zero_drift_threshold   = GYRO_ZERO_DRIFT_THRESHOLD;
     gyro->last_print_tick       = 0;
     gyro->dma_busy              = 0;
+    gyro->dma_start_tick        = 0;
 
     return 0;
 }
@@ -328,6 +336,7 @@ void Gyro_Constructor(Gyro_t *self, I2C_HandleTypeDef *i2c_handle)
     self->zero_drift_threshold   = GYRO_ZERO_DRIFT_THRESHOLD;
     self->last_print_tick        = 0;
     self->dma_busy               = 0;
+    self->dma_start_tick         = 0;
 
     /* 4. 替换为子类虚函数表 */
     self->base.vtable = &gyro_vtable;
