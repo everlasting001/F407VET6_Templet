@@ -106,12 +106,13 @@ typedef struct {
     /* 直角转弯参数 */
     float            turn_target_yaw;   /**< 目标 Yaw 角 (°) */
     float            turn_start_yaw;    /**< 转弯起始 Yaw (°) */
+    PID_t            turn_pid;          /**< 转弯 PID (Yaw 角度闭环) */
     float            turn_pwm;          /**< 转弯基准 PWM (300~600) */
     float            turn_tolerance;    /**< 转弯角度容差 (°, 默认 3.0) */
     float            turn_kp;           /**< 转弯 P 增益 (PWM/°) */
 
     /* 路口微调参数 */
-    float            adjust_distance_mm;    /**< 微调前进距离 (传感器到轮轴距离) */
+    float            adjust_distance_mm[4]; /**< 每个路口的微调前进距离 (传感器到轮轴距离) */
     float            adjust_speed_pwm;       /**< 微调前进 PWM */
 
     /* 运行状态 */

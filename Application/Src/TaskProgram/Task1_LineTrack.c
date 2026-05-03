@@ -42,23 +42,26 @@
 /** @brief 正方形边数 (3 条边 = 少转一次) */
 #define SQUARE_TARGET_EDGES     3
 
-/** @brief 路口确认连续次数 (2×2ms=4ms 持续检测) */
-#define TASK1_INTERSECTION_THRESHOLD  2
+/** @brief 路口确认连续次数 (8×2ms=16ms 持续检测) */
+#define TASK1_INTERSECTION_THRESHOLD  8
 
-/** @brief 路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
-#define TASK1_ADJUST_DISTANCE_MM      60.0f
+/** @brief 每个路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
+#define TASK1_ADJUST_DISTANCE_MM_0    60.0f
+#define TASK1_ADJUST_DISTANCE_MM_1    25.0f
+#define TASK1_ADJUST_DISTANCE_MM_2    25.0f
+#define TASK1_ADJUST_DISTANCE_MM_3    25.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
-#define TASK1_BASE_PWM               700.0f
+#define TASK1_BASE_PWM               750.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
-#define TASK1_K_LINE                 100.0f
+#define TASK1_K_LINE                 135.0f
 
 /** @brief 转弯基准 PWM (0~1500) */
 #define TASK1_TURN_PWM               450.0f
 
 /** @brief 微调前进 PWM */
-#define TASK1_ADJUST_SPEED_PWM       330.0f
+#define TASK1_ADJUST_SPEED_PWM       250.0f
 
 /** @brief 状态打印间隔 (ms) */
 #define TASK1_PRINT_INTERVAL_MS      500U
@@ -100,9 +103,14 @@ void Task1_LineTrack_Init(void)
                                    SQUARE_TARGET_EDGES,
                                    TASK1_INTERSECTION_THRESHOLD,
                                    TASK1_TURN_PWM,
-                                   TASK1_ADJUST_DISTANCE_MM);
+                                   TASK1_ADJUST_DISTANCE_MM_0);
 
-    /* 3. 设置微调前进速度 */
+    /* 3. 各路口微调距离独立配置 */
+    move_ctrl.adjust_distance_mm[1] = TASK1_ADJUST_DISTANCE_MM_1;
+    move_ctrl.adjust_distance_mm[2] = TASK1_ADJUST_DISTANCE_MM_2;
+    move_ctrl.adjust_distance_mm[3] = TASK1_ADJUST_DISTANCE_MM_3;
+
+    /* 4. 设置微调前进速度 */
     move_ctrl.adjust_speed_pwm = TASK1_ADJUST_SPEED_PWM;
 
     /* 4. 启动巡线模式 (发车, ISR 开始驱动电机) */
