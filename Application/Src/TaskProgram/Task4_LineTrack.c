@@ -119,6 +119,12 @@ void Task4_LineTrack_Init(void)
         (double)TASK4_ADJUST_DISTANCE_MM);
 
     last_print_tick = HAL_GetTick();
+
+    /* USART2 (K230) 启动信息 */
+    DebugPrintf_Print(&k230_printf,
+        "=== Task4: K230 UART Ready, waiting for K230 data... ===\r\n");
+    DebugPrintf_Print(&dbg_printf,
+        "  K230 UART (USART2) registered for Task4\r\n");
 }
 
 /* ==================== Part 2: 主循环 ==================== */
@@ -144,6 +150,21 @@ void Task4_LineTrack_Loop(void)
     } else if (move_ctrl.buzzer_beep_flag == 2) {
         move_ctrl.buzzer_beep_flag = 0;
         Buzzer_BeepDouble(&task4_buzzer, TASK4_BEEP_ON_MS, TASK4_BEEP_OFF_MS);
+    }
+
+    /* ---- K230 数据接收检测 (每周期检查, 不限制速率) ---- */
+    if (k230_printf.uart.rx_done) {
+        uint16_t len = k230_printf.uart.rx_len;
+        k230_printf.uart.rx_done = 0;
+        if (len > 0 && len <= k230_printf.uart.rx_buf_size) {
+            DebugPrintf_Print(&k230_printf, "K230 RX[%u]: ", (unsigned int)len);
+            uint16_t echo_len = (len > 128U) ? 128U : len;
+            for (uint16_t i = 0; i < echo_len; i++) {
+                DebugPrintf_Print(&k230_printf, "%02X ",
+                    k230_printf.uart.rx_buffer[i]);
+            }
+            DebugPrintf_Print(&k230_printf, "\r\n");
+        }
     }
 
     /* 速率限制: 每 500ms 打印一次 */

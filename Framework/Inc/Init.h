@@ -53,7 +53,8 @@
 
 /* ==================== 全局实例 (extern) ==================== */
 
-extern DebugPrintf_t  dbg_printf;     /**< 调试串口实例 (printf 重定向) */
+extern DebugPrintf_t  dbg_printf;     /**< 调试串口实例 (printf 重定向, USART1) */
+extern DebugPrintf_t  k230_printf;    /**< K230 串口实例 (printf + 数据接收, USART2) */
 
 extern Encoder_t      left_encoder;   /**< 左轮编码器 */
 extern Encoder_t      right_encoder;  /**< 右轮编码器 */

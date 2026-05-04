@@ -21,10 +21,12 @@ static const DCMotorPinConfig right_pins[DCMOTOR_PIN_COUNT] = {
 /* ==================== 调试串口 DMA 接收缓冲 ==================== */
 
 static uint8_t dbg_rx_buffer[512];
+static uint8_t k230_rx_buffer[512];
 
 /* ==================== 全局实例定义 ==================== */
 
 DebugPrintf_t  dbg_printf;
+DebugPrintf_t  k230_printf;
 
 Encoder_t      left_encoder;
 Encoder_t      right_encoder;
@@ -60,6 +62,14 @@ void Framework_Init(void)
 
     DebugPrintf_Print(&dbg_printf,
         "=== Framework Init Start ===\r\n");
+
+    /* ---- K230 串口 (USART2, TX=PA2, RX=PA3) ---- */
+    DebugPrintf_Constructor(&k230_printf, &huart2,
+                            k230_rx_buffer, sizeof(k230_rx_buffer));
+    if (DebugPrintf_Init(&k230_printf) != 0) {
+        Error_Handler();
+    }
+    DebugPrintf_Print(&k230_printf, "=== K230 UART (USART2) Ready ===\r\n");
 
     /* ==================== 2. 编码器 ==================== */
 

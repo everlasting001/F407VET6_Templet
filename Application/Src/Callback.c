@@ -150,6 +150,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if (huart->Instance == USART1) {
         Vofa_IRQHandler(&dbg_printf.uart, Size);
         UartBase_RxIdleCallback(&dbg_printf.uart, Size);
+    } else if (huart->Instance == USART2) {
+        UartBase_RxIdleCallback(&k230_printf.uart, Size);
     }
 }
 
@@ -161,6 +163,8 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
         UartBase_TxCpltCallback(&dbg_printf.uart);
+    } else if (huart->Instance == USART2) {
+        UartBase_TxCpltCallback(&k230_printf.uart);
     }
 }
 
@@ -173,6 +177,8 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART1) {
         UartBase_ErrorCallback(&dbg_printf.uart);
+    } else if (huart->Instance == USART2) {
+        UartBase_ErrorCallback(&k230_printf.uart);
     }
 }
 
