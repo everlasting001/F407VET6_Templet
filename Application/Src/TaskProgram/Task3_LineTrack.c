@@ -190,7 +190,7 @@ void Task3_LineTrack_Loop(void)
     /* 测量完成 → VOFA 发送 */
     if (LengthMeasure_IsDone(&length_measure)) {
         DebugPrintf_Print(&dbg_printf,
-            "L1:%.1f;L2:%.1f\r\n",
+            "L1:%.2fcm;L2:%.2fcm\r\n",
             (double)LengthMeasure_GetL1Cm(&length_measure),
             (double)LengthMeasure_GetL2Cm(&length_measure));
         LengthMeasure_Reset(&length_measure);
@@ -199,7 +199,7 @@ void Task3_LineTrack_Loop(void)
     /* 测量超时 → 报错 */
     if (LengthMeasure_IsTimeout(&length_measure)) {
         DebugPrintf_Print(&dbg_printf,
-            "L1:ERR;L2:ERR\r\n");
+            "L1:ERRcm;L2:ERRcm\r\n");
         LengthMeasure_Reset(&length_measure);
     }
 

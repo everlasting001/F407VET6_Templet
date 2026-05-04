@@ -22,7 +22,7 @@
 
 #define TAPE_THRESHOLD  5   /**< >= 此值认为是黑胶带 */
 #define GAP_THRESHOLD   2   /**< <= 此值认为是白纸 */
-#define DEFAULT_CONFIRM 2   /**< 默认防抖次数 (2×2ms=4ms) */
+#define DEFAULT_CONFIRM 1   /**< 默认防抖次数 (1×2ms=2ms) */
 #define DEFAULT_TIMEOUT_MM 400.0f  /**< 默认超时距离 */
 
 /* ==================== 私有辅助 ==================== */
