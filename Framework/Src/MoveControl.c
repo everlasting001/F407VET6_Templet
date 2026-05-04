@@ -154,6 +154,7 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->adjust_speed_pwm         = DEFAULT_ADJUST_SPEED_PWM;
     ctrl->fake_turn_threshold_mm   = DEFAULT_FAKE_TURN_THRESHOLD_MM;
     ctrl->first_intersection       = 0;
+    ctrl->final_turn_done          = 0;
 
     ctrl->state          = MOVE_STATE_IDLE;
     ctrl->start_tick     = 0;
@@ -325,8 +326,39 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     && traveled_mm < ctrl->fake_turn_threshold_mm) {
                     /* 假路口: 距离不足 → 复位计数器, 不清零编码器, 继续循线 */
                     ctrl->intersection_cnt = 0;
-                } else if (ctrl->is_slow_phase || ctrl->final_edge) {
-                    /* 慢速阶段或最后一段: 检测到真路口 → 任务结束 */
+                } else if (ctrl->final_edge) {
+                    /* 最后路口: 反向90°转弯后停车 */
+                    ctrl->first_intersection = 0;
+                    ctrl->final_turn_done = 1;
+                    DCMotor_Stop(ctrl->motor_left);
+                    DCMotor_Stop(ctrl->motor_right);
+
+                    if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+                    if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+
+                    /* 最后边沿反向转弯: 翻转检测方向 */
+                    if (right_cnt > left_cnt) {
+                        ctrl->turn_direction = -1;  /* 检测到CCW, 翻转为CW */
+                    } else if (left_cnt > right_cnt) {
+                        ctrl->turn_direction =  1;  /* 检测到CW, 翻转为CCW */
+                    }
+
+                    /* 原地反向90°转弯补偿系数 */
+                    ctrl->turn_angle = 90.0f;
+                    ctrl->adjust_distance_mm = 125.0f;  /* 最后边沿微调距离 */
+                    if (ctrl->turn_direction == -1) {
+                        ctrl->turn_reverse_boost = 1.3f;  /* CW: 反转轮 */
+                        ctrl->turn_other_boost   = 1.0f;  /* CW: 另一轮 */
+                    } else {
+                        ctrl->turn_reverse_boost = 1.2f;  /* CCW: 反转轮 */
+                        ctrl->turn_other_boost   = 0.6f;  /* CCW: 另一轮 */
+                    }
+
+                    PID_Reset(&ctrl->turn_pid);
+                    ctrl->intersection_cnt = 0;
+                    ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
+                } else if (ctrl->is_slow_phase) {
+                    /* 慢速阶段: 检测到真路口 → 任务结束 */
                     ctrl->first_intersection = 0;
                     DCMotor_Stop(ctrl->motor_left);
                     DCMotor_Stop(ctrl->motor_right);
@@ -496,7 +528,12 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         DCMotor_Stop(ctrl->motor_left);
         DCMotor_Stop(ctrl->motor_right);
 
-        if (ctrl->edge_count >= ctrl->target_edges) {
+        if (ctrl->final_turn_done) {
+            /* 最后反向转弯完成 → 任务结束 */
+            ctrl->final_turn_done = 0;
+            ctrl->state = MOVE_STATE_COMPLETE;
+            ctrl->buzzer_beep_flag = 2;
+        } else if (ctrl->edge_count >= ctrl->target_edges) {
             /* 全部转弯完成 → 最后一段循线, 下一路口停止 (不减速) */
             ctrl->final_edge = 1;
             ctrl->intersection_cnt = 0;
@@ -624,6 +661,7 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
     if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
     ctrl->first_intersection = 1;
+    ctrl->final_turn_done    = 0;
 
     /* 复位 PID 历史状态（避免模式切换时残余） */
     PID_Reset(&ctrl->pos_pid);
@@ -706,6 +744,7 @@ void MoveControl_ResetLineTrack(MoveControl_t *ctrl)
     ctrl->edge_count         = 0;
     ctrl->is_slow_phase      = 0;
     ctrl->buzzer_beep_flag   = 0;
+    ctrl->final_turn_done    = 0;
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
     ctrl->state              = MOVE_STATE_RUNNING;

@@ -122,6 +122,7 @@ typedef struct {
     /* 假路口过滤参数 */
     float            fake_turn_threshold_mm; /**< 假路口过滤距离阈值 (默认 600mm) */
     uint8_t          first_intersection;     /**< 编码器清零后首个路口标志: 1=跳过距离检查 */
+    uint8_t          final_turn_done;        /**< 最后反向转弯完成标志: 1=EDGE_DONE后直接COMPLETE */
 
     /* 运行状态 */
     MoveState_t  state;
