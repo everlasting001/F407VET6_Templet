@@ -70,6 +70,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Application/Src/Callback.c # 回调函数
     Application/Src/TaskProgram/Task1_LineTrack.c # Task1: 正方形边框逆时针循迹一圈
     Application/Src/TaskProgram/Task2_LineTrack.c # Task2: 正方形边框顺时针循迹一圈
+    Application/Src/TaskProgram/Task3_LineTrack.c # Task3: 正方形边框循迹一圈
 )
 
 # Add include paths
