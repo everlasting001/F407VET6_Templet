@@ -501,8 +501,8 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                             ctrl->turn_other_boost   = 0.6f;  /* CCW: 另一轮 */
                         }
                     } else {
-                        /* Task3 第一个弯转85° (负重场景降低过冲) */
-                        if (ctrl->task_id == TASK_ID_3 && ctrl->edge_count == 0) {
+                        /* 第一个弯转85° (全任务统一, 降低过冲) */
+                        if (ctrl->edge_count == 0) {
                             ctrl->turn_angle = 85.0f;
                         } else {
                             ctrl->turn_angle = 90.0f;
