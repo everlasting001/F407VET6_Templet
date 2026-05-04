@@ -36,6 +36,7 @@
 #include "Encoder.h"
 #include "DebugPrintf.h"
 #include "Buzzer.h"
+#include "Callback.h"
 #include "main.h"
 
 /* ==================== 私有宏定义 ==================== */
@@ -108,6 +109,9 @@ void Task3_LineTrack_Init(void)
 {
     /* 0. 设置任务ID (区分状态机行为) */
     MoveControl_SetTaskID(&move_ctrl, TASK_ID_3);
+
+    /* 0.5. 将灰度循迹采样频率提升至 1ms (1000Hz)，提高长度测量精度 */
+    Callback_SetLineTrackDivider(1);
 
     /* 1. 设置巡线基础参数 (Vofa 可运行时调整) */
     MoveControl_SetBasePWM(&move_ctrl, TASK3_BASE_PWM);

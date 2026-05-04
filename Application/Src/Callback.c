@@ -19,12 +19,25 @@ volatile uint8_t Flag_100ms  = 0;
 volatile uint8_t Flag_500ms  = 0;
 volatile uint8_t Flag_1000ms = 0;
 
+/** @brief 灰度循迹采样分频系数 (默认 2, Task3 设为 1 以提高采样频率到 1ms) */
+volatile uint8_t g_line_track_divider = 2;
+
 /**
   * @brief  初始化定时回调模块：启动 TIM2 更新中断（1ms）
   */
 void Callback_Init(void)
 {
     HAL_TIM_Base_Start_IT(&htim2);
+}
+
+/**
+  * @brief  设置灰度循迹采样分频系数
+  * @param  divider  分频系数: 1=每1ms采样(Task3), 2=每2ms采样(Task1/2, 默认)
+  */
+void Callback_SetLineTrackDivider(uint8_t divider)
+{
+    if (divider < 1) divider = 1;
+    g_line_track_divider = divider;
 }
 
 /**
@@ -64,8 +77,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         Cnt_500ms++;
         Cnt_1000ms++;
 
-        /* 2ms 分频 — 灰度传感器扫描 + 巡线修正 (200Hz) */
-        if (Cnt_2ms >= 2) {
+        /* 灰度传感器扫描 + 巡线修正 (Task1/2: 2ms=500Hz, Task3: 1ms=1000Hz) */
+        if (Cnt_2ms >= g_line_track_divider) {
             SensorBase_Run((SensorBase_t *)&line_sensor);
             MoveControl_LineTrackUpdate(&move_ctrl);
             LengthMeasure_Run(&length_measure);
