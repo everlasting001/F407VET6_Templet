@@ -72,6 +72,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Application/Src/TaskProgram/Task1_LineTrack.c # Task1: 正方形边框逆时针循迹一圈
     Application/Src/TaskProgram/Task2_LineTrack.c # Task2: 正方形边框顺时针循迹一圈
     Application/Src/TaskProgram/Task3_LineTrack.c # Task3: 正方形边框循迹一圈
+    Application/Src/TaskProgram/Task4_LineTrack.c # Task4: 180°掉头→巡线→第1边沿90°转→400pwm/500ms
 )
 
 # Add include paths

@@ -49,7 +49,8 @@ typedef enum {
 typedef enum {
     TASK_ID_1 = 0,
     TASK_ID_2 = 1,
-    TASK_ID_3 = 2
+    TASK_ID_3 = 2,
+    TASK_ID_4 = 3
 } TaskID_t;
 
 /** @brief 巡线子状态机 — 正方形边框循迹的状态转移 */
@@ -60,7 +61,9 @@ typedef enum {
     LINE_STATE_TURNING             = 3,  /**< 直角转弯中 (陀螺仪 Yaw 闭环) */
     LINE_STATE_EDGE_DONE           = 4,  /**< 一条边完成，准备切换下一条边 */
     LINE_STATE_FINAL_FOLLOW        = 5,  /**< 最后循迹400ms后180°掉头 */
-    LINE_STATE_FINAL_DETECT        = 6   /**< 最后180°后250低速循迹, 检测第8边沿立即停车 */
+    LINE_STATE_FINAL_DETECT        = 6,  /**< 最后180°后250低速循迹, 检测第8边沿立即停车 */
+    LINE_STATE_INITIAL_TURN        = 7,  /**< 初始180°顺时针掉头 (Task4) */
+    LINE_STATE_TASK4_POST_FOLLOW   = 8   /**< 第1边沿90°转弯后400pwm循迹500ms (Task4) */
 } LineTrackState_t;
 
 typedef struct {
@@ -132,6 +135,7 @@ typedef struct {
     float            fake_turn_threshold_mm; /**< 假路口过滤距离阈值 (默认 600mm) */
     uint8_t          first_intersection;     /**< 编码器清零后首个路口标志: 1=跳过距离检查 */
     uint8_t          final_turn_done;        /**< 最后反向转弯完成标志: 1=EDGE_DONE后直接COMPLETE */
+    uint8_t          initial_turn_setup_done; /**< 初始转弯已初始化标志 (Task4) */
 
     /* 减速带参数 (Task3 负重场景) */
     uint8_t          first_turn_is_cw;        /**< 首弯方向: 1=CW顺时针, 0=CCW逆时针 */
