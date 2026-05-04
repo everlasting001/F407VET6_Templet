@@ -49,6 +49,7 @@
 #include "DebugPrintf.h"
 #include "LineSensor.h"
 #include "Gyro.h"
+#include "LengthMeasure.h"
 
 /* ==================== 全局实例 (extern) ==================== */
 
@@ -61,6 +62,7 @@ extern DCMotor_t      right_motor;    /**< 右轮电机 */
 extern MoveControl_t  move_ctrl;      /**< 运动控制器 */
 extern LineSensor_t   line_sensor;    /**< 八路灰度循迹传感器 */
 extern Gyro_t         gyro;           /**< MPU6050 陀螺仪 (I2C1) */
+extern LengthMeasure_t length_measure;  /**< 长度测量模块 (Task3 减速带) */
 
 /* ==================== 公有接口 ==================== */
 

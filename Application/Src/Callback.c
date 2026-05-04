@@ -8,6 +8,7 @@
 #include "Vofa.h"
 #include "LineSensor.h"
 #include "Gyro.h"
+#include "LengthMeasure.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -67,6 +68,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         if (Cnt_2ms >= 2) {
             SensorBase_Run((SensorBase_t *)&line_sensor);
             MoveControl_LineTrackUpdate(&move_ctrl);
+            LengthMeasure_Run(&length_measure);
             Cnt_2ms = 0;
         }
 

@@ -56,6 +56,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Devices/Src/DeviceClass/Sensors/Encoder.c # 编码器传感器
     Devices/Src/DeviceClass/Sensors/LineSensor.c # 八路灰度循迹传感器
     Devices/Src/DeviceClass/Sensors/Gyro.c # MPU6050陀螺仪传感器
+    Devices/Src/DeviceClass/Sensors/LengthMeasure.c # 长度测量模块
     Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
     Devices/Src/DebugPeripheral/UartBase.c # UART基类
     Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出

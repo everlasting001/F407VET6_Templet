@@ -31,6 +31,7 @@
 #include "Init.h"
 #include "MoveControl.h"
 #include "LineSensor.h"
+#include "LengthMeasure.h"
 #include "Gyro.h"
 #include "Encoder.h"
 #include "DebugPrintf.h"
@@ -178,6 +179,29 @@ void Task3_LineTrack_Init(void)
   */
 void Task3_LineTrack_Loop(void)
 {
+
+    /* 减速带测量: decel_zone_active 上升沿触发 Arm */
+    static uint8_t prev_decel_active = 0;
+    if (move_ctrl.decel_zone_active && !prev_decel_active) {
+        LengthMeasure_Arm(&length_measure);
+    }
+    prev_decel_active = move_ctrl.decel_zone_active;
+
+    /* 测量完成 → VOFA 发送 */
+    if (LengthMeasure_IsDone(&length_measure)) {
+        DebugPrintf_Print(&dbg_printf,
+            "L1:%.1f;L2:%.1f\r\n",
+            (double)LengthMeasure_GetL1Cm(&length_measure),
+            (double)LengthMeasure_GetL2Cm(&length_measure));
+        LengthMeasure_Reset(&length_measure);
+    }
+
+    /* 测量超时 → 报错 */
+    if (LengthMeasure_IsTimeout(&length_measure)) {
+        DebugPrintf_Print(&dbg_printf,
+            "L1:ERR;L2:ERR\r\n");
+        LengthMeasure_Reset(&length_measure);
+    }
 
     /* 蜂鸣器事件处理 (标志由 ISR 设置, 主循环中执行阻塞鸣叫) */
     if (move_ctrl.buzzer_beep_flag == 1) {

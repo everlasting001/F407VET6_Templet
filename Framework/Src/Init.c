@@ -33,6 +33,7 @@ DCMotor_t      right_motor;
 MoveControl_t  move_ctrl;
 LineSensor_t  line_sensor;
 Gyro_t        gyro;
+LengthMeasure_t  length_measure;
 
 /* ==================== Framework_Init — 一站式初始化 ==================== */
 
@@ -126,6 +127,14 @@ void Framework_Init(void)
     MoveControl_SetGyro(&move_ctrl, &gyro);
 
     Vofa_SetGyro(&gyro);
+
+    /* ==================== 6.5. 长度测量模块 ==================== */
+
+    LengthMeasure_Constructor(&length_measure, &line_sensor,
+                               &left_encoder, &right_encoder);
+
+    DebugPrintf_Print(&dbg_printf,
+        "  LengthMeasure: OK\r\n");
 
     /* ==================== 7. 后续模块初始化预留 ==================== */
     /*
