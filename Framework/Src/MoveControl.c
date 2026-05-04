@@ -157,6 +157,13 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->first_intersection       = 0;
     ctrl->final_turn_done          = 0;
 
+    /* 减速带参数默认 (Task3 负重场景) */
+    ctrl->first_turn_is_cw        = 0;
+    ctrl->decel_zone_active       = 0;
+    ctrl->decel_zone_start_pwm    = 300.0f;
+    ctrl->decel_zone_fast_pwm     = 750.0f;
+    ctrl->decel_zone_threshold_mm = 750.0f;
+
     ctrl->state          = MOVE_STATE_IDLE;
     ctrl->start_tick     = 0;
 }
@@ -309,6 +316,21 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                                    - ratio * (ctrl->base_pwm - ctrl->slow_pwm);
                 if (effective_base_pwm < ctrl->slow_pwm)
                     effective_base_pwm = ctrl->slow_pwm;
+            }
+        }
+
+        /* Task3 减速带: 前半段低速(start_pwm), 里程≥阈值后高速(fast_pwm) */
+        if (ctrl->task_id == TASK_ID_3 && ctrl->decel_zone_active) {
+            float decel_dist = 0.0f;
+            if (ctrl->encoder_left && ctrl->encoder_right) {
+                float dl = Encoder_GetDistance(ctrl->encoder_left);
+                float dr = Encoder_GetDistance(ctrl->encoder_right);
+                decel_dist = (dl + dr) * 0.5f;
+            }
+            if (decel_dist >= ctrl->decel_zone_threshold_mm) {
+                effective_base_pwm = ctrl->decel_zone_fast_pwm;
+            } else {
+                effective_base_pwm = ctrl->decel_zone_start_pwm;
             }
         }
 
@@ -589,6 +611,18 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     && ctrl->edge_count >= 4) {
                     ctrl->is_slow_phase = 1;
                 }
+
+                /* Task3: 记录首弯方向 (edge_count==1 表示第一个弯刚完成) */
+                if (ctrl->task_id == TASK_ID_3 && ctrl->edge_count == 1) {
+                    ctrl->first_turn_is_cw = (ctrl->turn_direction == -1) ? 1 : 0;
+                }
+
+                /* Task3: 首弯CW→edge2减速带, 首弯CCW→edge3减速带 */
+                if (ctrl->task_id == TASK_ID_3) {
+                    uint8_t decel_edge = ctrl->first_turn_is_cw ? 2 : 3;
+                    ctrl->decel_zone_active = (ctrl->edge_count == decel_edge) ? 1 : 0;
+                }
+
                 if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
                 if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
                 ctrl->intersection_cnt = 0;

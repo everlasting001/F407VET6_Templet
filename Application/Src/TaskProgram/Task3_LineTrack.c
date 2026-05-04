@@ -51,30 +51,30 @@
 /** @brief 路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
 #define TASK3_ADJUST_DISTANCE_MM      60.0f
 
-/** @brief 巡线基准 PWM (0~1500) */
-#define TASK3_BASE_PWM               670.0f
+/** @brief 巡线基准 PWM (0~1500) — Task3 负重, 高于 Task1 */
+#define TASK3_BASE_PWM               850.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK3_K_LINE                 100.0f
 
-/** @brief 转弯基准 PWM (0~1500) */
-#define TASK3_TURN_PWM               430.0f
+/** @brief 转弯基准 PWM (0~1500) — Task3 负重, 高于 Task1 */
+#define TASK3_TURN_PWM               500.0f
 
 /** @brief 假路口过滤距离阈值 (mm) */
 #define TASK3_FAKE_TURN_THRESHOLD_MM 750.0f
 
-/** @brief 微调前进 PWM */
-#define TASK3_ADJUST_SPEED_PWM       350.0f
+/** @brief 微调前进 PWM — Task3 负重 */
+#define TASK3_ADJUST_SPEED_PWM       280.0f
 
 /** @brief 减速终点 PWM (第4个弯后线性递减至 250) */
 #define TASK3_SLOW_PWM              250.0f
 
-/** @brief 状态打印间隔 (ms) */
-#define TASK3_PRINT_INTERVAL_MS      500U
+/** @brief 减速带参数 (Task3 负重场景) */
+#define TASK3_DECEL_ZONE_START_PWM   340.0f
+#define TASK3_DECEL_ZONE_FAST_PWM    750.0f
+#define TASK3_DECEL_ZONE_THRESHOLD_MM 750.0f
 
 /* ==================== 私有变量 ==================== */
-
-static uint32_t last_print_tick = 0;
 
 /** @brief Task3 蜂鸣器实例 (PC2, 低电平触发) */
 static Buzzer_t task3_buzzer;
@@ -120,6 +120,11 @@ void Task3_LineTrack_Init(void)
     move_ctrl.adjust_speed_pwm = TASK3_ADJUST_SPEED_PWM;
     move_ctrl.slow_pwm         = TASK3_SLOW_PWM;
 
+    /* 4.5. 配置减速带参数 (Task3 负重场景) */
+    move_ctrl.decel_zone_start_pwm    = TASK3_DECEL_ZONE_START_PWM;
+    move_ctrl.decel_zone_fast_pwm     = TASK3_DECEL_ZONE_FAST_PWM;
+    move_ctrl.decel_zone_threshold_mm = TASK3_DECEL_ZONE_THRESHOLD_MM;
+
     /* 5. 初始化蜂鸣器 (PC2, 低电平触发响, 默认输出高电平静音) */
     Buzzer_Constructor(&task3_buzzer, BUZZER1_GPIO_Port, BUZZER1_Pin,
                        BUZZER_TYPE_ACTIVE, 0);
@@ -130,7 +135,8 @@ void Task3_LineTrack_Init(void)
     /* 6. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
     MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
 
-    /* 7. 打印启动信息 */
+    /* 7. 打印启动信息 (Task3 负重场景关闭 Vofa 打印) */
+#if 0
     DebugPrintf_Print(&dbg_printf,
         "=== Task3: Square Border Track Start ===\r\n");
     DebugPrintf_Print(&dbg_printf,
@@ -139,8 +145,8 @@ void Task3_LineTrack_Init(void)
         (double)TASK3_BASE_PWM,
         (double)TASK3_K_LINE,
         (double)TASK3_TURN_PWM);
+#endif
 
-    last_print_tick = HAL_GetTick();
 }
 
 /* ==================== Part 2: 主循环 ==================== */
@@ -160,7 +166,6 @@ void Task3_LineTrack_Init(void)
   */
 void Task3_LineTrack_Loop(void)
 {
-    uint32_t now = HAL_GetTick();
 
     /* 蜂鸣器事件处理 (标志由 ISR 设置, 主循环中执行阻塞鸣叫) */
     if (move_ctrl.buzzer_beep_flag == 1) {
@@ -171,21 +176,18 @@ void Task3_LineTrack_Loop(void)
         Buzzer_BeepDouble(&task3_buzzer, TASK3_BEEP_ON_MS, TASK3_BEEP_OFF_MS);
     }
 
-    /* 速率限制: 每 500ms 打印一次 */
-    if (now - last_print_tick < TASK3_PRINT_INTERVAL_MS) {
-        return;
-    }
-    last_print_tick = now;
-
     /* 检查是否完成 */
     if (MoveControl_GetLineTrackDone(&move_ctrl)) {
+#if 0
         DebugPrintf_Print(&dbg_printf,
             "=== Task3: COMPLETE! %d edges tracked ===\r\n",
             MoveControl_GetEdgeCount(&move_ctrl));
+#endif
         return;
     }
 
-    /* 打印运行状态 */
+    /* 打印运行状态 (Task3 负重场景关闭 Vofa 打印) */
+#if 0
     uint8_t edge = MoveControl_GetEdgeCount(&move_ctrl);
 
     static const char *state_names[] = {
@@ -204,6 +206,7 @@ void Task3_LineTrack_Loop(void)
         move_ctrl.line_ch_bits,
         (double)move_ctrl.line_left_pwm,
         (double)move_ctrl.line_right_pwm);
+#endif
 }
 
 /* ==================== Part 3: 中断回调 ==================== */

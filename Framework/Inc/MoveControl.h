@@ -133,6 +133,13 @@ typedef struct {
     uint8_t          first_intersection;     /**< 编码器清零后首个路口标志: 1=跳过距离检查 */
     uint8_t          final_turn_done;        /**< 最后反向转弯完成标志: 1=EDGE_DONE后直接COMPLETE */
 
+    /* 减速带参数 (Task3 负重场景) */
+    uint8_t          first_turn_is_cw;        /**< 首弯方向: 1=CW顺时针, 0=CCW逆时针 */
+    uint8_t          decel_zone_active;       /**< 减速带激活标志 (1=当前边执行减速带) */
+    float            decel_zone_start_pwm;    /**< 减速带前半段 PWM (默认 300) */
+    float            decel_zone_fast_pwm;     /**< 减速带后半段 PWM (默认 750) */
+    float            decel_zone_threshold_mm; /**< 减速带切换距离阈值 (默认 750mm) */
+
     /* 运行状态 */
     MoveState_t  state;
     uint32_t     start_tick;         /**< 运动开始时刻 (ms) */
