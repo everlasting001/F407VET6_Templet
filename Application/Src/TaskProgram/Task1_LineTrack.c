@@ -31,6 +31,8 @@
 #include "Gyro.h"
 #include "Encoder.h"
 #include "DebugPrintf.h"
+#include "Buzzer.h"
+#include "main.h"
 
 /* ==================== 私有宏定义 ==================== */
 
@@ -68,6 +70,13 @@
 
 static uint32_t last_print_tick = 0;
 
+/** @brief Task1 蜂鸣器实例 (PC2, 低电平触发) */
+static Buzzer_t task1_buzzer;
+
+/** @brief 蜂鸣器鸣叫时长 (ms) */
+#define TASK1_BEEP_ON_MS    150U
+#define TASK1_BEEP_OFF_MS   80U
+
 /* ==================== Part 1: 初始化 ==================== */
 
 /**
@@ -99,10 +108,17 @@ void Task1_LineTrack_Init(void)
     move_ctrl.adjust_speed_pwm = TASK1_ADJUST_SPEED_PWM;
     move_ctrl.slow_pwm         = TASK1_SLOW_PWM;
 
-    /* 4. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
+    /* 4. 初始化蜂鸣器 (PC2, 低电平触发响, 默认输出高电平静音) */
+    Buzzer_Constructor(&task1_buzzer, BUZZER1_GPIO_Port, BUZZER1_Pin,
+                       BUZZER_TYPE_ACTIVE, 0);
+    if (ModuleBase_Init((ModuleBase_t *)&task1_buzzer) != 0) {
+        Error_Handler();
+    }
+
+    /* 5. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
     MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
 
-    /* 5. 打印启动信息 */
+    /* 6. 打印启动信息 */
     DebugPrintf_Print(&dbg_printf,
         "=== Task1: Square Border Track Start ===\r\n");
     DebugPrintf_Print(&dbg_printf,
@@ -133,6 +149,15 @@ void Task1_LineTrack_Init(void)
 void Task1_LineTrack_Loop(void)
 {
     uint32_t now = HAL_GetTick();
+
+    /* 蜂鸣器事件处理 (标志由 ISR 设置, 主循环中执行阻塞鸣叫) */
+    if (move_ctrl.buzzer_beep_flag == 1) {
+        move_ctrl.buzzer_beep_flag = 0;
+        Buzzer_Beep(&task1_buzzer, TASK1_BEEP_ON_MS);
+    } else if (move_ctrl.buzzer_beep_flag == 2) {
+        move_ctrl.buzzer_beep_flag = 0;
+        Buzzer_BeepDouble(&task1_buzzer, TASK1_BEEP_ON_MS, TASK1_BEEP_OFF_MS);
+    }
 
     /* 速率限制: 每 500ms 打印一次 */
     if (now - last_print_tick < TASK1_PRINT_INTERVAL_MS) {

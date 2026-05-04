@@ -137,6 +137,7 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->target_edges             = 4;
     ctrl->is_slow_phase            = 0;
     ctrl->slow_pwm                 = 400.0f;
+    ctrl->buzzer_beep_flag          = 0;
     ctrl->turn_target_yaw          = 0.0f;
     ctrl->turn_start_yaw           = 0.0f;
     ctrl->turn_pwm                 = DEFAULT_TURN_PWM;
@@ -312,7 +313,11 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                 if (ctrl->is_slow_phase) {
                     /* 慢速阶段: 检测到路口 → 任务结束 */
                     ctrl->state = MOVE_STATE_COMPLETE;
+                    ctrl->buzzer_beep_flag = 2;
                 } else {
+                    if (ctrl->edge_count == 0) {
+                        ctrl->buzzer_beep_flag = 1;
+                    }
                     ctrl->intersection_cnt = 0;
                     ctrl->line_state = LINE_STATE_FORWARD_ADJUST;
                 }
@@ -534,6 +539,7 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
     ctrl->is_slow_phase      = 0;
+    ctrl->buzzer_beep_flag   = 0;
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
 
@@ -615,6 +621,7 @@ void MoveControl_ResetLineTrack(MoveControl_t *ctrl)
     ctrl->intersection_cnt   = 0;
     ctrl->edge_count         = 0;
     ctrl->is_slow_phase      = 0;
+    ctrl->buzzer_beep_flag   = 0;
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
     ctrl->state              = MOVE_STATE_RUNNING;

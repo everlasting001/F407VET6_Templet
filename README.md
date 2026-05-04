@@ -30,7 +30,7 @@
                         2.StepMotor(步进电机)
                         3.Servo
         2.调试外设（Debug Peripheral）
-                分为四类：
+            分为四类：
                     1.UART调试
                     2.OLED打印
                     3.SPI调试
