@@ -9,6 +9,7 @@
 #include "LineSensor.h"
 #include "Gyro.h"
 #include "LengthMeasure.h"
+#include "TaskSelector.h"
 
 /* 定时分频标志定义 */
 volatile uint8_t Flag_1ms    = 0;
@@ -66,6 +67,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         /* 1ms 基准标志 */
         Flag_1ms = 1;
+        TaskSelector_IRQHandler();  /* KEY1-4 按键状态机驱动 */
         // Key_Test_IRQHandler();
         // StepperMotor_Test_IRQHandler();  /* 当前为空, DWT 已接管时序 */
         /* 软件分频计数器递增 */

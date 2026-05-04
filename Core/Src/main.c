@@ -20,7 +20,7 @@
 // #include "MoveControlTest.h"
 #include "Callback.h"
 #include "Init.h"
-#include "Task4_LineTrack.h"
+#include "TaskSelector.h"
 // #include "Vofa.h"  /* Task3 循迹期间禁用 Vofa，避免串口冲突 */
 /* USER CODE END Includes */
 
@@ -30,7 +30,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-/* Task4 循迹模式 — 180°CW掉头→巡线→第1边沿90°转→400pwm/500ms */
+/* TaskSelector — 按键选择: KEY1-4 → Task1-4 */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -89,7 +89,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Callback_Init();           /* 启动 TIM2 1ms 基时 + 软件分频 */
   Framework_Init();          /* 初始化所有硬件模块 + 运动控制 */
-  Task4_LineTrack_Init();    /* Task4: 180°CW掉头→巡线→第1边沿90°转→400pwm/500ms */
+  TaskSelector_Init();       /* 按键选择任务: KEY1-4 → Task1-4 */
   // Vofa_Init(&dbg_printf.uart, &move_ctrl);  /* Task3 期间禁用 */
   /* USER CODE END 2 */
 
@@ -110,8 +110,8 @@ int main(void)
       // }
     }
 
-    /* Task4 主循环: 蜂鸣器处理 + 状态监控 */
-    Task4_LineTrack_Loop();
+    /* 按键选择 + 任务分发: IDLE等待按键 → RUNNING执行任务 → 完成后回IDLE */
+    TaskSelector_Loop();
 
     /* 陀螺仪调试打印 — Task1 期间禁用，状态由 Task1_LineTrack_Loop 统一输出 */
     // static uint32_t last_gyro = 0;
