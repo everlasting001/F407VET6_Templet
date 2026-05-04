@@ -43,10 +43,10 @@
 #define TASK2_INTERSECTION_THRESHOLD  2
 
 /** @brief 路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
-#define TASK2_ADJUST_DISTANCE_MM      60.0f
+#define TASK2_ADJUST_DISTANCE_MM      40.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
-#define TASK2_BASE_PWM               670.0f
+#define TASK2_BASE_PWM               660.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK2_K_LINE                 100.0f
@@ -55,7 +55,7 @@
 #define TASK2_TURN_PWM               430.0f
 
 /** @brief 微调前进 PWM */
-#define TASK2_ADJUST_SPEED_PWM       350.0f
+#define TASK2_ADJUST_SPEED_PWM       300.0f
 
 /** @brief 状态打印间隔 (ms) */
 #define TASK2_PRINT_INTERVAL_MS      500U

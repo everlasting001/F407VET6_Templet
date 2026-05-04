@@ -54,7 +54,7 @@
 #define TASK3_ADJUST_DISTANCE_MM      50.0f
 
 /** @brief 巡线基准 PWM (0~1500) — Task3 负重, 高于 Task1 */
-#define TASK3_BASE_PWM               950.0f
+#define TASK3_BASE_PWM               800.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK3_K_LINE                 100.0f
@@ -80,8 +80,8 @@
 #define TASK3_DECEL_ZONE_THRESHOLD_MM 750.0f
 
 /** @brief 加速带参数 (首弯后两条边: CCW→edge2+3, CW→edge2+4) */
-#define TASK3_ACCEL_ZONE_THRESHOLD_MM 700.0f
-#define TASK3_ACCEL_ZONE_FAST_PWM     950.0f
+#define TASK3_ACCEL_ZONE_THRESHOLD_MM 650.0f
+#define TASK3_ACCEL_ZONE_FAST_PWM     800.0f
 #define TASK3_ACCEL_ZONE_SLOW_PWM     280.0f
 #define TASK3_ACCEL_ZONE_DECEL_MS     500U
 

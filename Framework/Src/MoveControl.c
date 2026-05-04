@@ -495,7 +495,7 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                         ctrl->turn_angle = 180.0f;
                         if (ctrl->turn_direction == -1) {
                             ctrl->turn_reverse_boost = 1.3f;  /* CW: 反转轮 */
-                            ctrl->turn_other_boost   = 1.0f;  /* CW: 另一轮 */
+                            ctrl->turn_other_boost   = 0.9f;  /* CW: 另一轮 */
                         } else {
                             ctrl->turn_reverse_boost = 1.2f;  /* CCW: 反转轮 */
                             ctrl->turn_other_boost   = 0.6f;  /* CCW: 另一轮 */

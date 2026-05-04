@@ -12,7 +12,9 @@
   *   5. 400pwm 循迹 500ms 后停止 (LINE_STATE_TASK4_POST_FOLLOW)
   *
   * 控制核心由 MoveControl_LineTrackUpdate() 在 TIM2 ISR (2ms/500Hz) 中执行,
-  * 本文件负责参数配置和状态监控。
+  * 本文件负责参数配置 + K230 (USART2) 数据接收回显:
+ *   - ISR 中弱函数 UartBase_DataHandler 将原始数据回显到 K230
+ *   - 主循环中将 HEX dump 打印到 UART1 供调试监控
   ******************************************************************************
   */
 
@@ -49,12 +51,7 @@
 /** @brief 微调前进 PWM */
 #define TASK4_ADJUST_SPEED_PWM       350.0f
 
-/** @brief 状态打印间隔 (ms) */
-#define TASK4_PRINT_INTERVAL_MS      500U
-
 /* ==================== 私有变量 ==================== */
-
-static uint32_t last_print_tick = 0;
 
 /** @brief Task4 蜂鸣器实例 (PC2, 低电平触发) */
 static Buzzer_t task4_buzzer;
@@ -107,42 +104,21 @@ void Task4_LineTrack_Init(void)
 
     /* 5. 启动巡线模式 (Task4 从初始180°CW掉头开始) */
     MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
-
-    /* 6. 打印启动信息 */
-    DebugPrintf_Print(&dbg_printf,
-        "=== Task4: 180°CW U-turn → Line Track → 1st Edge 90° → 400pwm/500ms ===\r\n");
-    DebugPrintf_Print(&dbg_printf,
-        "  BasePWM: %.0f, KLine: %.0f, TurnPWM: %.0f, AdjDist: %.0fmm\r\n",
-        (double)TASK4_BASE_PWM,
-        (double)TASK4_K_LINE,
-        (double)TASK4_TURN_PWM,
-        (double)TASK4_ADJUST_DISTANCE_MM);
-
-    last_print_tick = HAL_GetTick();
-
-    /* USART2 (K230) 启动信息 */
-    DebugPrintf_Print(&k230_printf,
-        "=== Task4: K230 UART Ready, waiting for K230 data... ===\r\n");
-    DebugPrintf_Print(&dbg_printf,
-        "  K230 UART (USART2) registered for Task4\r\n");
 }
 
 /* ==================== Part 2: 主循环 ==================== */
 
 /**
-  * @brief  Task4 主循环 — 状态监控与调试输出
+  * @brief  Task4 主循环 — 蜂鸣器事件 + K230 数据接收回显
   *
   * @note   调用位置: main() → USER CODE BEGIN 3, while(1) 循环中
   *
-  *         每 500ms 打印:
-  *           - 当前巡线子状态 (line_state)
-  *           - LineTurn / 通道位图
-  *           - 当前左右轮 PWM
+  *         K230 (USART2) 数据流:
+  *           - ISR 中弱函数 UartBase_DataHandler 将原始数据回显到 K230
+  *           - 主循环中打印 HEX dump 到 UART1 供监控
   */
 void Task4_LineTrack_Loop(void)
 {
-    uint32_t now = HAL_GetTick();
-
     /* 蜂鸣器事件处理 (标志由 ISR 设置, 主循环中执行阻塞鸣叫) */
     if (move_ctrl.buzzer_beep_flag == 1) {
         move_ctrl.buzzer_beep_flag = 0;
@@ -153,51 +129,21 @@ void Task4_LineTrack_Loop(void)
     }
 
     /* ---- K230 数据接收检测 (每周期检查, 不限制速率) ---- */
+    /* 弱函数 UartBase_DataHandler 已将原始数据回显到 K230 (USART2),
+       此处将 HEX dump 打印到 UART1 供调试监控 */
     if (k230_printf.uart.rx_done) {
         uint16_t len = k230_printf.uart.rx_len;
         k230_printf.uart.rx_done = 0;
         if (len > 0 && len <= k230_printf.uart.rx_buf_size) {
-            DebugPrintf_Print(&k230_printf, "K230 RX[%u]: ", (unsigned int)len);
+            DebugPrintf_Print(&dbg_printf, "K230 RX[%u]: ", (unsigned int)len);
             uint16_t echo_len = (len > 128U) ? 128U : len;
             for (uint16_t i = 0; i < echo_len; i++) {
-                DebugPrintf_Print(&k230_printf, "%02X ",
+                DebugPrintf_Print(&dbg_printf, "%02X ",
                     k230_printf.uart.rx_buffer[i]);
             }
-            DebugPrintf_Print(&k230_printf, "\r\n");
+            DebugPrintf_Print(&dbg_printf, "\r\n");
         }
     }
-
-    /* 速率限制: 每 500ms 打印一次 */
-    if (now - last_print_tick < TASK4_PRINT_INTERVAL_MS) {
-        return;
-    }
-    last_print_tick = now;
-
-    /* 检查是否完成 */
-    if (MoveControl_GetLineTrackDone(&move_ctrl)) {
-        DebugPrintf_Print(&dbg_printf,
-            "=== Task4: COMPLETE! ===\r\n");
-        return;
-    }
-
-    /* 打印运行状态 */
-    static const char *state_names[] = {
-        "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE",
-        "FINAL_FOLLOW", "FINAL_DETECT", "INIT_TURN", "POST_FOLLOW"
-    };
-    const char *sname = (move_ctrl.line_state < 9)
-                        ? state_names[move_ctrl.line_state]
-                        : "UNKNOWN";
-
-    DebugPrintf_Print(&dbg_printf,
-        "[Task4] State:%s Ang:%.0f LT:%.1f CH:0x%02X "
-        "LPWM:%.0f RPWM:%.0f\r\n",
-        sname,
-        (double)move_ctrl.turn_angle,
-        (double)move_ctrl.line_turn,
-        move_ctrl.line_ch_bits,
-        (double)move_ctrl.line_left_pwm,
-        (double)move_ctrl.line_right_pwm);
 }
 
 /* ==================== Part 3: 中断回调 ==================== */
