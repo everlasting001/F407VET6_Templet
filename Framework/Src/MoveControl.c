@@ -310,8 +310,12 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         uint8_t right_cnt = (ch[0]?1:0)+(ch[1]?1:0)+(ch[2]?1:0)+(ch[3]?1:0);
         uint8_t left3  = (left_cnt >= 3);
         uint8_t right3 = (right_cnt >= 3);
+        uint8_t outer3_left  = (ch[5] && ch[6] && ch[7]);
+        uint8_t outer3_right = (ch[0] && ch[1] && ch[2]);
 
-        if (left3 || right3 || active_cnt >= 5) {
+        if (ctrl->edge_count == 0
+            ? (outer3_left || outer3_right || active_cnt >= 5)
+            : (left3 || right3 || active_cnt >= 5)) {
             ctrl->intersection_cnt++;
             if (ctrl->intersection_cnt >= ctrl->intersection_threshold) {
                 /* 读取编码器距离，过滤假路口 (边沿干扰图样) */
@@ -480,10 +484,16 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
             }
 
             if (ctrl->final_turn_done == 2) {
-                /* 最后180°转弯完成 → 任务结束 */
+                /* 最后180°转弯完成 → 循迹检测第8边沿 */
                 ctrl->final_turn_done = 0;
-                ctrl->state = MOVE_STATE_COMPLETE;
-                ctrl->buzzer_beep_flag = 2;
+                ctrl->intersection_cnt = 0;
+
+                /* 清零编码器用于假路口过滤 */
+                if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+                if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+                ctrl->first_intersection = 1;
+
+                ctrl->line_state = LINE_STATE_FINAL_DETECT;
             } else {
                 ctrl->edge_count++;
                 ctrl->line_state = LINE_STATE_EDGE_DONE;
@@ -530,7 +540,7 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         DCMotor_Stop(ctrl->motor_right);
 
         if (ctrl->final_turn_done) {
-            /* 最后正向90°转弯完成 → 循迹250ms后180°顺时针掉头 */
+            /* 最后正向90°转弯完成 → 循迹400ms后180°顺时针掉头 */
             ctrl->final_turn_done = 2;
             ctrl->intersection_cnt = 0;
             ctrl->start_tick = HAL_GetTick();
@@ -550,7 +560,7 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         }
         break;
 
-    /* ---- 状态 5: 最后循迹250ms后180°顺时针掉头 ---- */
+    /* ---- 状态 5: 最后循迹400ms后180°顺时针掉头 ---- */
     case LINE_STATE_FINAL_FOLLOW: {
         /* 正常速度循线 */
         float pwm_l = ctrl->base_pwm + line_turn * ctrl->k_line;
@@ -567,8 +577,8 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)pwm_l);
         DCMotor_SetSpeed(ctrl->motor_right, (int16_t)pwm_r);
 
-        /* 250ms 后停车, 准备180°顺时针掉头 */
-        if (HAL_GetTick() - ctrl->start_tick >= 250) {
+        /* 400ms 后停车, 准备180°顺时针掉头 */
+        if (HAL_GetTick() - ctrl->start_tick >= 400) {
             DCMotor_Stop(ctrl->motor_left);
             DCMotor_Stop(ctrl->motor_right);
 
@@ -593,6 +603,39 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
 
             PID_Reset(&ctrl->turn_pid);
             ctrl->line_state = LINE_STATE_TURNING;
+        }
+        break;
+    }
+
+    /* ---- 状态 6: 最后180°后250低速循迹, 检测第8边沿立即停车 ---- */
+    case LINE_STATE_FINAL_DETECT: {
+        /* 250 基准速度低速循线 */
+        float base = 250.0f;
+        float pwm_l = base + line_turn * ctrl->k_line;
+        float pwm_r = base - line_turn * ctrl->k_line;
+
+        if (pwm_l >  ctrl->pwm_limit) pwm_l =  ctrl->pwm_limit;
+        if (pwm_l < -ctrl->pwm_limit) pwm_l = -ctrl->pwm_limit;
+        if (pwm_r >  ctrl->pwm_limit) pwm_r =  ctrl->pwm_limit;
+        if (pwm_r < -ctrl->pwm_limit) pwm_r = -ctrl->pwm_limit;
+
+        ctrl->line_left_pwm  = pwm_l;
+        ctrl->line_right_pwm = pwm_r;
+
+        DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)pwm_l);
+        DCMotor_SetSpeed(ctrl->motor_right, (int16_t)pwm_r);
+
+        /* 边沿检测: 单侧≥3路 或 总共≥5路全黑 → 立即停车 */
+        uint8_t left_cnt  = (ch[4]?1:0)+(ch[5]?1:0)+(ch[6]?1:0)+(ch[7]?1:0);
+        uint8_t right_cnt = (ch[0]?1:0)+(ch[1]?1:0)+(ch[2]?1:0)+(ch[3]?1:0);
+        uint8_t left3  = (left_cnt >= 3);
+        uint8_t right3 = (right_cnt >= 3);
+
+        if (left3 || right3 || active_cnt >= 5) {
+            DCMotor_Stop(ctrl->motor_left);
+            DCMotor_Stop(ctrl->motor_right);
+            ctrl->state = MOVE_STATE_COMPLETE;
+            ctrl->buzzer_beep_flag = 2;
         }
         break;
     }

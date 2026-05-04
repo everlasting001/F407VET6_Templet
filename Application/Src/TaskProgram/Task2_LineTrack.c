@@ -172,9 +172,9 @@ void Task2_LineTrack_Loop(void)
 
     static const char *state_names[] = {
         "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE",
-        "FINAL_FOLLOW"
+        "FINAL_FOLLOW", "FINAL_DETECT"
     };
-    const char *sname = (move_ctrl.line_state < 6)
+    const char *sname = (move_ctrl.line_state < 7)
                         ? state_names[move_ctrl.line_state]
                         : "UNKNOWN";
 
