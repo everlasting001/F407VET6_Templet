@@ -20,8 +20,8 @@
 // #include "MoveControlTest.h"
 #include "Callback.h"
 #include "Init.h"
-#include "Task1_LineTrack.h"
-// #include "Vofa.h"  /* Task1 循迹期间禁用 Vofa，避免串口冲突 */
+#include "Task2_LineTrack.h"
+// #include "Vofa.h"  /* Task2 循迹期间禁用 Vofa，避免串口冲突 */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -30,7 +30,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-/* Task1 循迹模式 — 正方形边框一圈 */
+/* Task2 循迹模式 — 正方形边框一圈 */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -89,8 +89,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Callback_Init();           /* 启动 TIM2 1ms 基时 + 软件分频 */
   Framework_Init();          /* 初始化所有硬件模块 + 运动控制 */
-  Task1_LineTrack_Init();    /* 配置巡线参数并启动正方形边框循迹 */
-  // Vofa_Init(&dbg_printf.uart, &move_ctrl);  /* Task1 期间禁用 */
+  Task2_LineTrack_Init();    /* 配置巡线参数并启动正方形边框循迹 */
+  // Vofa_Init(&dbg_printf.uart, &move_ctrl);  /* Task2 期间禁用 */
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -101,7 +101,7 @@ int main(void)
       Flag_40ms = 0;
       Framework_IRQHandler();
 
-      /* Vofa 遥测 — Task1 期间禁用，避免占用 UART1 带宽 */
+      /* Vofa 遥测 — Task2 期间禁用，避免占用 UART1 带宽 */
       // static uint32_t last_vofa = 0;
       // uint32_t now = HAL_GetTick();
       // if (now - last_vofa >= 100) {
@@ -110,10 +110,10 @@ int main(void)
       // }
     }
 
-    /* Task1 主循环: 每 500ms 打印巡线状态，完成后输出完成信息 */
-    Task1_LineTrack_Loop();
+    /* Task2 主循环: 每 500ms 打印巡线状态，完成后输出完成信息 */
+    Task2_LineTrack_Loop();
 
-    /* 陀螺仪调试打印 — Task1 期间禁用，状态由 Task1_LineTrack_Loop 统一输出 */
+    /* 陀螺仪调试打印 — Task2 期间禁用，状态由 Task2_LineTrack_Loop 统一输出 */
     // static uint32_t last_gyro = 0;
     // uint32_t now = HAL_GetTick();
     // if (now - last_gyro >= 200) {

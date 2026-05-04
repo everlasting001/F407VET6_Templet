@@ -143,6 +143,7 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->turn_pwm                 = DEFAULT_TURN_PWM;
     ctrl->turn_tolerance           = DEFAULT_TURN_TOLERANCE;
     ctrl->turn_kp                  = DEFAULT_TURN_KP;
+    ctrl->turn_direction           = 1;  /* 默认 CCW (逆时针/左转), Task2 设为 -1 */
     ctrl->adjust_distance_mm       = DEFAULT_ADJUST_DISTANCE_MM;
     ctrl->adjust_speed_pwm         = DEFAULT_ADJUST_SPEED_PWM;
 
@@ -357,7 +358,8 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
             } else {
                 ctrl->turn_start_yaw = 0.0f;
             }
-            ctrl->turn_target_yaw = ctrl->turn_start_yaw + 90.0f;
+            ctrl->turn_target_yaw = ctrl->turn_start_yaw
+                                  + 90.0f * ctrl->turn_direction;
 
             /* 清零编码器用于转弯距离参考 */
             if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
@@ -542,6 +544,7 @@ void MoveControl_SetLineTrack(MoveControl_t *ctrl, LineSensor_t *sensor)
     ctrl->buzzer_beep_flag   = 0;
     ctrl->turn_target_yaw    = 0.0f;
     ctrl->turn_start_yaw     = 0.0f;
+    /* turn_direction 保持 Init 时设置的值 (Task1=1 CCW, Task2=-1 CW) */
 
     /* 复位陀螺仪 Yaw (从 0 开始本段循迹) */
     if (ctrl->gyro != NULL) {

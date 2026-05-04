@@ -109,6 +109,7 @@ typedef struct {
     float            turn_pwm;          /**< 转弯基准 PWM (300~600) */
     float            turn_tolerance;    /**< 转弯角度容差 (°, 默认 3.0) */
     float            turn_kp;           /**< 转弯 P 增益 (PWM/°) */
+    int8_t           turn_direction;    /**< 转弯方向: +1=CCW(左转), -1=CW(右转) */
 
     /* 路口微调参数 */
     float            adjust_distance_mm;    /**< 微调前进距离 (传感器到轮轴距离) */
