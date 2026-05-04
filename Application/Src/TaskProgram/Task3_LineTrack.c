@@ -96,6 +96,9 @@ static Buzzer_t task3_buzzer;
   */
 void Task3_LineTrack_Init(void)
 {
+    /* 0. 设置任务ID (区分状态机行为) */
+    MoveControl_SetTaskID(&move_ctrl, TASK_ID_3);
+
     /* 1. 设置巡线基础参数 (Vofa 可运行时调整) */
     MoveControl_SetBasePWM(&move_ctrl, TASK3_BASE_PWM);
     MoveControl_SetKLine(&move_ctrl, TASK3_K_LINE);

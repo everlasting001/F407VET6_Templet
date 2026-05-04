@@ -131,6 +131,7 @@ void MoveControl_Init(MoveControl_t *ctrl,
 
     /* 巡线状态机默认参数 */
     ctrl->gyro                     = NULL;
+    ctrl->task_id                  = TASK_ID_1;
     ctrl->line_state               = LINE_STATE_FOLLOWING;
     ctrl->intersection_cnt         = 0;
     ctrl->intersection_threshold   = DEFAULT_INTERSECTION_THRESHOLD;
@@ -330,8 +331,8 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     && traveled_mm < ctrl->fake_turn_threshold_mm) {
                     /* 假路口: 距离不足 → 复位计数器, 不清零编码器, 继续循线 */
                     ctrl->intersection_cnt = 0;
-                } else if (ctrl->final_edge) {
-                    /* 最后路口: 正向90°转弯后停车 */
+                } else if (ctrl->task_id == TASK_ID_2 && ctrl->final_edge) {
+                    /* Task2: 最后路口 — 正向90°转弯后停车 */
                     ctrl->first_intersection = 0;
                     ctrl->final_turn_done = 1;
                     DCMotor_Stop(ctrl->motor_left);
@@ -387,8 +388,8 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     }
                     /* 若两侧相等(由 active_cnt>=5 触发)则保持上次方向 */
 
-                    /* 第4个路口(edge_count==3): 180°掉头, 根据转弯方向选双轮补偿 */
-                    if (ctrl->edge_count == 3) {
+                    /* Task2 第4个路口(edge_count==3): 180°掉头 */
+                    if (ctrl->task_id == TASK_ID_2 && ctrl->edge_count == 3) {
                         ctrl->turn_angle = 180.0f;
                         if (ctrl->turn_direction == -1) {
                             ctrl->turn_reverse_boost = 1.3f;  /* CW: 反转轮 */
@@ -539,24 +540,34 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         DCMotor_Stop(ctrl->motor_left);
         DCMotor_Stop(ctrl->motor_right);
 
-        if (ctrl->final_turn_done) {
-            /* 最后正向90°转弯完成 → 循迹400ms后180°顺时针掉头 */
-            ctrl->final_turn_done = 2;
-            ctrl->intersection_cnt = 0;
-            ctrl->start_tick = HAL_GetTick();
-            ctrl->line_state = LINE_STATE_FINAL_FOLLOW;
-        } else if (ctrl->edge_count >= ctrl->target_edges) {
-            /* 全部转弯完成 → 最后一段循线, 下一路口停止 (不减速) */
-            ctrl->final_edge = 1;
-            ctrl->intersection_cnt = 0;
-            ctrl->line_state = LINE_STATE_FOLLOWING;
+        if (ctrl->task_id == TASK_ID_2) {
+            /* Task2: final_turn_done → FINAL_FOLLOW/DETECT 序列 */
+            if (ctrl->final_turn_done) {
+                ctrl->final_turn_done = 2;
+                ctrl->intersection_cnt = 0;
+                ctrl->start_tick = HAL_GetTick();
+                ctrl->line_state = LINE_STATE_FINAL_FOLLOW;
+            } else if (ctrl->edge_count >= ctrl->target_edges) {
+                ctrl->final_edge = 1;
+                ctrl->intersection_cnt = 0;
+                ctrl->line_state = LINE_STATE_FOLLOWING;
+            } else {
+                if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+                if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+                ctrl->intersection_cnt = 0;
+                ctrl->line_state = LINE_STATE_FOLLOWING;
+            }
         } else {
-            /* 切换下一条边: 清零编码器, 回到循线模式 */
-            if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
-            if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
-
-            ctrl->intersection_cnt = 0;
-            ctrl->line_state = LINE_STATE_FOLLOWING;
+            /* Task1/Task3: 边数达到目标 → 直接完成 */
+            if (ctrl->edge_count >= ctrl->target_edges) {
+                ctrl->state = MOVE_STATE_COMPLETE;
+                ctrl->buzzer_beep_flag = 2;
+            } else {
+                if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+                if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+                ctrl->intersection_cnt = 0;
+                ctrl->line_state = LINE_STATE_FOLLOWING;
+            }
         }
         break;
 
@@ -786,6 +797,12 @@ void MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w)
 /**
   * @brief  绑定陀螺仪到巡线控制器 (转弯 Yaw 闭环)
   */
+void MoveControl_SetTaskID(MoveControl_t *ctrl, TaskID_t id)
+{
+    if (ctrl == NULL) return;
+    ctrl->task_id = id;
+}
+
 void MoveControl_SetGyro(MoveControl_t *ctrl, Gyro_t *gyro)
 {
     if (ctrl == NULL) return;

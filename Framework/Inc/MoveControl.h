@@ -46,6 +46,12 @@ typedef enum {
     MOVE_MODE_LINE_TRACK  = 2
 } MoveMode_t;
 
+typedef enum {
+    TASK_ID_1 = 0,
+    TASK_ID_2 = 1,
+    TASK_ID_3 = 2
+} TaskID_t;
+
 /** @brief 巡线子状态机 — 正方形边框循迹的状态转移 */
 typedef enum {
     LINE_STATE_FOLLOWING           = 0,  /**< 直线循线中，持续检测路口 */
@@ -96,6 +102,7 @@ typedef struct {
 
     /* 巡线状态机 (正方形边框循迹) */
     Gyro_t          *gyro;              /**< 陀螺仪引用 (转弯 Yaw 闭环) */
+    TaskID_t         task_id;           /**< 任务ID (区分 Task1/Task2/Task3 行为) */
     LineTrackState_t line_state;        /**< 巡线子状态 */
     uint8_t          intersection_cnt;  /**< 连续路口确认计数 */
     uint8_t          intersection_threshold; /**< 路口确认阈值 (默认 5) */
@@ -154,6 +161,7 @@ void     MoveControl_SetKLine(MoveControl_t *ctrl, float k);
 void     MoveControl_SetLineWeight(MoveControl_t *ctrl, uint8_t ch, float w);
 
 /* 巡线状态机控制 (正方形边框循迹) */
+void     MoveControl_SetTaskID(MoveControl_t *ctrl, TaskID_t id);
 void     MoveControl_SetGyro(MoveControl_t *ctrl, Gyro_t *gyro);
 void     MoveControl_SetLineTrackConfig(MoveControl_t *ctrl,
                                         uint8_t target_edges,
