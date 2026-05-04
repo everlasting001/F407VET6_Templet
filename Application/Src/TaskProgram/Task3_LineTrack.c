@@ -49,16 +49,16 @@
 #define TASK3_INTERSECTION_THRESHOLD  2
 
 /** @brief 路口微调前进距离 (mm) — 传感器安装位置到轮轴中心距离 */
-#define TASK3_ADJUST_DISTANCE_MM      60.0f
+#define TASK3_ADJUST_DISTANCE_MM      50.0f
 
 /** @brief 巡线基准 PWM (0~1500) — Task3 负重, 高于 Task1 */
-#define TASK3_BASE_PWM               850.0f
+#define TASK3_BASE_PWM               950.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK3_K_LINE                 100.0f
 
 /** @brief 转弯基准 PWM (0~1500) — Task3 负重, 高于 Task1 */
-#define TASK3_TURN_PWM               500.0f
+#define TASK3_TURN_PWM               600.0f
 
 /** @brief 假路口过滤距离阈值 (mm) */
 #define TASK3_FAKE_TURN_THRESHOLD_MM 750.0f
@@ -70,9 +70,15 @@
 #define TASK3_SLOW_PWM              250.0f
 
 /** @brief 减速带参数 (Task3 负重场景) */
-#define TASK3_DECEL_ZONE_START_PWM   340.0f
+#define TASK3_DECEL_ZONE_START_PWM   350.0f
 #define TASK3_DECEL_ZONE_FAST_PWM    750.0f
 #define TASK3_DECEL_ZONE_THRESHOLD_MM 750.0f
+
+/** @brief 加速带参数 (首弯后两条边: CCW→edge2+3, CW→edge2+4) */
+#define TASK3_ACCEL_ZONE_THRESHOLD_MM 700.0f
+#define TASK3_ACCEL_ZONE_FAST_PWM     950.0f
+#define TASK3_ACCEL_ZONE_SLOW_PWM     280.0f
+#define TASK3_ACCEL_ZONE_DECEL_MS     500U
 
 /* ==================== 私有变量 ==================== */
 
@@ -124,6 +130,12 @@ void Task3_LineTrack_Init(void)
     move_ctrl.decel_zone_start_pwm    = TASK3_DECEL_ZONE_START_PWM;
     move_ctrl.decel_zone_fast_pwm     = TASK3_DECEL_ZONE_FAST_PWM;
     move_ctrl.decel_zone_threshold_mm = TASK3_DECEL_ZONE_THRESHOLD_MM;
+
+    /* 4.6. 配置加速带参数 (首弯后两条边) */
+    move_ctrl.accel_zone_threshold_mm = TASK3_ACCEL_ZONE_THRESHOLD_MM;
+    move_ctrl.accel_zone_fast_pwm     = TASK3_ACCEL_ZONE_FAST_PWM;
+    move_ctrl.accel_zone_slow_pwm     = TASK3_ACCEL_ZONE_SLOW_PWM;
+    move_ctrl.accel_zone_decel_ms     = TASK3_ACCEL_ZONE_DECEL_MS;
 
     /* 5. 初始化蜂鸣器 (PC2, 低电平触发响, 默认输出高电平静音) */
     Buzzer_Constructor(&task3_buzzer, BUZZER1_GPIO_Port, BUZZER1_Pin,

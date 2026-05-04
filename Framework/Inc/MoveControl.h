@@ -140,6 +140,15 @@ typedef struct {
     float            decel_zone_fast_pwm;     /**< 减速带后半段 PWM (默认 750) */
     float            decel_zone_threshold_mm; /**< 减速带切换距离阈值 (默认 750mm) */
 
+    /* 加速带参数 (Task3 首弯后两条边) */
+    uint8_t          accel_zone_active;          /**< 加速带激活标志 (1=当前边执行加速带) */
+    float            accel_zone_threshold_mm;     /**< 加速带距离阈值 (默认 700mm) */
+    float            accel_zone_fast_pwm;         /**< 加速带前半段 PWM (默认 850) */
+    float            accel_zone_slow_pwm;         /**< 加速带减速下限 PWM (默认 280) */
+    uint32_t         accel_zone_decel_ms;         /**< 加速带减速时间 (ms, 默认 500) */
+    uint32_t         accel_zone_decel_start_tick; /**< 减速起始 tick (ms) */
+    uint8_t          accel_zone_in_decel;         /**< 加速带当前处于减速阶段 */
+
     /* 运行状态 */
     MoveState_t  state;
     uint32_t     start_tick;         /**< 运动开始时刻 (ms) */

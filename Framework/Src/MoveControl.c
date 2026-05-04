@@ -164,6 +164,15 @@ void MoveControl_Init(MoveControl_t *ctrl,
     ctrl->decel_zone_fast_pwm     = 750.0f;
     ctrl->decel_zone_threshold_mm = 750.0f;
 
+    /* 加速带参数默认 (Task3 首弯后两条边) */
+    ctrl->accel_zone_active          = 0;
+    ctrl->accel_zone_threshold_mm     = 700.0f;
+    ctrl->accel_zone_fast_pwm         = 850.0f;
+    ctrl->accel_zone_slow_pwm         = 280.0f;
+    ctrl->accel_zone_decel_ms         = 500;
+    ctrl->accel_zone_decel_start_tick = 0;
+    ctrl->accel_zone_in_decel         = 0;
+
     ctrl->state          = MOVE_STATE_IDLE;
     ctrl->start_tick     = 0;
 }
@@ -331,6 +340,40 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                 effective_base_pwm = ctrl->decel_zone_fast_pwm;
             } else {
                 effective_base_pwm = ctrl->decel_zone_start_pwm;
+            }
+        }
+
+        /* Task3 加速带: <700mm→850, >=700mm→时间减速850→280/500ms */
+        if (ctrl->task_id == TASK_ID_3 && ctrl->accel_zone_active) {
+            float accel_dist = 0.0f;
+            if (ctrl->encoder_left && ctrl->encoder_right) {
+                float dl = Encoder_GetDistance(ctrl->encoder_left);
+                float dr = Encoder_GetDistance(ctrl->encoder_right);
+                accel_dist = (dl + dr) * 0.5f;
+            }
+            if (accel_dist < ctrl->accel_zone_threshold_mm) {
+                effective_base_pwm = ctrl->accel_zone_fast_pwm;
+                ctrl->accel_zone_in_decel = 0;
+            } else {
+                if (!ctrl->accel_zone_in_decel) {
+                    ctrl->accel_zone_in_decel = 1;
+                    ctrl->accel_zone_decel_start_tick = HAL_GetTick();
+                }
+                uint32_t elapsed = HAL_GetTick()
+                                 - ctrl->accel_zone_decel_start_tick;
+                float ratio = (float)elapsed
+                            / (float)ctrl->accel_zone_decel_ms;
+                if (ratio > 1.0f) ratio = 1.0f;
+                effective_base_pwm = ctrl->accel_zone_fast_pwm
+                    - ratio * (ctrl->accel_zone_fast_pwm
+                             - ctrl->accel_zone_slow_pwm);
+                if (effective_base_pwm < ctrl->accel_zone_slow_pwm)
+                    effective_base_pwm = ctrl->accel_zone_slow_pwm;
+
+                /* 边沿触发微调: 以微调速度为准 */
+                if (active_cnt >= 1) {
+                    effective_base_pwm = ctrl->adjust_speed_pwm;
+                }
             }
         }
 
@@ -617,10 +660,23 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     ctrl->first_turn_is_cw = (ctrl->turn_direction == -1) ? 1 : 0;
                 }
 
-                /* Task3: 首弯CW→edge2减速带, 首弯CCW→edge3减速带 */
+                /* Task3: 首弯CW→edge3减速带, 首弯CCW→edge4减速带 */
                 if (ctrl->task_id == TASK_ID_3) {
-                    uint8_t decel_edge = ctrl->first_turn_is_cw ? 2 : 3;
+                    uint8_t decel_edge = ctrl->first_turn_is_cw ? 3 : 2;
                     ctrl->decel_zone_active = (ctrl->edge_count == decel_edge) ? 1 : 0;
+                }
+
+                /* Task3 加速带: CCW→edge2+3, CW→edge2+4 */
+                if (ctrl->task_id == TASK_ID_3 && !ctrl->is_slow_phase) {
+                    if (ctrl->first_turn_is_cw) {
+                        ctrl->accel_zone_active = (ctrl->edge_count == 1
+                                                || ctrl->edge_count == 2) ? 1 : 0;
+                    } else {
+                        ctrl->accel_zone_active = (ctrl->edge_count == 1
+                                                || ctrl->edge_count == 3) ? 1 : 0;
+                    }
+                } else if (ctrl->task_id == TASK_ID_3) {
+                    ctrl->accel_zone_active = 0;
                 }
 
                 if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
