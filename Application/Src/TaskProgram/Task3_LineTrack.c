@@ -60,7 +60,7 @@
 #define TASK3_K_LINE                 100.0f
 
 /** @brief 转弯基准 PWM (0~1500) — Task3 负重, 高于 Task1 */
-#define TASK3_TURN_PWM               600.0f
+#define TASK3_TURN_PWM               850.0f
 
 /** @brief 假路口过滤距离阈值 (mm) */
 #define TASK3_FAKE_TURN_THRESHOLD_MM 750.0f
@@ -72,7 +72,10 @@
 #define TASK3_SLOW_PWM              250.0f
 
 /** @brief 减速带参数 (Task3 负重场景) */
-#define TASK3_DECEL_ZONE_START_PWM   350.0f
+#define TASK3_DECEL_BUFFER_LENGTH_MM 200.0f
+#define TASK3_DECEL_BUFFER_START_PWM 550.0f
+#define TASK3_DECEL_BUFFER_END_PWM   220.0f
+#define TASK3_DECEL_ZONE_START_PWM   220.0f
 #define TASK3_DECEL_ZONE_FAST_PWM    750.0f
 #define TASK3_DECEL_ZONE_THRESHOLD_MM 750.0f
 
@@ -132,6 +135,9 @@ void Task3_LineTrack_Init(void)
     move_ctrl.slow_pwm         = TASK3_SLOW_PWM;
 
     /* 4.5. 配置减速带参数 (Task3 负重场景) */
+    move_ctrl.decel_buffer_length_mm  = TASK3_DECEL_BUFFER_LENGTH_MM;
+    move_ctrl.decel_buffer_start_pwm  = TASK3_DECEL_BUFFER_START_PWM;
+    move_ctrl.decel_buffer_end_pwm    = TASK3_DECEL_BUFFER_END_PWM;
     move_ctrl.decel_zone_start_pwm    = TASK3_DECEL_ZONE_START_PWM;
     move_ctrl.decel_zone_fast_pwm     = TASK3_DECEL_ZONE_FAST_PWM;
     move_ctrl.decel_zone_threshold_mm = TASK3_DECEL_ZONE_THRESHOLD_MM;
@@ -190,6 +196,11 @@ void Task3_LineTrack_Loop(void)
         LengthMeasure_Arm(&length_measure);
     }
     prev_decel_active = move_ctrl.decel_zone_active;
+
+    /* 跳变6 (退出第三条黑胶带) → 减速带 PWM 恢复高速 */
+    if (LengthMeasure_IsPatternExit(&length_measure)) {
+        move_ctrl.decel_pwm_raised = 1;
+    }
 
     /* 测量完成 → VOFA 发送 */
     if (LengthMeasure_IsDone(&length_measure)) {

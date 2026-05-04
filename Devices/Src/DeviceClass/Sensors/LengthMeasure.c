@@ -4,14 +4,18 @@
   * @brief   长度测量模块实现 — "丰"字图案白色间隙测量
   *
   * @details
-  * 6 状态跳变检测状态机：
-  *   IDLE → WAIT_TAPE1 → WAIT_GAP1 → WAIT_TAPE2 → WAIT_GAP2 → WAIT_TAPE3 → DONE
+  * 8 状态跳变检测状态机：
+  *   IDLE → WAIT_TAPE1 → WAIT_GAP1 → WAIT_TAPE2 → WAIT_GAP2 → WAIT_TAPE3
+  *   → WAIT_EXIT → DONE
   *
   * 跳变条件：
   *   - TAPE 状态 → 下一状态: active_channels >= 5 (黑胶带)
   *   - GAP  状态 → 下一状态: active_channels <= 2 (白纸)
   *
-  * 防抖：连续 N 次 (默认 2×2ms=4ms) 满足条件才触发跳变。
+  * 跳变6 (WAIT_EXIT→DONE): 退出第三条黑胶带进入白纸，pattern_exit_flag 置位，
+  * 用于触发减速带 PWM 恢复。
+  *
+  * 防抖：连续 N 次 (默认 1×1ms=1ms) 满足条件才触发跳变。
   * 超时：行驶距离超过 timeout_distance_mm (默认 400mm) 后退出。
   ******************************************************************************
   */
@@ -54,6 +58,7 @@ void LengthMeasure_Constructor(LengthMeasure_t *self,
     self->timeout_distance_mm = DEFAULT_TIMEOUT_MM;
     self->done_flag         = 0;
     self->timeout_flag      = 0;
+    self->pattern_exit_flag = 0;
 
     for (uint8_t i = 0; i < 4; i++) {
         self->enc_reading[i] = 0.0f;
@@ -71,6 +76,7 @@ void LengthMeasure_Arm(LengthMeasure_t *self)
     self->confirm_cnt       = 0;
     self->done_flag         = 0;
     self->timeout_flag      = 0;
+    self->pattern_exit_flag = 0;
     self->start_distance_mm = LengthMeasure_GetAvgDist(self);
 
     for (uint8_t i = 0; i < 4; i++) {
@@ -166,6 +172,20 @@ void LengthMeasure_Run(LengthMeasure_t *self)
             if (self->confirm_cnt >= self->confirm_threshold) {
                 self->enc_reading[3] = dist;
                 self->L2_mm = self->enc_reading[3] - self->enc_reading[2];
+                self->state       = LENGTH_MEASURE_WAIT_EXIT;
+                self->confirm_cnt = 0;
+            }
+        } else {
+            self->confirm_cnt = 0;
+        }
+        break;
+
+    case LENGTH_MEASURE_WAIT_EXIT:
+        /* 跳变6: 退出第三条黑胶带进入白纸 → pattern_exit_flag 置位 */
+        if (active <= GAP_THRESHOLD) {
+            self->confirm_cnt++;
+            if (self->confirm_cnt >= self->confirm_threshold) {
+                self->pattern_exit_flag = 1;
                 self->state     = LENGTH_MEASURE_DONE;
                 self->done_flag = 1;
             }
@@ -203,6 +223,12 @@ uint8_t LengthMeasure_IsTimeout(const LengthMeasure_t *self)
     return self->timeout_flag;
 }
 
+uint8_t LengthMeasure_IsPatternExit(const LengthMeasure_t *self)
+{
+    if (self == NULL) return 0;
+    return self->pattern_exit_flag;
+}
+
 float LengthMeasure_GetL1Cm(const LengthMeasure_t *self)
 {
     if (self == NULL) return 0.0f;
@@ -224,6 +250,7 @@ void LengthMeasure_Reset(LengthMeasure_t *self)
     self->start_distance_mm = 0.0f;
     self->done_flag         = 0;
     self->timeout_flag      = 0;
+    self->pattern_exit_flag = 0;
 
     for (uint8_t i = 0; i < 4; i++) {
         self->enc_reading[i] = 0.0f;

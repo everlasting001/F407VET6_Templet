@@ -160,7 +160,11 @@ void MoveControl_Init(MoveControl_t *ctrl,
     /* 减速带参数默认 (Task3 负重场景) */
     ctrl->first_turn_is_cw        = 0;
     ctrl->decel_zone_active       = 0;
-    ctrl->decel_zone_start_pwm    = 300.0f;
+    ctrl->decel_pwm_raised        = 0;
+    ctrl->decel_buffer_length_mm  = 300.0f;
+    ctrl->decel_buffer_start_pwm  = 750.0f;
+    ctrl->decel_buffer_end_pwm    = 200.0f;
+    ctrl->decel_zone_start_pwm    = 200.0f;
     ctrl->decel_zone_fast_pwm     = 750.0f;
     ctrl->decel_zone_threshold_mm = 750.0f;
 
@@ -328,18 +332,29 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
             }
         }
 
-        /* Task3 减速带: 前半段低速(start_pwm), 里程≥阈值后高速(fast_pwm) */
+        /* Task3 减速带: 缓冲区线性缓降(750→200/300mm) → 低速 → 跳变6或750mm兜底后高速 */
         if (ctrl->task_id == TASK_ID_3 && ctrl->decel_zone_active) {
-            float decel_dist = 0.0f;
-            if (ctrl->encoder_left && ctrl->encoder_right) {
-                float dl = Encoder_GetDistance(ctrl->encoder_left);
-                float dr = Encoder_GetDistance(ctrl->encoder_right);
-                decel_dist = (dl + dr) * 0.5f;
-            }
-            if (decel_dist >= ctrl->decel_zone_threshold_mm) {
+            if (ctrl->decel_pwm_raised) {
                 effective_base_pwm = ctrl->decel_zone_fast_pwm;
             } else {
-                effective_base_pwm = ctrl->decel_zone_start_pwm;
+                float decel_dist = 0.0f;
+                if (ctrl->encoder_left && ctrl->encoder_right) {
+                    float dl = Encoder_GetDistance(ctrl->encoder_left);
+                    float dr = Encoder_GetDistance(ctrl->encoder_right);
+                    decel_dist = (dl + dr) * 0.5f;
+                }
+                /* 兜底: 编码器达到阈值时强制提高 PWM (即使跳变6未识别) */
+                if (decel_dist >= ctrl->decel_zone_threshold_mm) {
+                    ctrl->decel_pwm_raised = 1;
+                    effective_base_pwm = ctrl->decel_zone_fast_pwm;
+                } else if (decel_dist < ctrl->decel_buffer_length_mm) {
+                    float ratio = decel_dist / ctrl->decel_buffer_length_mm;
+                    effective_base_pwm = ctrl->decel_buffer_start_pwm
+                        - ratio * (ctrl->decel_buffer_start_pwm
+                                 - ctrl->decel_buffer_end_pwm);
+                } else {
+                    effective_base_pwm = ctrl->decel_zone_start_pwm;
+                }
             }
         }
 
@@ -485,7 +500,12 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                             ctrl->turn_other_boost   = 0.6f;  /* CCW: 另一轮 */
                         }
                     } else {
-                        ctrl->turn_angle = 90.0f;
+                        /* Task3 第一个弯转85° (负重场景降低过冲) */
+                        if (ctrl->task_id == TASK_ID_3 && ctrl->edge_count == 0) {
+                            ctrl->turn_angle = 85.0f;
+                        } else {
+                            ctrl->turn_angle = 90.0f;
+                        }
                         ctrl->turn_reverse_boost = 1.0f;
                         ctrl->turn_other_boost   = 1.0f;
                     }
@@ -664,6 +684,9 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                 if (ctrl->task_id == TASK_ID_3) {
                     uint8_t decel_edge = ctrl->first_turn_is_cw ? 3 : 2;
                     ctrl->decel_zone_active = (ctrl->edge_count == decel_edge) ? 1 : 0;
+                    if (ctrl->decel_zone_active) {
+                        ctrl->decel_pwm_raised = 0;
+                    }
                 }
 
                 /* Task3 加速带: CCW→edge2+3, CW→edge2+4 */

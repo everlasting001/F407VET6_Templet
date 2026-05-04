@@ -48,8 +48,9 @@ typedef enum {
     LENGTH_MEASURE_WAIT_TAPE2 = 3,  /**< 在白间隙中，等待第二条黑胶带 (>=5) */
     LENGTH_MEASURE_WAIT_GAP2  = 4,  /**< 在黑胶带上，等待第二个白间隙 (<=2) */
     LENGTH_MEASURE_WAIT_TAPE3 = 5,  /**< 在白间隙中，等待第三条黑胶带 (>=5) */
-    LENGTH_MEASURE_DONE       = 6,  /**< 测量完成，L1/L2 有效 */
-    LENGTH_MEASURE_TIMEOUT    = 7   /**< 超时退出 */
+    LENGTH_MEASURE_WAIT_EXIT  = 6,  /**< 在第三条黑带上，等待退出回到白纸 (<=2) — 跳变6 */
+    LENGTH_MEASURE_DONE       = 7,  /**< 测量完成，L1/L2 有效 */
+    LENGTH_MEASURE_TIMEOUT    = 8   /**< 超时退出 */
 } LengthMeasureState_t;
 
 /* ==================== 结构体定义 ==================== */
@@ -79,6 +80,7 @@ typedef struct {
     /* 输出标志 (ISR 设置, 主循环读取) */
     volatile uint8_t      done_flag;
     volatile uint8_t      timeout_flag;
+    volatile uint8_t      pattern_exit_flag;  /**< 跳变6: 退出第三条黑胶带进入白纸 */
 } LengthMeasure_t;
 
 /* ==================== 公有接口 ==================== */
@@ -92,6 +94,7 @@ void     LengthMeasure_SetDebounce(LengthMeasure_t *self, uint8_t threshold);
 void     LengthMeasure_SetTimeout(LengthMeasure_t *self, float distance_mm);
 uint8_t  LengthMeasure_IsDone(const LengthMeasure_t *self);
 uint8_t  LengthMeasure_IsTimeout(const LengthMeasure_t *self);
+uint8_t  LengthMeasure_IsPatternExit(const LengthMeasure_t *self);
 float    LengthMeasure_GetL1Cm(const LengthMeasure_t *self);
 float    LengthMeasure_GetL2Cm(const LengthMeasure_t *self);
 void     LengthMeasure_Reset(LengthMeasure_t *self);

@@ -136,8 +136,12 @@ typedef struct {
     /* 减速带参数 (Task3 负重场景) */
     uint8_t          first_turn_is_cw;        /**< 首弯方向: 1=CW顺时针, 0=CCW逆时针 */
     uint8_t          decel_zone_active;       /**< 减速带激活标志 (1=当前边执行减速带) */
-    float            decel_zone_start_pwm;    /**< 减速带前半段 PWM (默认 300) */
-    float            decel_zone_fast_pwm;     /**< 减速带后半段 PWM (默认 750) */
+    uint8_t          decel_pwm_raised;        /**< 减速带 PWM 已恢复 (跳变6触发) */
+    float            decel_buffer_length_mm;   /**< 减速带缓冲区长度 (默认 300mm) */
+    float            decel_buffer_start_pwm;   /**< 缓冲区起始 PWM (默认 750) */
+    float            decel_buffer_end_pwm;     /**< 缓冲区终点 PWM (默认 200) */
+    float            decel_zone_start_pwm;    /**< 减速带缓冲后/慢速 PWM (默认 200) */
+    float            decel_zone_fast_pwm;     /**< 减速带跳变6后高速 PWM (默认 750) */
     float            decel_zone_threshold_mm; /**< 减速带切换距离阈值 (默认 750mm) */
 
     /* 加速带参数 (Task3 首弯后两条边) */
