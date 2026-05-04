@@ -12,14 +12,17 @@
   *   1. Init: 配置巡线参数 → SetLineTrack 启动巡线模式
   *   2. ISR:  MoveControl_LineTrackUpdate() 驱动状态机
   *      FOLLOWING → 检测路口 → FORWARD_ADJUST → TURNING(90°) → EDGE_DONE
-  *   3. Loop: 监控 edge_count, 4 条边完成后打印完成信息
+ *      第4条边后 → 减速循迹 (PWM 670→250 线性递减/750mm) → 第5边沿停车
+  *   3. Loop: 监控 edge_count, 5 条边完成后打印完成信息
   *
   * === 关键参数 (可运行时通过 Vofa 调参) ===
-  *   base_pwm              = 400    巡线基准 PWM
+  *   base_pwm              = 670    巡线基准 PWM (减速起点)
   *   k_line                = 100    LineTurn→PWM 增益
-  *   turn_pwm              = 400    转弯基准 PWM
+  *   turn_pwm              = 430    转弯基准 PWM
   *   adjust_distance_mm    = 60     路口微调前进距离 (传感器到轮轴)
-  *   intersection_threshold = 5     路口确认连续次数 (5×2ms=10ms)
+  *   intersection_threshold = 2     路口确认连续次数 (2×2ms=4ms)
+ *   slow_pwm              = 250    减速终点 PWM (750mm 处)
+ *   fake_turn_threshold   = 750    假路口过滤/减速距离 (mm)
   *
   ******************************************************************************
   */
@@ -39,8 +42,8 @@
 /** @brief 正方形边长 (mm) — 用于参考，实际由路口检测驱动 */
 #define SQUARE_EDGE_MM          1000.0f
 
-/** @brief 正方形边数 (4 条边 = 一圈) */
-#define SQUARE_TARGET_EDGES     4
+/** @brief 正方形边数 (5 条边 = 前4条正常循迹 + 第5边沿停车) */
+#define SQUARE_TARGET_EDGES     5
 
 /** @brief 路口确认连续次数 (2×2ms=4ms 持续检测) */
 #define TASK3_INTERSECTION_THRESHOLD  2
@@ -63,8 +66,8 @@
 /** @brief 微调前进 PWM */
 #define TASK3_ADJUST_SPEED_PWM       350.0f
 
-/** @brief 慢速循迹基准 PWM (第4个弯之后) */
-#define TASK3_SLOW_PWM              330.0f
+/** @brief 减速终点 PWM (第4个弯后线性递减至 250) */
+#define TASK3_SLOW_PWM              250.0f
 
 /** @brief 状态打印间隔 (ms) */
 #define TASK3_PRINT_INTERVAL_MS      500U
@@ -193,7 +196,7 @@ void Task3_LineTrack_Loop(void)
                         : "UNKNOWN";
 
     DebugPrintf_Print(&dbg_printf,
-        "[Task3] Edge:%d/4 State:%s LT:%.1f CH:0x%02X "
+        "[Task3] Edge:%d/5 State:%s%s LT:%.1f CH:0x%02X "
         "LPWM:%.0f RPWM:%.0f\r\n",
         edge + 1, sname,
         move_ctrl.is_slow_phase ? "(Slow)" : "",
