@@ -44,12 +44,50 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+    # Device layer
+    Devices/Src/DeviceClass/Modules/ModuleBase.c # 模块基类
+    Devices/Src/DeviceClass/Modules/LED.c # LED模块
+    Devices/Src/DeviceClass/Modules/Buzzer.c # Buzzer模块
+    Devices/Src/DeviceClass/Modules/Key.c # Key模块
+    Devices/Src/DeviceClass/Motors/MotorBase.c # 电机基类
+    Devices/Src/DeviceClass/Motors/StepperMotor.c # 步进电机
+    Devices/Src/DeviceClass/Motors/DCMotor.c # DC有刷电机
+    Devices/Src/DeviceClass/Sensors/SensorBase.c # 传感器基类
+    Devices/Src/DeviceClass/Sensors/Encoder.c # 编码器传感器
+    Devices/Src/DeviceClass/Sensors/LineSensor.c # 八路灰度循迹传感器
+    Devices/Src/DeviceClass/Sensors/Gyro.c # MPU6050陀螺仪传感器
+    Devices/Src/DebugPeripheral/dwt_delay.c # DWT微秒延时
+    Devices/Src/DebugPeripheral/UartBase.c # UART基类
+    Devices/Src/DebugPeripheral/DebugPrintf.c # 调试格式化输出
+    Devices/Src/FilterAlgorithm/PID.c # PID控制器
+    Devices/Src/FilterAlgorithm/Vofa.c # Vofa+ FireWater调参
+
+    # Framework layer
+    Framework/Src/MoveControl.c # 运动控制系统
+    Framework/Src/Init.c # 全局初始化
+
+    # Application layer
+    Application/Src/Callback.c # 回调函数
+    Application/Src/TaskProgram/Task1_LineTrack.c # Task1: 正方形边框逆时针循迹一圈
+    Application/Src/TaskProgram/Task2_LineTrack.c # Task2: 正方形边框顺时针循迹一圈
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    # Device layer    
+    Devices/Inc/DeviceClass/Modules
+    Devices/Inc/DeviceClass/Motors
+    Devices/Inc/DeviceClass/Sensors
+    Devices/Inc/DebugPeripheral
+    Devices/Inc/FilterAlgorithm
+
+    # Framework layer
+    Framework/Inc
+
+    #application layer
+    Application/Inc/TestProgram
+    Application/Inc/TaskProgram
+    Application/Inc/
 )
 
 # Add project symbols (macros)

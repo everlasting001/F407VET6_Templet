@@ -12,13 +12,21 @@
       "Bash(ninja *)",
       "Bash(openocd *)",
       "Bash(git *)",
+      "Bash(make *)",
       "Read(Core/)",
       "Read(Drivers/)",
+      "Read(Devices/)",
+      "Read(Application/)",
+      "Read(Framework/)",
+      "Read(docs/)",
       "Read(.claude/docs/)",
       "Read(.claude/memory/)",
+      "Read(.claude/prjconfigs/)",
+      "Read(.claude/rules/)",
       "Edit(Core/)",
-      "Edit(Drivers/)",
-      "Bash(make *)"
+      "Edit(Devices/)",
+      "Edit(Application/)",
+      "Edit(Framework/)"
     ],
     "deny": [
       "Bash(rm -rf *)",

@@ -21,7 +21,7 @@
                 "D:/OpenOCD-20250710-0.12.0/share/openocd/scripts" // 注意这里指向 scripts 文件夹
             ],
             "runToEntryPoint": "main",
-            "showDevDebugOutput": "none",
+            "showDevDebugOutput": "raw",
             "gdbPath": "D:/DevEnv/DevEnv/GNU-tools-for-STM32/bin/arm-none-eabi-gdb.exe"
         },
     ]

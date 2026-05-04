@@ -12,22 +12,51 @@
 
 ---
 
+## ⏱️ 定时器配置
+
+| 定时器 | 模式 | 用途 | 通道/引脚 |
+|--------|------|------|-----------|
+| TIM1 | 编码器模式 | 左直流电机编码器 | CH1(PE9): A相, CH2(PE11): B相 |
+| TIM2 | 全局定时中断 | 系统时基/状态机心跳 | — |
+| TIM3 | PWM 生成 | 双路电机调速 | CH1(PA6): 左电机, CH2(PA7): 右电机 |
+| TIM8 | 编码器模式 | 右直流电机编码器 | CH1(PC6): A相, CH2(PC7): B相 |
+
+---
+
 ## 🤖 DC 有刷电机
 
-- **型号**: ________________  
-- **额定电压**: _____ V  
-- **额定功率**: _____ W  
-- **无负载转速**: _____ RPM @ _____ V  
-- **最大电流**: _____ A  
-- **驱动芯片**: ________________  
-- **驱动板型号**: ________________  
-- **PWM 频率**: _____ kHz (推荐 10 kHz)  
-- **GPIO 映射**:
-  - 方向1: _____ (GPIO_PIN___)  
-  - 方向2: _____ (GPIO_PIN___)  
-  - PWM: _____ (TIM_CHANNEL_)  
-- **数据手册**: `.claude/docs/datasheets/motor-model.pdf`  
-- **原理图**: `.claude/docs/schematics/motor-driver-board.pdf`  
+- **型号**: JGA25-310
+- **传感器类型**: 霍尔编码器
+- **磁环线数**: 13
+- **减速比**: 1:20
+- **额定电压**: 7.4V
+- **额定转速**: 440-460 RPM
+- **电机类型**: 有刷直流电机
+- **驱动芯片**: TB6612FNG
+- **PWM 频率**: 10 kHz (TIM3)
+- **数据手册**: `.claude/docs/datasheets/TB6612FNG Datasheet.pdf`
+- **驱动板原理图**: `.claude/docs/schematics/TK-TB6612-MD220A V1.0.pdf`
+- **编码器电机手册**: `.claude/docs/datasheets/塔克创新 l MC310编码器电机用户手册 V1.0.0.pdf`
+
+### 左直流电机 (Left_DCMotor) GPIO 映射
+
+| 功能 | 引脚 | 说明 |
+|------|------|------|
+| 方向控制 AIN1 | PD0 | 正反转控制 |
+| 方向控制 AIN2 | PD1 | 正反转控制 |
+| PWM 输出 PWMA | PA6 (TIM3_CH1) | 速度控制 |
+| 编码器 A 相 E1A | PE9 (TIM1_CH1) | 速度/位置反馈 |
+| 编码器 B 相 E1B | PE11 (TIM1_CH2) | 速度/位置反馈 |
+
+### 右直流电机 (Right_DCMotor) GPIO 映射
+
+| 功能 | 引脚 | 说明 |
+|------|------|------|
+| 方向控制 AIN1 | PD2 | 正反转控制 |
+| 方向控制 AIN2 | PD3 | 正反转控制 |
+| PWM 输出 PWMA | PA7 (TIM3_CH2) | 速度控制 |
+| 编码器 A 相 E1A | PC6 (TIM8_CH1) | 速度/位置反馈 |
+| 编码器 B 相 E1B | PC7 (TIM8_CH2) | 速度/位置反馈 |
 
 ---
 
@@ -38,13 +67,13 @@
 - **工作电压**: 3.3V / 5V ____  
 - **采样率**: _____ Hz (推荐 100-200 Hz)  
 - **GPIO 映射**:
-  - SCL: _____ (I2C3_SCL)  
-  - SDA: _____ (I2C3_SDA)  
+  - SCL: PB6 (I2C1_SCL)
+  - SDA: PB7 (I2C1_SDA)
   - INT (可选): _____ (GPIO)  
 - **I2C 速率**: 100 kHz / 400 kHz / 1 MHz ____  
 - **应用**: 姿态控制 / 运动检测 / 其他 ________________  
-- **数据手册**: `.claude/docs/datasheets/mpu6050.pdf`  
-- **原理图**: `.claude/docs/schematics/mpu6050-interface.pdf`  
+- **数据手册**: `.claude/docs/datasheets/PS-MPU-6000A.pdf` (寄存器映射)  
+- **应用笔记**: `.claude/docs/datasheets/RM-MPU-6000A.pdf`  
 
 ---
 
@@ -61,40 +90,48 @@
 - **检测距离**: _____ mm  
 - **黑线/白线阈值**: _____ (ADC 值)  
 - **应用**: 循迹 / 路径识别 / 其他 ________________  
-- **数据手册**: `.claude/docs/datasheets/grayscale-sensor.pdf`  
-- **原理图**: `.claude/docs/schematics/grayscale-circuit.pdf`  
+- **用户手册**: `.claude/docs/datasheets/亚博智能灰度循迹模块用户入门手册.pdf`  
+- **数据读取指南**: `.claude/docs/datasheets/循迹模块数据读取.pdf`  
+- **循迹算法**: `.claude/docs/datasheets/循迹模块小车巡线.pdf`  
 
 ---
 
 ## ⚙️ 步进电机驱动
 
 ### 步进电机规格
-- **型号**: ________________  
-- **相数**: 4 相 / 2 相 ____  
-- **单步角度**: _____ °  
-- **额定电压**: _____ V  
-- **相电流**: _____ mA  
-- **扭矩**: _____ g·cm  
-- **转速范围**: _____ - _____ RPM  
+- **型号**: 28BYJ-48
+- **相数**: 4 相 (四相八拍)
+- **额定电压**: 5V
+- **驱动芯片**: ULN2003
 
 ### 驱动芯片/模块
-- **驱动型号**: ULN2003 / TB6560 / TB6600 / 其他 ________________  
-- **逻辑电压**: 3.3V / 5V ____  
-- **输出电流**: _____ mA per phase  
-- **控制方式**: 4 相顺序 / 脉冲+方向 ____  
-- **GPIO 映射**:
-  - IN1: _____ (GPIO_PIN___)  
-  - IN2: _____ (GPIO_PIN___)  
-  - IN3: _____ (GPIO_PIN___)  
-  - IN4: _____ (GPIO_PIN___)  
-  - 或 PULSE: _____ (PWM)  
-  - 或 DIR: _____ (GPIO)  
-- **步进延迟**: _____ ms per step (推荐 2-10 ms)  
-- **最高速度**: _____ RPM (计算: 60000 / (step_delay_ms × steps_per_rev))  
-- **应用**: 位置控制 / 旋转拨盘 / 其他 ________________  
-- **数据手册**: `.claude/docs/datasheets/stepper-motor.pdf`  
-- **驱动IC数据手册**: `.claude/docs/datasheets/uln2003-datasheet.pdf` 或相应型号  
-- **原理图**: `.claude/docs/schematics/stepper-driver.pdf`  
+- **驱动型号**: ULN2003
+- **逻辑电压**: 5V
+- **控制方式**: 4 相顺序
+- **步进延迟**: 2-10 ms per step (推荐)
+- **应用**: 位置控制
+- **步进电机规格**: `.claude/docs/datasheets/28BYJ48规格书.doc`
+- **驱动IC英文手册**: `.claude/docs/datasheets/ULN2003英文数据手册.pdf`
+- **驱动IC中文手册**: `.claude/docs/datasheets/ULN2003中文数据手册.pdf`
+- **驱动板原理图**: `.claude/docs/schematics/步进电机驱动板原理图.pdf`
+
+### 水平步进电机 (Horizontal_Stepper_Motor) GPIO 映射
+
+| 功能 | 引脚 |
+|------|------|
+| H_IN1 | PD4 |
+| H_IN2 | PD5 |
+| H_IN3 | PD6 |
+| H_IN4 | PD7 |
+
+### 垂直步进电机 (Vertical_Stepper_Motor) GPIO 映射
+
+| 功能 | 引脚 |
+|------|------|
+| V_IN1 | PB3 |
+| V_IN2 | PB4 |
+| V_IN3 | PB5 |
+| V_IN4 | PB8 |
 
 ---
 
@@ -111,7 +148,8 @@
   - 电机驱动: 1000 µF  
 - **地回路**: 共地是否完整? ☐ 是 ☐ 否  
 - **散热**: 需要散热片? ☐ 是 ☐ 否  
-- **数据手册**: `.claude/docs/schematics/power-supply.pdf`  
+- **稳压器1手册**: `.claude/docs/datasheets/RT8289GSP.PDF`  
+- **稳压器2手册**: `.claude/docs/datasheets/RT9013-33GB.PDF`  
 
 ---
 
@@ -119,12 +157,18 @@
 
 | 模块 | GPIO / 引脚 | 中断类型 | 优先级 | 状态 |
 |------|-----------|---------|--------|------|
-| DC 电机 | PA0/PA1/PA2 | PWM | - | ☐ |
+| 左DC电机 方向 | PD0, PD1 | — | — | ☐ |
+| 右DC电机 方向 | PD2, PD3 | — | — | ☐ |
+| 左DC电机 PWM | PA6 (TIM3_CH1) | — | — | ☐ |
+| 右DC电机 PWM | PA7 (TIM3_CH2) | — | — | ☐ |
+| 左DC电机 编码器 | PE9, PE11 (TIM1_CH1/CH2) | TIM1 | — | ☐ |
+| 右DC电机 编码器 | PC6, PC7 (TIM8_CH1/CH2) | TIM8 | — | ☐ |
+| 水平步进电机 | PD4-PD7 | — | — | ☐ |
+| 垂直步进电机 | PB3-PB5, PB8 | — | — | ☐ |
 | 灰度传感器 | PA3-PA7 | DMA/ADC | 2 | ☐ |
-| 步进电机 | PA8-PA11 | - | - | ☐ |
-| MPU6050 | PB8/PB9 | I2C | 1 | ☐ |
+| MPU6050 | PB6/PB7 | I2C | 1 | ☐ |
 | UART | PA9/PA10 | UART | 3 | ☐ |
-| 其他 | ___________ | _______ | ___ | ☐ |
+| 全局定时器 | — (TIM2) | 定时中断 | — | ☐ |
 
 ---
 
@@ -194,7 +238,7 @@
 
 ---
 
-**最后更新**: __________  
-**维护人**: __________  
-**下次审查**: __________  
+**最后更新**: 2026-05-01
+**维护人**: __________
+**下次审查**: __________
 **备注**: _________________________________

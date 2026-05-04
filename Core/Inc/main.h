@@ -57,6 +57,74 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LED1_Pin GPIO_PIN_0
+#define LED1_GPIO_Port GPIOC
+#define BUZZER1_Pin GPIO_PIN_2
+#define BUZZER1_GPIO_Port GPIOC
+#define KEY2_Pin GPIO_PIN_3
+#define KEY2_GPIO_Port GPIOC
+#define KEY3_Pin GPIO_PIN_0
+#define KEY3_GPIO_Port GPIOA
+#define KEY4_Pin GPIO_PIN_1
+#define KEY4_GPIO_Port GPIOA
+#define K230_TX_Pin GPIO_PIN_2
+#define K230_TX_GPIO_Port GPIOA
+#define K230_RX_Pin GPIO_PIN_3
+#define K230_RX_GPIO_Port GPIOA
+#define PWMA_Pin GPIO_PIN_6
+#define PWMA_GPIO_Port GPIOA
+#define PWMB_Pin GPIO_PIN_7
+#define PWMB_GPIO_Port GPIOA
+#define E1A_Pin GPIO_PIN_9
+#define E1A_GPIO_Port GPIOE
+#define E1B_Pin GPIO_PIN_11
+#define E1B_GPIO_Port GPIOE
+#define BT_TX_Pin GPIO_PIN_8
+#define BT_TX_GPIO_Port GPIOD
+#define BT_RX_Pin GPIO_PIN_9
+#define BT_RX_GPIO_Port GPIOD
+#define OUT_Pin GPIO_PIN_11
+#define OUT_GPIO_Port GPIOD
+#define AD0_Pin GPIO_PIN_12
+#define AD0_GPIO_Port GPIOD
+#define AD2_Pin GPIO_PIN_14
+#define AD2_GPIO_Port GPIOD
+#define E2A_Pin GPIO_PIN_6
+#define E2A_GPIO_Port GPIOC
+#define E2B_Pin GPIO_PIN_7
+#define E2B_GPIO_Port GPIOC
+#define TX_DEBUG_Pin GPIO_PIN_9
+#define TX_DEBUG_GPIO_Port GPIOA
+#define RX_DEBUG_Pin GPIO_PIN_10
+#define RX_DEBUG_GPIO_Port GPIOA
+#define AIN1_Pin GPIO_PIN_0
+#define AIN1_GPIO_Port GPIOD
+#define AIN2_Pin GPIO_PIN_1
+#define AIN2_GPIO_Port GPIOD
+#define BIN1_Pin GPIO_PIN_2
+#define BIN1_GPIO_Port GPIOD
+#define BIN2_Pin GPIO_PIN_3
+#define BIN2_GPIO_Port GPIOD
+#define H_IN1_Pin GPIO_PIN_4
+#define H_IN1_GPIO_Port GPIOD
+#define H_IN2_Pin GPIO_PIN_5
+#define H_IN2_GPIO_Port GPIOD
+#define H_IN3_Pin GPIO_PIN_6
+#define H_IN3_GPIO_Port GPIOD
+#define H_IN4_Pin GPIO_PIN_7
+#define H_IN4_GPIO_Port GPIOD
+#define V_IN1_Pin GPIO_PIN_3
+#define V_IN1_GPIO_Port GPIOB
+#define V_IN2_Pin GPIO_PIN_4
+#define V_IN2_GPIO_Port GPIOB
+#define V_IN3_Pin GPIO_PIN_5
+#define V_IN3_GPIO_Port GPIOB
+#define MPU6050_SCL_Pin GPIO_PIN_6
+#define MPU6050_SCL_GPIO_Port GPIOB
+#define MPU6050_SDA_Pin GPIO_PIN_7
+#define MPU6050_SDA_GPIO_Port GPIOB
+#define V_IN4_Pin GPIO_PIN_8
+#define V_IN4_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

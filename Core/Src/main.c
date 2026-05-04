@@ -1,60 +1,54 @@
 /* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
+#include "i2c.h"
+#include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+// Test includes disabled — re-enable per-module when testing individually:
+// #include "LedTest.h"
+// #include "KeyTest.h"
+// #include "StepperMotorTest.h"
+// #include "DCMotorTest.h"
+// #include "DebugPrintfTest.h"
+// #include "EncoderTest.h"
+// #include "MoveControlTest.h"
+#include "Callback.h"
+#include "Init.h"
+#include "Task2_LineTrack.h"
+// #include "Vofa.h"  /* Task2 循迹期间禁用 Vofa，避免串口冲突 */
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+/* Task2 循迹模式 — 正方形边框一圈 */
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -65,7 +59,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -74,30 +67,63 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_USART1_UART_Init();
+  MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM8_Init();
+  MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
+  Callback_Init();           /* 启动 TIM2 1ms 基时 + 软件分频 */
+  Framework_Init();          /* 初始化所有硬件模块 + 运动控制 */
+  Task2_LineTrack_Init();    /* 配置巡线参数并启动正方形边框循迹 */
+  // Vofa_Init(&dbg_printf.uart, &move_ctrl);  /* Task2 期间禁用 */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while(1){
+    /* 40ms 周期调度: 编码器更新 + 运动控制 (巡线模式下 MoveControl_Update 静默返回) */
+    if (Flag_40ms) {
+      Flag_40ms = 0;
+      Framework_IRQHandler();
+
+      /* Vofa 遥测 — Task2 期间禁用，避免占用 UART1 带宽 */
+      // static uint32_t last_vofa = 0;
+      // uint32_t now = HAL_GetTick();
+      // if (now - last_vofa >= 100) {
+      //   last_vofa = now;
+      //   Vofa_SendTelemetry();
+      // }
+    }
+
+    /* Task2 主循环: 每 500ms 打印巡线状态，完成后输出完成信息 */
+    Task2_LineTrack_Loop();
+
+    /* 陀螺仪调试打印 — Task2 期间禁用，状态由 Task2_LineTrack_Loop 统一输出 */
+    // static uint32_t last_gyro = 0;
+    // uint32_t now = HAL_GetTick();
+    // if (now - last_gyro >= 200) {
+    //   last_gyro = now;
+    //   Gyro_PrintInfo(&gyro, &dbg_printf);
+    // }
+  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
   /* USER CODE END 3 */
 }
 
@@ -148,7 +174,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
 /* USER CODE END 4 */
 
 /**
@@ -158,11 +183,6 @@ void SystemClock_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
@@ -176,8 +196,6 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

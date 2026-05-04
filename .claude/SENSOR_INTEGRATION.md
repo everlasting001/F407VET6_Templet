@@ -13,25 +13,37 @@ STM32F407VET6 (核心)
 
 ## 文件位置清单
 
-### 数据手册和原理图（需要上传）
+### 数据手册和原理图
 
 **MPU6050**:
 ```
-.claude/docs/datasheets/mpu6050.pdf
-.claude/docs/schematics/mpu6050-interface.pdf
+.claude/docs/datasheets/PS-MPU-6000A.pdf          ← Register Map
+.claude/docs/datasheets/RM-MPU-6000A.pdf          ← Application Notes
+.claude/docs/datasheets/MPU6050-V1-SCH.jpg         ← 模块原理图
 ```
 
 **灰度循迹模块**:
 ```
-.claude/docs/datasheets/grayscale-sensor.pdf
-.claude/docs/schematics/grayscale-circuit.pdf
+.claude/docs/datasheets/亚博智能灰度循迹模块用户入门手册.pdf
+.claude/docs/datasheets/循迹模块数据读取.pdf
+.claude/docs/datasheets/循迹模块识别不良解决方案.pdf
+.claude/docs/datasheets/循迹模块小车巡线.pdf
 ```
 
 **步进电机驱动**:
 ```
-.claude/docs/datasheets/stepper-motor.pdf
-.claude/docs/datasheets/uln2003-datasheet.pdf  # 或 TB6560
-.claude/docs/schematics/stepper-driver.pdf
+.claude/docs/datasheets/28BYJ48规格书.doc
+.claude/docs/datasheets/ULN2003英文数据手册.pdf
+.claude/docs/datasheets/ULN2003中文数据手册.pdf
+.claude/docs/schematics/步进电机驱动板原理图.pdf
+```
+
+**直流电机驱动**:
+```
+.claude/docs/datasheets/TB6612FNG Datasheet.pdf
+.claude/docs/datasheets/塔克创新 l TB6612双路编码器电机驱动用户手册 V1.0.pdf
+.claude/docs/datasheets/塔克创新 l MC310编码器电机用户手册 V1.0.0.pdf
+.claude/docs/schematics/TK-TB6612-MD220A V1.0.pdf
 ```
 
 ## 快速 STM32CubeMX 配置
@@ -272,8 +284,10 @@ A: 检查延迟是否过小（推荐 > 2ms），或电流是否不足。
 
 ## 参考文档
 
-- MPU6050: `.claude/rules/sensor-modules-guide.md` 第 1 节
-- 灰度传感器: `.claude/rules/sensor-modules-guide.md` 第 2 节
-- 步进电机: `.claude/rules/sensor-modules-guide.md` 第 3 节
-- 硬件集成: `.claude/rules/hardware-integration.md`
-- 最佳实践: `.claude/rules/embedded-best-practices.md`
+- MPU6050: [sensor-modules-guide.md](rules/sensor-modules-guide.md) 第 1 节
+- 灰度传感器: [sensor-modules-guide.md](rules/sensor-modules-guide.md) 第 2 节
+- 步进电机: [sensor-modules-guide.md](rules/sensor-modules-guide.md) 第 3 节
+- 硬件集成: [hardware-integration.md](rules/hardware-integration.md)
+- 最佳实践: [embedded-best-practices.md](rules/embedded-best-practices.md)
+- 实际硬件清单: [memory/real-hardware-modules.md](memory/real-hardware-modules.md)
+- I2C 快速参考: [memory/quick-i2c-ref.md](memory/quick-i2c-ref.md)
