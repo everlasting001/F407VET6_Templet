@@ -52,7 +52,7 @@
 #define TASK1_ADJUST_DISTANCE_MM      60.0f
 
 /** @brief 巡线基准 PWM (0~1500) */
-#define TASK1_BASE_PWM               670.0f
+#define TASK1_BASE_PWM               760.0f
 
 /** @brief LineTurn 增益 (LineTurn→PWM 修正量) */
 #define TASK1_K_LINE                 100.0f
