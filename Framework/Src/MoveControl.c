@@ -291,9 +291,10 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
 
     /* ---- 状态 0: 直线循线 + 路口检测 ---- */
     case LINE_STATE_FOLLOWING: {
-        /* Task3 减速曲线: base_pwm 线性递减 (670→slow_pwm, 行驶750mm后到位) */
+        /* Task1/Task3 减速曲线: base_pwm 线性递减 (670→slow_pwm, 行驶750mm后到位) */
         float effective_base_pwm = ctrl->base_pwm;
-        if (ctrl->task_id == TASK_ID_3 && ctrl->is_slow_phase) {
+        if ((ctrl->task_id == TASK_ID_1 || ctrl->task_id == TASK_ID_3)
+            && ctrl->is_slow_phase) {
             float decel_traveled = 0.0f;
             if (ctrl->encoder_left && ctrl->encoder_right) {
                 float dl = Encoder_GetDistance(ctrl->encoder_left);
@@ -583,8 +584,9 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                 ctrl->state = MOVE_STATE_COMPLETE;
                 ctrl->buzzer_beep_flag = 2;
             } else {
-                /* Task3: 第4个边沿后进入减速循迹阶段 */
-                if (ctrl->task_id == TASK_ID_3 && ctrl->edge_count >= 4) {
+                /* Task1/Task3: 第4个边沿后进入减速循迹阶段 */
+                if ((ctrl->task_id == TASK_ID_1 || ctrl->task_id == TASK_ID_3)
+                    && ctrl->edge_count >= 4) {
                     ctrl->is_slow_phase = 1;
                 }
                 if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
