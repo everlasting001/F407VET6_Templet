@@ -171,9 +171,10 @@ void Task2_LineTrack_Loop(void)
     uint8_t edge = MoveControl_GetEdgeCount(&move_ctrl);
 
     static const char *state_names[] = {
-        "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE"
+        "FOLLOWING", "INTER_CONFIRM", "FWD_ADJUST", "TURNING", "EDGE_DONE",
+        "FINAL_FOLLOW"
     };
-    const char *sname = (move_ctrl.line_state < 5)
+    const char *sname = (move_ctrl.line_state < 6)
                         ? state_names[move_ctrl.line_state]
                         : "UNKNOWN";
 

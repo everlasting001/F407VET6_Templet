@@ -52,7 +52,8 @@ typedef enum {
     LINE_STATE_INTERSECTION_CONFIRM = 1,  /**< 疑似路口，连续确认中 */
     LINE_STATE_FORWARD_ADJUST      = 2,  /**< 路口确认，微调前进对齐轮轴 */
     LINE_STATE_TURNING             = 3,  /**< 直角转弯中 (陀螺仪 Yaw 闭环) */
-    LINE_STATE_EDGE_DONE           = 4   /**< 一条边完成，准备切换下一条边 */
+    LINE_STATE_EDGE_DONE           = 4,  /**< 一条边完成，准备切换下一条边 */
+    LINE_STATE_FINAL_FOLLOW        = 5   /**< 最后循迹250ms后180°掉头 */
 } LineTrackState_t;
 
 typedef struct {

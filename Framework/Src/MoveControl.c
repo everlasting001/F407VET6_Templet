@@ -327,7 +327,7 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     /* 假路口: 距离不足 → 复位计数器, 不清零编码器, 继续循线 */
                     ctrl->intersection_cnt = 0;
                 } else if (ctrl->final_edge) {
-                    /* 最后路口: 反向90°转弯后停车 */
+                    /* 最后路口: 正向90°转弯后停车 */
                     ctrl->first_intersection = 0;
                     ctrl->final_turn_done = 1;
                     DCMotor_Stop(ctrl->motor_left);
@@ -336,23 +336,17 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                     if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
                     if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
 
-                    /* 最后边沿反向转弯: 翻转检测方向 */
+                    /* 根据检测侧自动决定转弯方向 (与正常路口一致) */
                     if (right_cnt > left_cnt) {
-                        ctrl->turn_direction = -1;  /* 检测到CCW, 翻转为CW */
+                        ctrl->turn_direction =  1;  /* CCW */
                     } else if (left_cnt > right_cnt) {
-                        ctrl->turn_direction =  1;  /* 检测到CW, 翻转为CCW */
+                        ctrl->turn_direction = -1;  /* CW */
                     }
 
-                    /* 原地反向90°转弯补偿系数 */
+                    /* 正常90°转弯, 无补偿系数, 微调距离与之前边沿一致 */
                     ctrl->turn_angle = 90.0f;
-                    ctrl->adjust_distance_mm = 125.0f;  /* 最后边沿微调距离 */
-                    if (ctrl->turn_direction == -1) {
-                        ctrl->turn_reverse_boost = 1.3f;  /* CW: 反转轮 */
-                        ctrl->turn_other_boost   = 1.0f;  /* CW: 另一轮 */
-                    } else {
-                        ctrl->turn_reverse_boost = 1.2f;  /* CCW: 反转轮 */
-                        ctrl->turn_other_boost   = 0.6f;  /* CCW: 另一轮 */
-                    }
+                    ctrl->turn_reverse_boost = 1.0f;
+                    ctrl->turn_other_boost   = 1.0f;
 
                     PID_Reset(&ctrl->turn_pid);
                     ctrl->intersection_cnt = 0;
@@ -485,8 +479,15 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
                 Gyro_ResetYaw(ctrl->gyro);
             }
 
-            ctrl->edge_count++;
-            ctrl->line_state = LINE_STATE_EDGE_DONE;
+            if (ctrl->final_turn_done == 2) {
+                /* 最后180°转弯完成 → 任务结束 */
+                ctrl->final_turn_done = 0;
+                ctrl->state = MOVE_STATE_COMPLETE;
+                ctrl->buzzer_beep_flag = 2;
+            } else {
+                ctrl->edge_count++;
+                ctrl->line_state = LINE_STATE_EDGE_DONE;
+            }
         } else {
             /* PID 角度闭环: Yaw误差 → PWM */
             float turn_out = PID_Compute(&ctrl->turn_pid,
@@ -529,10 +530,11 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
         DCMotor_Stop(ctrl->motor_right);
 
         if (ctrl->final_turn_done) {
-            /* 最后反向转弯完成 → 任务结束 */
-            ctrl->final_turn_done = 0;
-            ctrl->state = MOVE_STATE_COMPLETE;
-            ctrl->buzzer_beep_flag = 2;
+            /* 最后正向90°转弯完成 → 循迹250ms后180°顺时针掉头 */
+            ctrl->final_turn_done = 2;
+            ctrl->intersection_cnt = 0;
+            ctrl->start_tick = HAL_GetTick();
+            ctrl->line_state = LINE_STATE_FINAL_FOLLOW;
         } else if (ctrl->edge_count >= ctrl->target_edges) {
             /* 全部转弯完成 → 最后一段循线, 下一路口停止 (不减速) */
             ctrl->final_edge = 1;
@@ -547,6 +549,53 @@ void MoveControl_LineTrackUpdate(MoveControl_t *ctrl)
             ctrl->line_state = LINE_STATE_FOLLOWING;
         }
         break;
+
+    /* ---- 状态 5: 最后循迹250ms后180°顺时针掉头 ---- */
+    case LINE_STATE_FINAL_FOLLOW: {
+        /* 正常速度循线 */
+        float pwm_l = ctrl->base_pwm + line_turn * ctrl->k_line;
+        float pwm_r = ctrl->base_pwm - line_turn * ctrl->k_line;
+
+        if (pwm_l >  ctrl->pwm_limit) pwm_l =  ctrl->pwm_limit;
+        if (pwm_l < -ctrl->pwm_limit) pwm_l = -ctrl->pwm_limit;
+        if (pwm_r >  ctrl->pwm_limit) pwm_r =  ctrl->pwm_limit;
+        if (pwm_r < -ctrl->pwm_limit) pwm_r = -ctrl->pwm_limit;
+
+        ctrl->line_left_pwm  = pwm_l;
+        ctrl->line_right_pwm = pwm_r;
+
+        DCMotor_SetSpeed(ctrl->motor_left,  (int16_t)pwm_l);
+        DCMotor_SetSpeed(ctrl->motor_right, (int16_t)pwm_r);
+
+        /* 250ms 后停车, 准备180°顺时针掉头 */
+        if (HAL_GetTick() - ctrl->start_tick >= 250) {
+            DCMotor_Stop(ctrl->motor_left);
+            DCMotor_Stop(ctrl->motor_right);
+
+            /* 清零编码器用于转弯距离参考 */
+            if (ctrl->encoder_left)  Encoder_ClearData(ctrl->encoder_left);
+            if (ctrl->encoder_right) Encoder_ClearData(ctrl->encoder_right);
+
+            /* 记录起始 Yaw */
+            if (ctrl->gyro != NULL) {
+                ctrl->turn_start_yaw = Gyro_GetYaw(ctrl->gyro);
+            } else {
+                ctrl->turn_start_yaw = 0.0f;
+            }
+
+            /* 180°顺时针掉头 (与第4边沿参数一致) */
+            ctrl->turn_direction = -1;  /* CW */
+            ctrl->turn_angle = 180.0f;
+            ctrl->turn_reverse_boost = 1.3f;  /* CW: 反转轮 */
+            ctrl->turn_other_boost   = 1.0f;  /* CW: 另一轮 */
+            ctrl->turn_target_yaw = ctrl->turn_start_yaw
+                                  + ctrl->turn_angle * ctrl->turn_direction;
+
+            PID_Reset(&ctrl->turn_pid);
+            ctrl->line_state = LINE_STATE_TURNING;
+        }
+        break;
+    }
 
     default:
         ctrl->line_state = LINE_STATE_FOLLOWING;
