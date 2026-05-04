@@ -57,6 +57,9 @@
 /** @brief 转弯基准 PWM (0~1500) */
 #define TASK3_TURN_PWM               430.0f
 
+/** @brief 假路口过滤距离阈值 (mm) */
+#define TASK3_FAKE_TURN_THRESHOLD_MM 750.0f
+
 /** @brief 微调前进 PWM */
 #define TASK3_ADJUST_SPEED_PWM       350.0f
 
@@ -104,21 +107,24 @@ void Task3_LineTrack_Init(void)
                                    TASK3_TURN_PWM,
                                    TASK3_ADJUST_DISTANCE_MM);
 
-    /* 3. 设置微调前进速度 */
+    /* 3. 设置假路口过滤阈值 */
+    MoveControl_SetFakeTurnThreshold(&move_ctrl, TASK3_FAKE_TURN_THRESHOLD_MM);
+
+    /* 4. 设置微调前进速度 */
     move_ctrl.adjust_speed_pwm = TASK3_ADJUST_SPEED_PWM;
     move_ctrl.slow_pwm         = TASK3_SLOW_PWM;
 
-    /* 4. 初始化蜂鸣器 (PC2, 低电平触发响, 默认输出高电平静音) */
+    /* 5. 初始化蜂鸣器 (PC2, 低电平触发响, 默认输出高电平静音) */
     Buzzer_Constructor(&task3_buzzer, BUZZER1_GPIO_Port, BUZZER1_Pin,
                        BUZZER_TYPE_ACTIVE, 0);
     if (ModuleBase_Init((ModuleBase_t *)&task3_buzzer) != 0) {
         Error_Handler();
     }
 
-    /* 5. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
+    /* 6. 启动巡线模式 (进入 LINE_STATE_FOLLOWING, 开始第 1 条边) */
     MoveControl_SetLineTrack(&move_ctrl, &line_sensor);
 
-    /* 6. 打印启动信息 */
+    /* 7. 打印启动信息 */
     DebugPrintf_Print(&dbg_printf,
         "=== Task3: Square Border Track Start ===\r\n");
     DebugPrintf_Print(&dbg_printf,
